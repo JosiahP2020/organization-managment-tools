@@ -311,17 +311,7 @@ function GembaDocEditorContent() {
     [annotatingCell, upsertCellMutation]
   );
 
-  // Handle step number/text change
-  const handleStepNumberChange = useCallback(
-    (position: number, value: string) => {
-      upsertCellMutation.mutate({
-        position,
-        updates: { step_number: value || null },
-      });
-    },
-    [upsertCellMutation]
-  );
-
+  // Handle step text change (step numbers are now auto-generated)
   const handleStepTextChange = useCallback(
     (position: number, value: string) => {
       upsertCellMutation.mutate({
@@ -426,42 +416,42 @@ function GembaDocEditorContent() {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="p-4 border-b">
-            <div className="flex items-start gap-4">
-              {/* Sub Logo */}
+          <div className="p-6 border-b">
+            <div className="flex items-start gap-6">
+              {/* Sub Logo - Larger */}
               {subLogoUrl && (
                 <Logo
-                  size="md"
+                  size="lg"
                   customSrc={subLogoUrl}
                   variant="full"
                   className="shrink-0"
                 />
               )}
 
-              {/* Title and Description */}
+              {/* Title and Description - Larger */}
               <div className="flex-1 text-center">
                 {canEdit ? (
                   <Input
                     value={gembaDoc.title}
                     onChange={(e) => handleTitleChange(e.target.value)}
-                    className="text-2xl font-bold text-center border-none bg-transparent h-auto py-1"
+                    className="text-3xl font-bold text-center border-none bg-transparent h-auto py-2"
                     placeholder="Document Title"
                   />
                 ) : (
-                  <h1 className="text-2xl font-bold">{gembaDoc.title}</h1>
+                  <h1 className="text-3xl font-bold">{gembaDoc.title}</h1>
                 )}
 
                 {canEdit ? (
                   <Textarea
                     value={gembaDoc.description || ""}
                     onChange={(e) => handleDescriptionChange(e.target.value)}
-                    className="text-sm text-muted-foreground text-center border-none bg-transparent resize-none mt-1"
+                    className="text-base text-muted-foreground text-center border-none bg-transparent resize-none mt-2"
                     placeholder="Add a description..."
                     rows={1}
                   />
                 ) : (
                   gembaDoc.description && (
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-base text-muted-foreground mt-2">
                       {gembaDoc.description}
                     </p>
                   )
@@ -469,7 +459,7 @@ function GembaDocEditorContent() {
               </div>
 
               {/* Spacer to balance layout */}
-              <div className="w-16 shrink-0" />
+              <div className="w-20 shrink-0" />
             </div>
           </div>
 
@@ -482,7 +472,6 @@ function GembaDocEditorContent() {
                   position: c.position,
                   image_url: c.image_url,
                   image_annotations: c.image_annotations as object[] | null,
-                  step_number: c.step_number,
                   step_text: c.step_text,
                 })) || []
               }
@@ -493,7 +482,6 @@ function GembaDocEditorContent() {
               onCellImageUpload={handleCellImageUpload}
               onCellImageDelete={handleCellImageDelete}
               onCellAnnotate={handleCellAnnotate}
-              onCellStepNumberChange={handleStepNumberChange}
               onCellStepTextChange={handleStepTextChange}
               uploadingPositions={uploadingPositions}
             />
