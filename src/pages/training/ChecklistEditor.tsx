@@ -218,7 +218,7 @@ const ChecklistEditor = () => {
         <DashboardLayout>
           <div className="relative">
             {/* Sidebar - Positioned absolutely on the left, independent from content */}
-            <div className="absolute left-0 top-[10.5rem]">
+            <div className="absolute left-0 top-[7.5rem]">
               <ChecklistSidebar
                 isLocked={isLocked}
                 hideCompleted={hideCompleted}
