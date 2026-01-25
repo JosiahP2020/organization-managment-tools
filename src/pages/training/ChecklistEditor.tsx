@@ -202,9 +202,9 @@ const ChecklistEditor = () => {
   }
 
   return (
-    <DashboardLayout>
-      {/* Print view (hidden on screen) */}
-      <div className="hidden print:block">
+    <>
+      {/* Print view - OUTSIDE DashboardLayout so no header/menu/back button */}
+      <div className="hidden print:block print:p-0 print:m-0">
         <ChecklistPrintView
           ref={printRef}
           checklist={checklist}
@@ -216,142 +216,144 @@ const ChecklistEditor = () => {
 
       {/* Screen view (hidden on print) */}
       <div className="print:hidden">
-        <div className="max-w-6xl mx-auto">
-          {/* Header: Sub-logo left, Title centered, Completion below */}
-          <div className="relative flex items-start mb-8">
-            {/* Sub-logo on the left */}
-            <div className="flex-shrink-0">
-              {subLogoUrl ? (
-                <img 
-                  src={subLogoUrl} 
-                  alt="Organization Logo" 
-                  className="h-16 md:h-20 w-auto object-contain"
-                />
-              ) : (
-                <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
-                  <span className="text-muted-foreground text-xs">Logo</span>
-                </div>
-              )}
-            </div>
-
-            {/* Centered title and completion count */}
-            <div className="flex-1 text-center">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                {checklist.title}
-              </h1>
-              {checklist.description && (
-                <p className="text-muted-foreground mt-1">
-                  {checklist.description}
-                </p>
-              )}
-              <p className="text-sm text-muted-foreground mt-2">
-                {completedItems} of {totalItems} completed
-              </p>
-            </div>
-
-            {/* Spacer for symmetry */}
-            <div className="flex-shrink-0 w-16 md:w-20" />
-          </div>
-
-          {/* Main content with sidebar */}
-          <div className="flex gap-6">
-            {/* Sidebar */}
-            <ChecklistSidebar
-              isLocked={isLocked}
-              hideCompleted={hideCompleted}
-              hideAllImages={hideAllImages}
-              hasAnyImages={hasAnyImages}
-              onToggleHideCompleted={() => setHideCompleted(!hideCompleted)}
-              onToggleHideImages={() => setHideAllImages(!hideAllImages)}
-              onToggleLock={handleToggleLock}
-              onReset={handleReset}
-              onPrint={handlePrint}
-              canEdit={isAdmin}
-            />
-
-            {/* Checklist content */}
-            <div className="flex-1 space-y-4">
-              {sections && sections.length > 0 ? (
-                sections.map((section, index) => (
-                  <ChecklistSection
-                    key={section.id}
-                    section={section}
-                    hideCompleted={hideCompleted}
-                    canEdit={canEdit}
-                    isLocked={isLocked}
-                    checklistId={checklistId!}
-                    isFirst={index === 0}
-                    isLast={index === sections.length - 1}
-                    totalSections={sections.length}
-                    hideAllImages={hideAllImages}
+        <DashboardLayout>
+          <div className="max-w-6xl mx-auto">
+            {/* Header: Sub-logo left, Title centered, Completion below */}
+            <div className="relative flex items-start mb-8">
+              {/* Sub-logo on the left */}
+              <div className="flex-shrink-0">
+                {subLogoUrl ? (
+                  <img 
+                    src={subLogoUrl} 
+                    alt="Organization Logo" 
+                    className="h-16 md:h-20 w-auto object-contain"
                   />
-                ))
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No sections yet. {canEdit && "Add a section to get started."}
-                </div>
-              )}
+                ) : (
+                  <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
+                    <span className="text-muted-foreground text-xs">Logo</span>
+                  </div>
+                )}
+              </div>
 
-              {/* Add Section Button */}
-              {canEdit && (
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={() => setAddSectionOpen(true)}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Section
-                </Button>
-              )}
+              {/* Centered title and completion count */}
+              <div className="flex-1 text-center">
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {checklist.title}
+                </h1>
+                {checklist.description && (
+                  <p className="text-muted-foreground mt-1">
+                    {checklist.description}
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground mt-2">
+                  {completedItems} of {totalItems} completed
+                </p>
+              </div>
 
+              {/* Spacer for symmetry */}
+              <div className="flex-shrink-0 w-16 md:w-20" />
+            </div>
 
-              {/* View All Images Gallery Button */}
-              {hasAnyImages && (
-                <div className="flex justify-center pt-2">
+            {/* Main content with sidebar */}
+            <div className="flex gap-6">
+              {/* Sidebar */}
+              <ChecklistSidebar
+                isLocked={isLocked}
+                hideCompleted={hideCompleted}
+                hideAllImages={hideAllImages}
+                hasAnyImages={hasAnyImages}
+                onToggleHideCompleted={() => setHideCompleted(!hideCompleted)}
+                onToggleHideImages={() => setHideAllImages(!hideAllImages)}
+                onToggleLock={handleToggleLock}
+                onReset={handleReset}
+                onPrint={handlePrint}
+                canEdit={isAdmin}
+              />
+
+              {/* Checklist content */}
+              <div className="flex-1 space-y-4">
+                {sections && sections.length > 0 ? (
+                  sections.map((section, index) => (
+                    <ChecklistSection
+                      key={section.id}
+                      section={section}
+                      hideCompleted={hideCompleted}
+                      canEdit={canEdit}
+                      isLocked={isLocked}
+                      checklistId={checklistId!}
+                      isFirst={index === 0}
+                      isLast={index === sections.length - 1}
+                      totalSections={sections.length}
+                      hideAllImages={hideAllImages}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No sections yet. {canEdit && "Add a section to get started."}
+                  </div>
+                )}
+
+                {/* Add Section Button */}
+                {canEdit && (
                   <Button
                     variant="outline"
-                    onClick={() => setShowAllImagesGallery(!showAllImagesGallery)}
-                    className="gap-2"
+                    className="w-full gap-2"
+                    onClick={() => setAddSectionOpen(true)}
                   >
-                    <Image className="h-4 w-4" />
-                    {showAllImagesGallery ? "Hide Image Gallery" : "View All Images"}
+                    <Plus className="h-4 w-4" />
+                    Add Section
                   </Button>
-                </div>
-              )}
+                )}
 
-              {/* All Images Gallery */}
-              {showAllImagesGallery && hasAnyImages && (
-                <div className="mt-6 p-4 border border-border rounded-lg bg-muted/30">
-                  <h3 className="text-lg font-semibold mb-4">All Section Images</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {sectionsWithImages.map((section) => (
-                      <div key={section.id} className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {section.title}
-                        </p>
-                        <img
-                          src={section.image_url!}
-                          alt={`${section.title} image`}
-                          className="w-full rounded-lg border border-border"
-                        />
-                      </div>
-                    ))}
+
+                {/* View All Images Gallery Button */}
+                {hasAnyImages && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAllImagesGallery(!showAllImagesGallery)}
+                      className="gap-2"
+                    >
+                      <Image className="h-4 w-4" />
+                      {showAllImagesGallery ? "Hide Image Gallery" : "View All Images"}
+                    </Button>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* All Images Gallery */}
+                {showAllImagesGallery && hasAnyImages && (
+                  <div className="mt-6 p-4 border border-border rounded-lg bg-muted/30">
+                    <h3 className="text-lg font-semibold mb-4">All Section Images</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {sectionsWithImages.map((section) => (
+                        <div key={section.id} className="space-y-2">
+                          <p className="text-sm font-medium text-muted-foreground">
+                            {section.title}
+                          </p>
+                          <img
+                            src={section.image_url!}
+                            alt={`${section.title} image`}
+                            className="w-full rounded-lg border border-border"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Add Section Dialog */}
-      <AddSectionDialog
-        open={addSectionOpen}
-        onOpenChange={setAddSectionOpen}
-        checklistId={checklistId!}
-        nextSortOrder={sections?.length || 0}
-      />
-    </DashboardLayout>
+          {/* Add Section Dialog */}
+          <AddSectionDialog
+            open={addSectionOpen}
+            onOpenChange={setAddSectionOpen}
+            checklistId={checklistId!}
+            nextSortOrder={sections?.length || 0}
+          />
+        </DashboardLayout>
+      </div>
+    </>
   );
 };
 

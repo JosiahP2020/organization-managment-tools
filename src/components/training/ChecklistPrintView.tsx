@@ -76,7 +76,7 @@ export const ChecklistPrintView = forwardRef<HTMLDivElement, ChecklistPrintViewP
     };
 
     return (
-      <div ref={ref} className="p-8 bg-white text-black min-h-screen">
+      <div ref={ref} className="bg-white text-black" style={{ padding: '0.5in' }}>
         {/* Header: Logo left, Title center */}
         <div className="flex items-start mb-6 pb-4 border-b-2 border-black">
           {/* Logo on the left */}
