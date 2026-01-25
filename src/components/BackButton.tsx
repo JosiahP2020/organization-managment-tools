@@ -13,15 +13,20 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
   const location = useLocation();
 
   const handleBack = useCallback(() => {
-    // Navigate to parent path by removing the last segment
     const pathParts = location.pathname.split('/').filter(Boolean);
     
-    if (pathParts.length > 2) {
-      // Remove the last segment and navigate to parent
+    // Check if we're in a Gemba doc (path contains 'gemba' segment)
+    const gembaIndex = pathParts.indexOf('gemba');
+    
+    if (gembaIndex !== -1) {
+      // For Gemba docs, go back to the category page (before 'gemba')
+      const parentPath = '/' + pathParts.slice(0, gembaIndex).join('/');
+      navigate(parentPath);
+    } else if (pathParts.length > 2) {
+      // Regular behavior: remove the last segment
       const parentPath = '/' + pathParts.slice(0, -1).join('/');
       navigate(parentPath);
     } else {
-      // Already at a top-level page, use fallback
       navigate(fallbackPath, { replace: true });
     }
   }, [navigate, fallbackPath, location.pathname]);
