@@ -2,6 +2,7 @@ import { Home, Settings, User, Users, Building2, LogOut } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
+import { LogoContainer } from "@/components/LogoContainer";
 import {
   Sidebar,
   SidebarContent,
@@ -52,7 +53,9 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <Logo variant={collapsed ? "icon" : "icon"} size="sm" />
+          <LogoContainer className="p-1">
+            <Logo variant={collapsed ? "icon" : "icon"} size="sm" />
+          </LogoContainer>
           {!collapsed && (
             <div className="flex flex-col">
               <span className="font-semibold text-sm text-foreground">ShellStar</span>

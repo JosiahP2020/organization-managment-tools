@@ -88,11 +88,13 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
         {/* Header with Logo - aligned left */}
         <SheetHeader className="p-6 pb-4">
           <div className="flex justify-start">
-            <img
-              src={sidebarLogo}
-              alt={organization?.name || "SCC"}
-              className="h-16 w-auto max-w-[200px] object-contain"
-            />
+            <div className="inline-flex items-center justify-center rounded-lg p-2 dark:bg-[hsl(0,0%,85%)]">
+              <img
+                src={sidebarLogo}
+                alt={organization?.name || "SCC"}
+                className="h-16 w-auto max-w-[200px] object-contain"
+              />
+            </div>
           </div>
         </SheetHeader>
 
