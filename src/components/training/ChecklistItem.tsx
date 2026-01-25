@@ -48,6 +48,7 @@ export function ChecklistItem({
   const [addSubItemOpen, setAddSubItemOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(item.text);
+  const [showMobileActions, setShowMobileActions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -175,10 +176,25 @@ export function ChecklistItem({
 
   const displayPrefix = getDisplayPrefix();
 
+  // Handle row click for mobile to toggle action buttons
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Only handle on mobile, and don't trigger if clicking on interactive elements
+    if (isMobile && canEdit) {
+      const target = e.target as HTMLElement;
+      // Check if click is on the row itself, not on buttons, inputs, or checkbox
+      if (!target.closest('button') && !target.closest('input') && !target.closest('[role="checkbox"]')) {
+        setShowMobileActions(prev => !prev);
+      }
+    }
+  };
+
   return (
     <div className={cn(depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
       {/* Use group/item to isolate hover effect to this specific item row */}
-      <div className="group/item flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
+      <div 
+        className="group/item flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors"
+        onClick={handleRowClick}
+      >
         {/* Checkbox or Number */}
         {displayMode === "numbered" ? (
           <div className="mt-0.5 w-5 flex justify-center">
@@ -219,11 +235,13 @@ export function ChecklistItem({
         </div>
 
         {/* Actions - only show when canEdit (admin and not locked) */}
-        {/* On mobile: always visible. On desktop: visible on hover */}
+        {/* On mobile: visible on tap. On desktop: visible on hover */}
         {canEdit && (
           <div className={cn(
             "flex items-center gap-1 transition-opacity",
-            isMobile ? "opacity-100" : "opacity-0 group-hover/item:opacity-100"
+            isMobile 
+              ? (showMobileActions ? "opacity-100" : "opacity-0 pointer-events-none") 
+              : "opacity-0 group-hover/item:opacity-100"
           )}>
             <Button
               variant="ghost"
