@@ -11,7 +11,7 @@ import { AddSectionDialog } from "@/components/training/AddSectionDialog";
 import { ChecklistPrintView } from "@/components/training/ChecklistPrintView";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Image, ImageOff } from "lucide-react";
 
 export interface ChecklistItem {
   id: string;
@@ -41,6 +41,7 @@ const ChecklistEditor = () => {
   const printRef = useRef<HTMLDivElement>(null);
   
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [hideAllImages, setHideAllImages] = useState(false);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
 
   // Use sub_logo_url for the checklist display
@@ -161,6 +162,9 @@ const ChecklistEditor = () => {
     acc + section.items.filter(item => item.is_completed).length, 0
   ) || 0;
 
+  // Check if any section has an image
+  const hasAnyImages = sections?.some(section => section.image_url) || false;
+
   const isLocked = checklist?.is_locked || false;
   const canEdit = isAdmin && !isLocked;
 
@@ -208,7 +212,7 @@ const ChecklistEditor = () => {
       {/* Screen view (hidden on print) */}
       <div className="print:hidden">
         <div className="max-w-6xl mx-auto">
-          {/* New Header Layout: Sub-logo left, Title centered, Completion below */}
+          {/* Header: Sub-logo left, Title centered, Completion below */}
           <div className="relative flex items-start mb-8">
             {/* Sub-logo on the left */}
             <div className="flex-shrink-0">
@@ -270,6 +274,7 @@ const ChecklistEditor = () => {
                     isFirst={index === 0}
                     isLast={index === sections.length - 1}
                     totalSections={sections.length}
+                    hideAllImages={hideAllImages}
                   />
                 ))
               ) : (
@@ -288,6 +293,29 @@ const ChecklistEditor = () => {
                   <Plus className="h-4 w-4" />
                   Add Section
                 </Button>
+              )}
+
+              {/* Hide/View All Images Button - at bottom */}
+              {hasAnyImages && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setHideAllImages(!hideAllImages)}
+                    className="gap-2"
+                  >
+                    {hideAllImages ? (
+                      <>
+                        <Image className="h-4 w-4" />
+                        View All Images
+                      </>
+                    ) : (
+                      <>
+                        <ImageOff className="h-4 w-4" />
+                        Hide All Images
+                      </>
+                    )}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
