@@ -67,6 +67,7 @@ export type Database = {
           checklist_id: string
           created_at: string | null
           id: string
+          image_url: string | null
           sort_order: number
           title: string
         }
@@ -74,6 +75,7 @@ export type Database = {
           checklist_id: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           sort_order?: number
           title: string
         }
@@ -81,6 +83,7 @@ export type Database = {
           checklist_id?: string
           created_at?: string | null
           id?: string
+          image_url?: string | null
           sort_order?: number
           title?: string
         }
