@@ -20,6 +20,7 @@ interface ChecklistSectionProps {
   isLast: boolean;
   totalSections: number;
   hideAllImages: boolean;
+  displayMode: "checkbox" | "numbered";
 }
 
 export function ChecklistSection({
@@ -31,6 +32,7 @@ export function ChecklistSection({
   isLast,
   totalSections,
   hideAllImages,
+  displayMode,
 }: ChecklistSectionProps) {
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -333,7 +335,7 @@ export function ChecklistSection({
         {/* Items */}
         {visibleItems.length > 0 ? (
           <div className="space-y-1">
-            {visibleItems.map((item) => (
+            {visibleItems.map((item, index) => (
               <ChecklistItem
                 key={item.id}
                 item={item}
@@ -343,6 +345,8 @@ export function ChecklistSection({
                 checklistId={checklistId}
                 sectionId={section.id}
                 depth={0}
+                displayMode={displayMode}
+                itemNumber={index + 1}
               />
             ))}
           </div>

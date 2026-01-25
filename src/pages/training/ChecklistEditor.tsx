@@ -22,6 +22,7 @@ export interface ChecklistItem {
   sort_order: number;
   notes: string | null;
   created_at: string;
+  item_type?: string;
 }
 
 export interface ChecklistSectionType {
@@ -120,6 +121,25 @@ const ChecklistEditor = () => {
     },
   });
 
+  // Toggle display mode mutation
+  const toggleDisplayModeMutation = useMutation({
+    mutationFn: async () => {
+      const newMode = (checklist as any)?.display_mode === "numbered" ? "checkbox" : "numbered";
+      const { error } = await supabase
+        .from("checklists")
+        .update({ display_mode: newMode })
+        .eq("id", checklistId!);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklist", checklistId] });
+    },
+    onError: () => {
+      toast.error("Failed to update display mode");
+    },
+  });
+
   // Reset all items mutation
   const resetAllMutation = useMutation({
     mutationFn: async () => {
@@ -166,6 +186,7 @@ const ChecklistEditor = () => {
   const hasAnyImages = sections?.some(section => section.image_url) || false;
 
   const isLocked = checklist?.is_locked || false;
+  const displayMode = ((checklist as any)?.display_mode || "checkbox") as "checkbox" | "numbered";
   const canEdit = isAdmin && !isLocked;
 
   if (checklistLoading || sectionsLoading) {
@@ -254,8 +275,10 @@ const ChecklistEditor = () => {
             <ChecklistSidebar
               isLocked={isLocked}
               hideCompleted={hideCompleted}
+              displayMode={displayMode}
               onToggleHideCompleted={() => setHideCompleted(!hideCompleted)}
               onToggleLock={handleToggleLock}
+              onToggleDisplayMode={() => toggleDisplayModeMutation.mutate()}
               onReset={handleReset}
               onPrint={handlePrint}
               canEdit={isAdmin}
@@ -275,6 +298,7 @@ const ChecklistEditor = () => {
                     isLast={index === sections.length - 1}
                     totalSections={sections.length}
                     hideAllImages={hideAllImages}
+                    displayMode={displayMode}
                   />
                 ))
               ) : (

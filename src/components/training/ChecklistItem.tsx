@@ -18,7 +18,15 @@ interface ChecklistItemProps {
   checklistId: string;
   sectionId: string;
   depth: number;
+  displayMode: "checkbox" | "numbered";
+  itemNumber: number;
+  parentLetter?: string;
 }
+
+// Helper to convert number to letter (1 -> A, 2 -> B, etc.)
+const numberToLetter = (num: number): string => {
+  return String.fromCharCode(64 + num);
+};
 
 export function ChecklistItem({
   item,
@@ -28,6 +36,9 @@ export function ChecklistItem({
   checklistId,
   sectionId,
   depth,
+  displayMode,
+  itemNumber,
+  parentLetter,
 }: ChecklistItemProps) {
   const [addSubItemOpen, setAddSubItemOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -164,11 +175,29 @@ export function ChecklistItem({
 
   const itemType = (item as any).item_type || "checkbox";
 
+  // Determine what to display in place of checkbox
+  const getDisplayPrefix = () => {
+    if (displayMode === "numbered") {
+      if (depth === 0) {
+        return `${itemNumber}.`;
+      } else {
+        return `${numberToLetter(itemNumber)}.`;
+      }
+    }
+    return null;
+  };
+
+  const displayPrefix = getDisplayPrefix();
+
   return (
     <div className={cn("group", depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
       <div className="flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
-        {/* Checkbox or Dash */}
-        {itemType === "dash" ? (
+        {/* Checkbox, Dash, or Number */}
+        {displayMode === "numbered" ? (
+          <div className="mt-0.5 w-5 flex justify-center">
+            <span className="text-sm font-medium text-muted-foreground">{displayPrefix}</span>
+          </div>
+        ) : itemType === "dash" ? (
           <div className="mt-1.5 w-5 flex justify-center">
             <Minus className="h-4 w-4 text-muted-foreground" />
           </div>
@@ -246,7 +275,7 @@ export function ChecklistItem({
       {/* Child items (always visible) */}
       {visibleChildren.length > 0 && (
         <div className="space-y-1">
-          {visibleChildren.map((child) => (
+          {visibleChildren.map((child, index) => (
             <ChecklistItem
               key={child.id}
               item={child}
@@ -256,6 +285,8 @@ export function ChecklistItem({
               checklistId={checklistId}
               sectionId={sectionId}
               depth={depth + 1}
+              displayMode={displayMode}
+              itemNumber={index + 1}
             />
           ))}
         </div>
