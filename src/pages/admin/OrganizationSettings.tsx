@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Calendar, Link } from "lucide-react";
+import { Building2, Calendar, Link, Image } from "lucide-react";
 import { format } from "date-fns";
+import { LogoUpload } from "@/components/LogoUpload";
 
 const OrganizationSettings = () => {
   const { organization } = useAuth();
@@ -16,6 +17,7 @@ const OrganizationSettings = () => {
   
   const [orgName, setOrgName] = useState(organization?.name || "");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(organization?.logo_url || null);
 
   const handleUpdateOrganization = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +59,10 @@ const OrganizationSettings = () => {
     }
   };
 
+  const handleLogoUploadComplete = (url: string) => {
+    setLogoUrl(url || null);
+  };
+
   return (
     <AdminRoute>
       <DashboardLayout>
@@ -66,6 +72,29 @@ const OrganizationSettings = () => {
             <p className="text-muted-foreground mt-1">
               Manage your organization details
             </p>
+          </div>
+
+          {/* Organization Logo */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                <Image className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Organization Logo</h2>
+                <p className="text-sm text-muted-foreground">
+                  Upload your company logo to display in the header and sidebar
+                </p>
+              </div>
+            </div>
+
+            {organization && (
+              <LogoUpload
+                currentLogoUrl={logoUrl}
+                organizationId={organization.id}
+                onUploadComplete={handleLogoUploadComplete}
+              />
+            )}
           </div>
 
           {/* Organization Info */}

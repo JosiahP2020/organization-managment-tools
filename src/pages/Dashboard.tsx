@@ -2,6 +2,7 @@ import { GraduationCap, ShoppingBag, Wrench } from "lucide-react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
+import { Logo } from "@/components/Logo";
 
 interface CategoryCardProps {
   icon: React.ReactNode;
@@ -46,8 +47,18 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto">
+        {/* Organization Logo - Centered */}
+        <div className="flex justify-center mb-6 md:mb-8">
+          <Logo 
+            size="xl" 
+            customSrc={organization?.logo_url} 
+            variant="full"
+            className="max-h-32 md:max-h-40"
+          />
+        </div>
+
         {/* Dashboard Title */}
-        <div className="mb-6 md:mb-8">
+        <div className="text-center mb-6 md:mb-8">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             {organization?.name || "Your Organization"} Dashboard
           </h1>
