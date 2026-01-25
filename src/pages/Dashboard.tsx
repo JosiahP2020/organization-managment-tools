@@ -50,7 +50,7 @@ function CategoryCard({ icon, title, description, comingSoon = false, onClick }:
 const Dashboard = () => {
   const { organization } = useAuth();
   const navigate = useNavigate();
-  const { mainLogoUrl } = useThemeLogos();
+  const { mainLogoUrl, logoFilterClass } = useThemeLogos();
 
   const handleTrainingClick = () => {
     if (organization?.slug) {
@@ -67,6 +67,7 @@ const Dashboard = () => {
             size="xl" 
             customSrc={mainLogoUrl} 
             variant="full"
+            filterClass={logoFilterClass}
             className="max-h-32 md:max-h-40"
           />
         </div>

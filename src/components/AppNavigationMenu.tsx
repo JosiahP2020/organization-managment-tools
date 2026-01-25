@@ -54,7 +54,7 @@ function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
 
 export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
   const { profile, isAdmin, signOut, organization } = useAuth();
-  const { subLogoUrl } = useThemeLogos();
+  const { subLogoUrl, logoFilterClass } = useThemeLogos();
   const navigate = useNavigate();
   const [isProfileHovered, setIsProfileHovered] = useState(false);
 
@@ -93,7 +93,7 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
             <img
               src={sidebarLogo}
               alt={organization?.name || "SCC"}
-              className="h-16 w-auto max-w-[200px] object-contain"
+              className={`h-16 w-auto max-w-[200px] object-contain ${logoFilterClass}`}
             />
           </div>
         </SheetHeader>

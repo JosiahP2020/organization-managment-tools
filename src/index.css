@@ -62,49 +62,55 @@
   }
 
   .dark {
-    --background: 0 0% 6%;
+    /* Softer dark theme - lighter grays instead of near-black */
+    --background: 0 0% 18%;
     --foreground: 0 0% 96%;
 
-    --card: 0 0% 8%;
+    --card: 0 0% 22%;
     --card-foreground: 0 0% 96%;
 
-    --popover: 0 0% 8%;
+    --popover: 0 0% 22%;
     --popover-foreground: 0 0% 96%;
 
     --primary: 22 90% 54%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 14%;
+    --secondary: 0 0% 26%;
     --secondary-foreground: 0 0% 96%;
 
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 0 0% 26%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 22 90% 20%;
+    --accent: 22 90% 25%;
     --accent-foreground: 22 90% 80%;
 
-    --destructive: 0 62% 30%;
+    --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 96%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
+    --border: 0 0% 30%;
+    --input: 0 0% 30%;
     --ring: 22 90% 54%;
 
     /* Custom tokens - dark */
     --brand-black: 0 0% 96%;
     --brand-orange: 22 90% 54%;
     --brand-orange-hover: 22 90% 60%;
-    --surface-elevated: 0 0% 10%;
-    --surface-subtle: 0 0% 6%;
+    --surface-elevated: 0 0% 24%;
+    --surface-subtle: 0 0% 18%;
 
-    --sidebar-background: 0 0% 8%;
+    --sidebar-background: 0 0% 20%;
     --sidebar-foreground: 0 0% 96%;
     --sidebar-primary: 22 76% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent: 0 0% 28%;
     --sidebar-accent-foreground: 0 0% 96%;
-    --sidebar-border: 0 0% 16%;
+    --sidebar-border: 0 0% 28%;
     --sidebar-ring: 22 90% 54%;
+  }
+
+  /* Dark mode logo filter - dims white to light gray */
+  .dark-mode-logo {
+    filter: brightness(0.85) contrast(1.1);
   }
 }
 

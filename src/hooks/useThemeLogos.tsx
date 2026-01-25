@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 /**
  * Hook that returns the appropriate logo URLs based on the current theme.
- * Falls back to light mode logos if dark mode logos are not available.
+ * In dark mode, applies a CSS filter class to soften white colors to gray.
  */
 export function useThemeLogos() {
   const { organization } = useAuth();
@@ -18,21 +18,17 @@ export function useThemeLogos() {
 
   const isDarkMode = mounted && resolvedTheme === "dark";
 
-  // Main logo: use dark variant if in dark mode and available
-  const mainLogoUrl = 
-    isDarkMode && organization?.main_logo_dark_url
-      ? organization.main_logo_dark_url
-      : organization?.main_logo_url || organization?.logo_url || null;
+  // Use base logos - no separate dark mode logos needed
+  const mainLogoUrl = organization?.main_logo_url || organization?.logo_url || null;
+  const subLogoUrl = organization?.sub_logo_url || null;
 
-  // Sub logo: use dark variant if in dark mode and available
-  const subLogoUrl = 
-    isDarkMode && organization?.sub_logo_dark_url
-      ? organization.sub_logo_dark_url
-      : organization?.sub_logo_url || null;
+  // CSS class to apply brightness filter in dark mode (dims white to light gray)
+  const logoFilterClass = isDarkMode ? "dark-mode-logo" : "";
 
   return {
     mainLogoUrl,
     subLogoUrl,
     isDarkMode,
+    logoFilterClass,
   };
 }

@@ -43,11 +43,17 @@ const altTexts = {
   scc: "SCC Logo",
 };
 
-export const Logo = forwardRef<HTMLImageElement, LogoProps>(({ 
+interface LogoImgProps extends LogoProps {
+  /** CSS class for dark mode filter - applied when isDarkMode */
+  filterClass?: string;
+}
+
+export const Logo = forwardRef<HTMLImageElement, LogoImgProps>(({ 
   className = "", 
   size = "md", 
   variant = "full",
-  customSrc = null 
+  customSrc = null,
+  filterClass = ""
 }, ref) => {
   const logoSrc = customSrc || defaultLogos[variant];
   const altText = customSrc ? "Organization Logo" : altTexts[variant];
@@ -57,7 +63,7 @@ export const Logo = forwardRef<HTMLImageElement, LogoProps>(({
       ref={ref}
       src={logoSrc}
       alt={altText}
-      className={`${sizeClasses[variant][size]} w-auto object-contain ${className}`}
+      className={`${sizeClasses[variant][size]} w-auto object-contain ${filterClass} ${className}`}
     />
   );
 });
