@@ -291,7 +291,8 @@ const ChecklistEditor = () => {
               {/* Add Section Button - Orange styled */}
               {canEdit && (
                 <Button
-                  className="w-full border-dashed gap-2 bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
+                  variant="outline"
+                  className="w-full border-dashed gap-2"
                   onClick={() => setAddSectionOpen(true)}
                 >
                   <Plus className="h-4 w-4" />
