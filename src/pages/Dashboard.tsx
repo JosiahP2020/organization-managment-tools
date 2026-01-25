@@ -1,19 +1,23 @@
 import { GraduationCap, ShoppingBag, Wrench } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
-
 interface CategoryCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
   comingSoon?: boolean;
+  onClick?: () => void;
 }
 
-function CategoryCard({ icon, title, description, comingSoon = false }: CategoryCardProps) {
+function CategoryCard({ icon, title, description, comingSoon = false, onClick }: CategoryCardProps) {
   return (
-    <Card className="group relative overflow-hidden border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg cursor-pointer">
+    <Card 
+      className="group relative overflow-hidden border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg cursor-pointer"
+      onClick={onClick}
+    >
       <CardContent className="p-6 md:p-8 flex flex-col items-center text-center">
         {/* Icon */}
         <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-accent flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
@@ -43,7 +47,7 @@ function CategoryCard({ icon, title, description, comingSoon = false }: Category
 
 const Dashboard = () => {
   const { organization } = useAuth();
-
+  const navigate = useNavigate();
   // Use main_logo_url if available, otherwise fall back to logo_url
   const mainLogoUrl = organization?.main_logo_url || organization?.logo_url || null;
 
@@ -71,9 +75,9 @@ const Dashboard = () => {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <CategoryCard
             icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
-            title="Training"
-            description="Access training materials, courses, and certification programs."
-            comingSoon
+            title="SOP/Training"
+            description="Access SOPs, training materials, and operational guides."
+            onClick={() => navigate("/training")}
           />
           <CategoryCard
             icon={<ShoppingBag className="w-8 h-8 md:w-10 md:h-10" />}
