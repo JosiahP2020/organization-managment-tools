@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X, MessageSquare } from "lucide-react";
 import { ChecklistItem } from "@/components/training/ChecklistItem";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
@@ -35,8 +36,19 @@ export function ChecklistSection({
   const [uploading, setUploading] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [notes, setNotes] = useState("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(section.title);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
 
   // Build a tree of items (top-level items with their children)
   const buildItemTree = (items: ChecklistItemType[]): ChecklistItemType[] => {
@@ -54,6 +66,27 @@ export function ChecklistSection({
   const visibleItems = hideCompleted
     ? topLevelItems.filter(item => !item.is_completed)
     : topLevelItems;
+
+  // Update section title mutation
+  const updateTitleMutation = useMutation({
+    mutationFn: async (newTitle: string) => {
+      const { error } = await supabase
+        .from("checklist_sections")
+        .update({ title: newTitle })
+        .eq("id", section.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
+      setIsEditingTitle(false);
+    },
+    onError: () => {
+      toast.error("Failed to update section title");
+      setEditedTitle(section.title);
+      setIsEditingTitle(false);
+    },
+  });
 
   // Delete section mutation
   const deleteSectionMutation = useMutation({
@@ -77,7 +110,6 @@ export function ChecklistSection({
   // Reorder section mutation
   const reorderSectionMutation = useMutation({
     mutationFn: async (direction: "up" | "down") => {
-      // Get current sections
       const { data: allSections, error: fetchError } = await supabase
         .from("checklist_sections")
         .select("id, sort_order")
@@ -94,7 +126,6 @@ export function ChecklistSection({
       const currentSection = allSections[currentIndex];
       const targetSection = allSections[targetIndex];
 
-      // Swap sort_order values
       const { error: updateError1 } = await supabase
         .from("checklist_sections")
         .update({ sort_order: targetSection.sort_order })
@@ -196,6 +227,32 @@ export function ChecklistSection({
     }
   };
 
+  const handleTitleClick = () => {
+    if (canEdit) {
+      setEditedTitle(section.title);
+      setIsEditingTitle(true);
+    }
+  };
+
+  const handleTitleSave = () => {
+    const trimmedTitle = editedTitle.trim();
+    if (trimmedTitle && trimmedTitle !== section.title) {
+      updateTitleMutation.mutate(trimmedTitle);
+    } else {
+      setEditedTitle(section.title);
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleTitleSave();
+    } else if (e.key === "Escape") {
+      setEditedTitle(section.title);
+      setIsEditingTitle(false);
+    }
+  };
+
   const completedCount = section.items.filter(i => i.is_completed).length;
   const totalCount = section.items.length;
 
@@ -203,8 +260,25 @@ export function ChecklistSection({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          {/* Section title - bigger */}
-          <CardTitle className="text-xl md:text-2xl font-bold">{section.title}</CardTitle>
+          {/* Section title - clickable to edit */}
+          {isEditingTitle ? (
+            <Input
+              ref={titleInputRef}
+              value={editedTitle}
+              onChange={(e) => setEditedTitle(e.target.value)}
+              onBlur={handleTitleSave}
+              onKeyDown={handleTitleKeyDown}
+              className="text-xl md:text-2xl font-bold h-auto py-1 px-2"
+            />
+          ) : (
+            <h3
+              onClick={handleTitleClick}
+              className={`text-xl md:text-2xl font-bold ${canEdit ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+              title={canEdit ? "Click to edit" : undefined}
+            >
+              {section.title}
+            </h3>
+          )}
           
           <div className="flex items-center gap-2">
             {/* Progress count */}

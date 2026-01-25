@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
@@ -29,12 +30,23 @@ export function ChecklistItem({
   depth,
 }: ChecklistItemProps) {
   const [addSubItemOpen, setAddSubItemOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedText, setEditedText] = useState(item.text);
+  const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const childItems = getChildItems(item.id);
   const visibleChildren = hideCompleted
     ? childItems.filter(child => !child.is_completed)
     : childItems;
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
 
   // Toggle completion mutation
   const toggleCompletionMutation = useMutation({
@@ -51,6 +63,27 @@ export function ChecklistItem({
     },
     onError: () => {
       toast.error("Failed to update item");
+    },
+  });
+
+  // Update item text mutation
+  const updateTextMutation = useMutation({
+    mutationFn: async (newText: string) => {
+      const { error } = await supabase
+        .from("checklist_items")
+        .update({ text: newText })
+        .eq("id", item.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
+      setIsEditing(false);
+    },
+    onError: () => {
+      toast.error("Failed to update item");
+      setEditedText(item.text);
+      setIsEditing(false);
     },
   });
 
@@ -84,10 +117,36 @@ export function ChecklistItem({
     }
   };
 
+  const handleTextClick = () => {
+    if (canEdit) {
+      setEditedText(item.text);
+      setIsEditing(true);
+    }
+  };
+
+  const handleTextSave = () => {
+    const trimmedText = editedText.trim();
+    if (trimmedText && trimmedText !== item.text) {
+      updateTextMutation.mutate(trimmedText);
+    } else {
+      setEditedText(item.text);
+      setIsEditing(false);
+    }
+  };
+
+  const handleTextKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleTextSave();
+    } else if (e.key === "Escape") {
+      setEditedText(item.text);
+      setIsEditing(false);
+    }
+  };
+
   return (
     <div className={cn("group", depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
       <div className="flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
-        {/* Square Checkbox */}
+        {/* Checkbox */}
         <Checkbox
           checked={item.is_completed}
           onCheckedChange={handleToggle}
@@ -95,16 +154,30 @@ export function ChecklistItem({
           disabled={!canEdit && item.is_completed}
         />
 
-        {/* Text */}
+        {/* Text - clickable to edit */}
         <div className="flex-1 min-w-0">
-          <span
-            className={cn(
-              "text-sm",
-              item.is_completed && "line-through text-muted-foreground"
-            )}
-          >
-            {item.text}
-          </span>
+          {isEditing ? (
+            <Input
+              ref={inputRef}
+              value={editedText}
+              onChange={(e) => setEditedText(e.target.value)}
+              onBlur={handleTextSave}
+              onKeyDown={handleTextKeyDown}
+              className="text-sm h-auto py-1 px-2"
+            />
+          ) : (
+            <span
+              onClick={handleTextClick}
+              className={cn(
+                "text-sm",
+                item.is_completed && "line-through text-muted-foreground",
+                canEdit && "cursor-pointer hover:text-primary transition-colors"
+              )}
+              title={canEdit ? "Click to edit" : undefined}
+            >
+              {item.text}
+            </span>
+          )}
         </div>
 
         {/* Actions */}
