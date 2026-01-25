@@ -69,6 +69,7 @@ export type Database = {
         Row: {
           checklist_id: string
           created_at: string | null
+          display_mode: string
           id: string
           image_url: string | null
           sort_order: number
@@ -77,6 +78,7 @@ export type Database = {
         Insert: {
           checklist_id: string
           created_at?: string | null
+          display_mode?: string
           id?: string
           image_url?: string | null
           sort_order?: number
@@ -85,6 +87,7 @@ export type Database = {
         Update: {
           checklist_id?: string
           created_at?: string | null
+          display_mode?: string
           id?: string
           image_url?: string | null
           sort_order?: number
