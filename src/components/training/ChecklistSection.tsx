@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X, MessageSquare } from "lucide-react";
+import { ArrowUp, ArrowDown, Plus, Trash2, Upload, MessageSquare } from "lucide-react";
 import { ChecklistItem } from "@/components/training/ChecklistItem";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistSectionType, ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChecklistSectionProps {
   section: ChecklistSectionType;
@@ -43,9 +44,25 @@ export function ChecklistSection({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   // Get display mode from section (with fallback to checkbox)
   const displayMode = ((section as any).display_mode || "checkbox") as "checkbox" | "numbered";
+
+  // Get images array (with fallback to empty array, also handle legacy image_url)
+  const getImages = (): string[] => {
+    const imagesFromArray = (section as any).images as string[] | null;
+    if (imagesFromArray && Array.isArray(imagesFromArray) && imagesFromArray.length > 0) {
+      return imagesFromArray.filter(Boolean);
+    }
+    // Fallback to legacy image_url
+    if (section.image_url) {
+      return [section.image_url];
+    }
+    return [];
+  };
+
+  const images = getImages();
 
   // Focus input when editing starts
   useEffect(() => {
@@ -172,7 +189,7 @@ export function ChecklistSection({
     },
   });
 
-  // Image upload mutation
+  // Image upload mutation - now supports multiple images
   const uploadImageMutation = useMutation({
     mutationFn: async (file: File) => {
       setUploading(true);
@@ -191,9 +208,15 @@ export function ChecklistSection({
         .from("training-documents")
         .getPublicUrl(filePath);
 
+      // Add new image to the images array
+      const updatedImages = [...images, publicUrl.publicUrl];
+
       const { error: updateError } = await supabase
         .from("checklist_sections")
-        .update({ image_url: publicUrl.publicUrl })
+        .update({ 
+          images: updatedImages,
+          image_url: updatedImages[0] // Keep legacy field in sync
+        })
         .eq("id", section.id);
 
       if (updateError) throw updateError;
@@ -212,12 +235,17 @@ export function ChecklistSection({
     },
   });
 
-  // Remove image mutation
+  // Remove specific image mutation
   const removeImageMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (imageUrl: string) => {
+      const updatedImages = images.filter(img => img !== imageUrl);
+
       const { error } = await supabase
         .from("checklist_sections")
-        .update({ image_url: null })
+        .update({ 
+          images: updatedImages,
+          image_url: updatedImages.length > 0 ? updatedImages[0] : null // Keep legacy field in sync
+        })
         .eq("id", section.id);
 
       if (error) throw error;
@@ -249,6 +277,10 @@ export function ChecklistSection({
     const file = e.target.files?.[0];
     if (file) {
       uploadImageMutation.mutate(file);
+    }
+    // Reset input so the same file can be uploaded again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -395,25 +427,34 @@ export function ChecklistSection({
           </Button>
         )}
 
-        {/* Section Image - at bottom (always visible, even when locked) */}
-        {!hideAllImages && section.image_url && (
-          <div className="relative mt-4 inline-block">
-            <img 
-              src={section.image_url} 
-              alt={`${section.title} image`}
-              className="max-h-48 rounded-lg border border-border"
-            />
-            {/* Only show remove button when canEdit */}
-            {canEdit && (
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute -top-2 -right-2 h-6 w-6"
-                onClick={() => removeImageMutation.mutate()}
+        {/* Section Images - multiple images with hover delete */}
+        {!hideAllImages && images.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-3">
+            {images.map((imageUrl, index) => (
+              <div 
+                key={index} 
+                className="relative group inline-block"
               >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
+                <img 
+                  src={imageUrl} 
+                  alt={`${section.title} image ${index + 1}`}
+                  className="max-h-48 rounded-lg border border-border"
+                />
+                {/* Delete button - visible on hover (desktop) or always visible (mobile) */}
+                {canEdit && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className={`absolute top-2 right-2 h-8 w-8 transition-opacity ${
+                      isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    }`}
+                    onClick={() => removeImageMutation.mutate(imageUrl)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
         )}
 
@@ -426,7 +467,7 @@ export function ChecklistSection({
           className="hidden"
         />
 
-        {/* Bottom action bar - Notes always visible, Add Image only when canEdit */}
+        {/* Bottom action bar - Notes always visible, Add Image always available when canEdit */}
         <div className="mt-4 border-t border-border pt-4 flex items-center gap-2">
           {/* Show Notes button - always available */}
           <Button
@@ -439,8 +480,8 @@ export function ChecklistSection({
             {showNotes ? "Hide Notes" : "Show Notes"}
           </Button>
 
-          {/* Add Image button - only when canEdit and no image exists */}
-          {canEdit && !section.image_url && (
+          {/* Add Image button - always available when canEdit (supports multiple images) */}
+          {canEdit && (
             <Button
               variant="ghost"
               size="sm"
