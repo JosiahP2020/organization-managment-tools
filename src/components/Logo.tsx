@@ -1,10 +1,12 @@
 import shellstarLogo from "@/assets/shellstar-logo.png";
 import sccIcon from "@/assets/scc-icon.gif";
+import sccLogo from "@/assets/scc-logo.gif";
 
 interface LogoProps {
   className?: string;
-  size?: "sm" | "md" | "lg";
-  variant?: "full" | "icon";
+  size?: "sm" | "md" | "lg" | "xl";
+  variant?: "full" | "icon" | "scc";
+  customSrc?: string | null;
 }
 
 const sizeClasses = {
@@ -12,17 +14,42 @@ const sizeClasses = {
     sm: "h-10",
     md: "h-14",
     lg: "h-28",
+    xl: "h-36",
   },
   icon: {
     sm: "h-8 w-8",
     md: "h-10 w-10",
     lg: "h-14 w-14",
+    xl: "h-20 w-20",
+  },
+  scc: {
+    sm: "h-10",
+    md: "h-14",
+    lg: "h-20",
+    xl: "h-28",
   },
 };
 
-export const Logo = ({ className = "", size = "md", variant = "full" }: LogoProps) => {
-  const logoSrc = variant === "full" ? shellstarLogo : sccIcon;
-  const altText = variant === "full" ? "ShellStar Custom Cabinets" : "SCC";
+const defaultLogos = {
+  full: shellstarLogo,
+  icon: sccIcon,
+  scc: sccLogo,
+};
+
+const altTexts = {
+  full: "ShellStar Custom Cabinets",
+  icon: "SCC",
+  scc: "SCC Logo",
+};
+
+export const Logo = ({ 
+  className = "", 
+  size = "md", 
+  variant = "full",
+  customSrc = null 
+}: LogoProps) => {
+  const logoSrc = customSrc || defaultLogos[variant];
+  const altText = customSrc ? "Organization Logo" : altTexts[variant];
   
   return (
     <img

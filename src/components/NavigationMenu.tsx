@@ -3,7 +3,6 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -13,12 +12,11 @@ import {
   GraduationCap,
   ShoppingBag,
   Wrench,
-  Users,
-  Building2,
   LogOut,
   User,
 } from "lucide-react";
-import shellstarLogo from "@/assets/shellstar-logo.png";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import sccLogo from "@/assets/scc-logo.gif";
 
 interface NavigationMenuProps {
   open: boolean;
@@ -52,7 +50,7 @@ function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
 }
 
 export function NavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
-  const { profile, organization, isAdmin, signOut } = useAuth();
+  const { profile, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleClose = () => onOpenChange(false);
@@ -63,22 +61,54 @@ export function NavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
     navigate("/");
   };
 
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 p-0 flex flex-col">
-        {/* Header with Logo */}
+        {/* Header with SCC Star Logo */}
         <SheetHeader className="p-6 pb-4">
-          <div className="flex items-center gap-3">
+          <div className="flex justify-center">
             <img
-              src={shellstarLogo}
-              alt="ShellStar Custom Cabinets"
-              className="h-10 w-auto"
+              src={sccLogo}
+              alt="SCC"
+              className="h-16 w-auto"
             />
           </div>
-          <SheetTitle className="text-left text-sm text-muted-foreground mt-2">
-            {organization?.name || "Organization"}
-          </SheetTitle>
         </SheetHeader>
+
+        {/* User Profile Section - Right below the logo */}
+        <div className="px-6 pb-4">
+          <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-xl">
+            <Avatar className="h-10 w-10">
+              {profile?.avatar_url ? (
+                <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {profile?.avatar_url ? null : getInitials(profile?.full_name)}
+                {!profile?.avatar_url && !profile?.full_name && (
+                  <User className="h-5 w-5" />
+                )}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-foreground truncate">
+                {profile?.full_name || "User"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isAdmin ? "Admin" : "Employee"}
+              </p>
+            </div>
+          </div>
+        </div>
 
         <Separator />
 
@@ -111,48 +141,12 @@ export function NavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
             badge="Coming Soon"
             onClick={handleClose}
           />
-
-          {/* Admin Section */}
-          {isAdmin && (
-            <>
-              <Separator className="my-4" />
-              <p className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                Admin
-              </p>
-              <NavItem
-                to="/admin/users"
-                icon={<Users className="h-5 w-5" />}
-                label="Users"
-                onClick={handleClose}
-              />
-              <NavItem
-                to="/admin/organization"
-                icon={<Building2 className="h-5 w-5" />}
-                label="Organization"
-                onClick={handleClose}
-              />
-            </>
-          )}
         </nav>
 
         <Separator />
 
-        {/* User Profile & Sign Out */}
-        <div className="p-4 space-y-3">
-          <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-xl">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-foreground truncate">
-                {profile?.full_name || "User"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {isAdmin ? "Admin" : "Employee"}
-              </p>
-            </div>
-          </div>
-
+        {/* Sign Out */}
+        <div className="p-4">
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
