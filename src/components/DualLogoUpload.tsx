@@ -1,8 +1,23 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Image as ImageIcon, FileImage } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+// Helper to extract file info from URL
+function getFileInfoFromUrl(url: string | null): { name: string; type: string } | null {
+  if (!url) return null;
+  try {
+    const pathname = new URL(url).pathname;
+    const filename = pathname.split('/').pop() || '';
+    const extension = filename.split('.').pop()?.toUpperCase() || '';
+    // Clean up the filename (remove timestamp prefix if present)
+    const cleanName = filename.replace(/^\d+-/, '').replace(/-\d+\./, '.');
+    return { name: cleanName, type: extension };
+  } catch {
+    return null;
+  }
+}
 
 interface DualLogoUploadProps {
   mainLogoUrl: string | null;
@@ -110,6 +125,8 @@ function SingleLogoUpload({
     onUploadComplete(null);
   };
 
+  const fileInfo = getFileInfoFromUrl(previewUrl);
+
   return (
     <div className="space-y-3">
       <div>
@@ -117,8 +134,8 @@ function SingleLogoUpload({
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
       
-      <div className="flex items-center gap-4">
-        <div className="w-20 h-20 rounded-xl bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden">
+      <div className="flex items-start gap-4">
+        <div className="w-20 h-20 rounded-xl bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden flex-shrink-0">
           {previewUrl ? (
             <img
               src={previewUrl}
@@ -130,7 +147,20 @@ function SingleLogoUpload({
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 min-w-0">
+          {/* File info display */}
+          {fileInfo && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-2 py-1.5">
+              <FileImage className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate max-w-[140px]" title={fileInfo.name}>
+                {fileInfo.name}
+              </span>
+              <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[10px] font-medium flex-shrink-0">
+                {fileInfo.type}
+              </span>
+            </div>
+          )}
+
           <input
             ref={fileInputRef}
             type="file"
