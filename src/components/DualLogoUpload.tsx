@@ -3,6 +3,8 @@ import { Upload, X, Image as ImageIcon, FileImage } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { SvgColorEditor } from "@/components/SvgColorEditor";
+import { isSvgUrl } from "@/lib/svgColorUtils";
 
 // Helper to extract file info from URL
 function getFileInfoFromUrl(url: string | null): { name: string; type: string } | null {
@@ -27,6 +29,11 @@ interface DualLogoUploadProps {
   onSubLogoChange: (url: string | null) => void;
   mainLabel?: string;
   subLabel?: string;
+  // SVG color customization props
+  mainLogoColors?: Record<string, string>;
+  subLogoColors?: Record<string, string>;
+  onMainLogoColorsChange?: (colors: Record<string, string>) => void;
+  onSubLogoColorsChange?: (colors: Record<string, string>) => void;
 }
 
 interface SingleLogoUploadProps {
@@ -36,6 +43,9 @@ interface SingleLogoUploadProps {
   organizationId: string;
   filePrefix: string;
   onUploadComplete: (url: string | null) => void;
+  // SVG color customization
+  colorMappings?: Record<string, string>;
+  onColorMappingsChange?: (colors: Record<string, string>) => void;
 }
 
 function SingleLogoUpload({ 
@@ -44,7 +54,9 @@ function SingleLogoUpload({
   currentUrl, 
   organizationId, 
   filePrefix,
-  onUploadComplete 
+  onUploadComplete,
+  colorMappings = {},
+  onColorMappingsChange
 }: SingleLogoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentUrl);
@@ -100,6 +112,11 @@ function SingleLogoUpload({
 
       setPreviewUrl(publicUrl);
       onUploadComplete(publicUrl);
+      
+      // Clear color mappings when a new logo is uploaded
+      if (onColorMappingsChange) {
+        onColorMappingsChange({});
+      }
 
       toast({
         title: "Logo uploaded",
@@ -123,9 +140,14 @@ function SingleLogoUpload({
   const handleRemoveLogo = () => {
     setPreviewUrl(null);
     onUploadComplete(null);
+    // Clear color mappings when logo is removed
+    if (onColorMappingsChange) {
+      onColorMappingsChange({});
+    }
   };
 
   const fileInfo = getFileInfoFromUrl(previewUrl);
+  const isSvg = isSvgUrl(previewUrl);
 
   return (
     <div className="space-y-3">
@@ -147,7 +169,7 @@ function SingleLogoUpload({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 min-w-0">
+        <div className="flex flex-col gap-2 min-w-0 flex-1">
           {/* File info display */}
           {fileInfo && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-2 py-1.5">
@@ -199,6 +221,17 @@ function SingleLogoUpload({
           )}
         </div>
       </div>
+
+      {/* SVG Color Editor - only show for SVG files */}
+      {isSvg && previewUrl && onColorMappingsChange && (
+        <div className="mt-2">
+          <SvgColorEditor
+            svgUrl={previewUrl}
+            colorMappings={colorMappings}
+            onColorMappingsChange={onColorMappingsChange}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -210,7 +243,11 @@ export function DualLogoUpload({
   onMainLogoChange, 
   onSubLogoChange,
   mainLabel = "Main Logo",
-  subLabel = "Sidebar Logo (Sub-Logo)"
+  subLabel = "Sidebar Logo (Sub-Logo)",
+  mainLogoColors = {},
+  subLogoColors = {},
+  onMainLogoColorsChange,
+  onSubLogoColorsChange
 }: DualLogoUploadProps) {
   return (
     <div className="space-y-6">
@@ -221,6 +258,8 @@ export function DualLogoUpload({
         organizationId={organizationId}
         filePrefix="main-logo"
         onUploadComplete={onMainLogoChange}
+        colorMappings={mainLogoColors}
+        onColorMappingsChange={onMainLogoColorsChange}
       />
       
       <div className="border-t border-border pt-6">
@@ -231,11 +270,13 @@ export function DualLogoUpload({
           organizationId={organizationId}
           filePrefix="sub-logo"
           onUploadComplete={onSubLogoChange}
+          colorMappings={subLogoColors}
+          onColorMappingsChange={onSubLogoColorsChange}
         />
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Max 5MB per image. Supported: PNG, JPG, GIF, WebP, SVG.
+        Max 5MB per image. Supported: PNG, JPG, GIF, WebP, SVG. SVG logos support color customization.
       </p>
     </div>
   );

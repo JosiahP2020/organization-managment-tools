@@ -160,10 +160,12 @@ export type Database = {
           display_name: string | null
           id: string
           logo_url: string | null
+          main_logo_colors: Json | null
           main_logo_dark_url: string | null
           main_logo_url: string | null
           name: string
           slug: string
+          sub_logo_colors: Json | null
           sub_logo_dark_url: string | null
           sub_logo_url: string | null
           updated_at: string
@@ -174,10 +176,12 @@ export type Database = {
           display_name?: string | null
           id?: string
           logo_url?: string | null
+          main_logo_colors?: Json | null
           main_logo_dark_url?: string | null
           main_logo_url?: string | null
           name: string
           slug: string
+          sub_logo_colors?: Json | null
           sub_logo_dark_url?: string | null
           sub_logo_url?: string | null
           updated_at?: string
@@ -188,10 +192,12 @@ export type Database = {
           display_name?: string | null
           id?: string
           logo_url?: string | null
+          main_logo_colors?: Json | null
           main_logo_dark_url?: string | null
           main_logo_url?: string | null
           name?: string
           slug?: string
+          sub_logo_colors?: Json | null
           sub_logo_dark_url?: string | null
           sub_logo_url?: string | null
           updated_at?: string

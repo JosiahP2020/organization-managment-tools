@@ -17,6 +17,8 @@ interface Organization {
   sub_logo_dark_url: string | null;
   display_name: string | null;
   accent_color: string | null;
+  main_logo_colors: Record<string, string> | null;
+  sub_logo_colors: Record<string, string> | null;
 }
 
 interface Profile {
@@ -67,7 +69,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .maybeSingle();
 
     if (orgError) throw orgError;
-    setOrganization(orgData);
+    
+    if (orgData) {
+      // Cast JSON fields to proper types
+      const organization: Organization = {
+        ...orgData,
+        main_logo_colors: orgData.main_logo_colors && typeof orgData.main_logo_colors === 'object' && !Array.isArray(orgData.main_logo_colors)
+          ? orgData.main_logo_colors as Record<string, string>
+          : null,
+        sub_logo_colors: orgData.sub_logo_colors && typeof orgData.sub_logo_colors === 'object' && !Array.isArray(orgData.sub_logo_colors)
+          ? orgData.sub_logo_colors as Record<string, string>
+          : null,
+      };
+      setOrganization(organization);
+    } else {
+      setOrganization(null);
+    }
   }, []);
 
   // Refresh organization data (useful after updates)

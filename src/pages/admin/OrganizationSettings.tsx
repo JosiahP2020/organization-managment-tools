@@ -22,6 +22,8 @@ const OrganizationSettings = () => {
   const [mainLogoUrl, setMainLogoUrl] = useState<string | null>(null);
   const [subLogoUrl, setSubLogoUrl] = useState<string | null>(null);
   const [accentColor, setAccentColor] = useState<string | null>(null);
+  const [mainLogoColors, setMainLogoColors] = useState<Record<string, string>>({});
+  const [subLogoColors, setSubLogoColors] = useState<Record<string, string>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
   // Initialize state from organization data
@@ -32,6 +34,19 @@ const OrganizationSettings = () => {
       setMainLogoUrl(organization.main_logo_url || organization.logo_url || null);
       setSubLogoUrl(organization.sub_logo_url || null);
       setAccentColor(organization.accent_color || null);
+      // Parse color mappings from JSONB - handle both object and null cases
+      const mainColors = organization.main_logo_colors;
+      const subColors = organization.sub_logo_colors;
+      setMainLogoColors(
+        mainColors && typeof mainColors === 'object' && !Array.isArray(mainColors) 
+          ? mainColors as Record<string, string> 
+          : {}
+      );
+      setSubLogoColors(
+        subColors && typeof subColors === 'object' && !Array.isArray(subColors) 
+          ? subColors as Record<string, string> 
+          : {}
+      );
     }
   }, [organization]);
 
@@ -44,16 +59,32 @@ const OrganizationSettings = () => {
     const originalMainLogo = organization.main_logo_url || organization.logo_url || null;
     const originalSubLogo = organization.sub_logo_url || null;
     const originalAccentColor = organization.accent_color || null;
+    const originalMainColors = organization.main_logo_colors;
+    const originalSubColors = organization.sub_logo_colors;
+    
+    // Compare color mappings
+    const mainColorsChanged = JSON.stringify(mainLogoColors) !== JSON.stringify(
+      originalMainColors && typeof originalMainColors === 'object' && !Array.isArray(originalMainColors) 
+        ? originalMainColors 
+        : {}
+    );
+    const subColorsChanged = JSON.stringify(subLogoColors) !== JSON.stringify(
+      originalSubColors && typeof originalSubColors === 'object' && !Array.isArray(originalSubColors) 
+        ? originalSubColors 
+        : {}
+    );
     
     const changed = 
       displayName !== originalDisplayName ||
       orgCode !== originalCode ||
       mainLogoUrl !== originalMainLogo ||
       subLogoUrl !== originalSubLogo ||
-      accentColor !== originalAccentColor;
+      accentColor !== originalAccentColor ||
+      mainColorsChanged ||
+      subColorsChanged;
     
     setHasChanges(changed);
-  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, accentColor, organization]);
+  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, accentColor, mainLogoColors, subLogoColors, organization]);
 
   const handleSaveAll = async () => {
     if (!organization) return;
@@ -94,6 +125,8 @@ const OrganizationSettings = () => {
         sub_logo_url: subLogoUrl,
         logo_url: mainLogoUrl, // Keep legacy field in sync
         accent_color: accentColor,
+        main_logo_colors: mainLogoColors,
+        sub_logo_colors: subLogoColors,
       })
       .eq("id", organization.id);
 
@@ -138,7 +171,7 @@ const OrganizationSettings = () => {
               <div>
                 <h2 className="font-semibold text-foreground">Organization Logos</h2>
                 <p className="text-sm text-muted-foreground">
-                  Upload logos to customize your branding. Colors auto-adjust for dark mode.
+                  Upload logos to customize your branding. SVG logos support color customization.
                 </p>
               </div>
             </div>
@@ -150,6 +183,10 @@ const OrganizationSettings = () => {
                 organizationId={organization.id}
                 onMainLogoChange={setMainLogoUrl}
                 onSubLogoChange={setSubLogoUrl}
+                mainLogoColors={mainLogoColors}
+                subLogoColors={subLogoColors}
+                onMainLogoColorsChange={setMainLogoColors}
+                onSubLogoColorsChange={setSubLogoColors}
               />
             )}
           </div>
