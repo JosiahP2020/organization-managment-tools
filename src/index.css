@@ -196,13 +196,17 @@
    Clean, professional output for lamination
    ============================================= */
 @media print {
-  /* Hide all navigation and interactive elements */
+  /* Hide ALL browser UI, headers, footers, and app elements */
   .print\\:hidden,
   .dashboard-header,
   header,
   nav,
   button,
-  .no-print {
+  aside,
+  .no-print,
+  [data-sidebar],
+  .sidebar,
+  .back-button {
     display: none !important;
   }
 
@@ -211,8 +215,8 @@
     display: block !important;
   }
 
-  /* Reset page for clean print */
-  body {
+  /* Reset page for clean print - no browser headers/footers */
+  html, body {
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -220,10 +224,17 @@
     print-color-adjust: exact !important;
   }
 
-  /* Page setup */
+  /* Page setup - removes browser default headers/footers */
   @page {
     size: letter;
     margin: 0.5in;
+    /* Remove browser headers and footers */
+    @top-left { content: none !important; }
+    @top-center { content: none !important; }
+    @top-right { content: none !important; }
+    @bottom-left { content: none !important; }
+    @bottom-center { content: none !important; }
+    @bottom-right { content: none !important; }
   }
 
   /* Ensure proper page breaks */
@@ -231,14 +242,8 @@
     break-inside: avoid;
   }
 
-  /* Fixed footer for page numbers */
-  .print-footer {
-    position: fixed;
-    bottom: 0.25in;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 10px;
-    color: #999;
+  /* Hide title attribute which browsers sometimes show */
+  title {
+    display: none !important;
   }
 }

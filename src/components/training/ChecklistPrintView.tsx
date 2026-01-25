@@ -35,16 +35,17 @@ function PrintItem({ item, getChildItems, depth, isNumbered, index }: PrintItemP
             {depth === 0 ? `${index + 1}.` : `${String.fromCharCode(65 + index)}.`}
           </span>
         ) : (
-          // Checkbox for print - 20x20px with 2px border
+          // Checkbox for print - 20x20px with 2px border and rounded corners
           <div 
-            className="shrink-0 mt-0.5"
+            className="shrink-0 mt-0.5 rounded"
             style={{ 
               width: '20px', 
               height: '20px', 
               minWidth: '20px', 
               minHeight: '20px',
               border: '2px solid black',
-              backgroundColor: 'white'
+              backgroundColor: 'white',
+              borderRadius: '4px'
             }}
           />
         )}
