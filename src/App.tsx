@@ -9,7 +9,6 @@ import OrganizationLogin from "./pages/OrganizationLogin";
 import EmployeeLogin from "./pages/EmployeeLogin";
 import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
-import SOPTraining from "./pages/training/SOPTraining";
 import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
@@ -30,7 +29,6 @@ const App = () => (
             <Route path="/login/:organizationName" element={<EmployeeLogin />} />
             <Route path="/create-organization" element={<CreateOrganization />} />
             <Route path="/dashboard/:orgSlug" element={<Dashboard />} />
-            <Route path="/training" element={<SOPTraining />} />
             <Route path="/settings" element={<Settings />} />
             {/* Legacy routes redirect to new combined settings */}
             <Route path="/settings/account" element={<Settings />} />
