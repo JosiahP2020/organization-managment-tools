@@ -14,6 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
+      checklist_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_completed: boolean | null
+          notes: string | null
+          parent_item_id: string | null
+          section_id: string
+          sort_order: number
+          text: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          notes?: string | null
+          parent_item_id?: string | null
+          section_id: string
+          sort_order?: number
+          text: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_completed?: boolean | null
+          notes?: string | null
+          parent_item_id?: string | null
+          section_id?: string
+          sort_order?: number
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_parent_item_id_fkey"
+            columns: ["parent_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_sections: {
+        Row: {
+          checklist_id: string
+          created_at: string | null
+          id: string
+          sort_order: number
+          title: string
+        }
+        Insert: {
+          checklist_id: string
+          created_at?: string | null
+          id?: string
+          sort_order?: number
+          title: string
+        }
+        Update: {
+          checklist_id?: string
+          created_at?: string | null
+          id?: string
+          sort_order?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_sections_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "checklists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklists: {
+        Row: {
+          category: Database["public"]["Enums"]["document_category"]
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          is_locked: boolean | null
+          organization_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["document_category"]
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          is_locked?: boolean | null
+          organization_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["document_category"]
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_locked?: boolean | null
+          organization_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string

@@ -10,6 +10,8 @@ import EmployeeLogin from "./pages/EmployeeLogin";
 import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
 import Training from "./pages/Training";
+import CategoryDocuments from "./pages/training/CategoryDocuments";
+import ChecklistEditor from "./pages/training/ChecklistEditor";
 import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
@@ -31,6 +33,8 @@ const App = () => (
             <Route path="/create-organization" element={<CreateOrganization />} />
             <Route path="/dashboard/:orgSlug" element={<Dashboard />} />
             <Route path="/dashboard/:orgSlug/training" element={<Training />} />
+            <Route path="/dashboard/:orgSlug/training/:category" element={<CategoryDocuments />} />
+            <Route path="/dashboard/:orgSlug/training/:category/:checklistId" element={<ChecklistEditor />} />
             <Route path="/settings" element={<Settings />} />
             {/* Legacy routes redirect to new combined settings */}
             <Route path="/settings/account" element={<Settings />} />
