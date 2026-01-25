@@ -90,7 +90,7 @@ const Dashboard = () => {
           <CategoryCard
             icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
             title="SOP"
-            description="Access training materials, courses, and certification programs."
+            description="SOP, Machine Operation, and Machine Maintenance."
             onClick={handleTrainingClick}
           />
         </div>
