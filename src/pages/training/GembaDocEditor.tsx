@@ -2,7 +2,6 @@ import { useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import type { Json } from "@/integrations/supabase/types";
 
 function GembaDocEditorContent() {
@@ -392,155 +390,9 @@ function GembaDocEditorContent() {
     })) || [];
 
   return (
-    <DashboardLayout>
-      <div className="flex h-[calc(100vh-80px)]">
-        {/* Sidebar */}
-        <div className="w-64 shrink-0 border-r">
-          <GembaDocSidebar
-            isLocked={isLocked}
-            onLockChange={(locked) => updateDocMutation.mutate({ is_locked: locked })}
-            orientation={orientation}
-            onOrientationChange={(o) => updateDocMutation.mutate({ orientation: o })}
-            gridRows={gridRows}
-            gridCols={gridCols}
-            onGridChange={(rows, cols) =>
-              updateDocMutation.mutate({ grid_rows: rows, grid_columns: cols })
-            }
-            doubleSided={doubleSided}
-            onDoubleSidedChange={setDoubleSided}
-            onPrint={handlePrint}
-            isAdmin={isAdmin}
-          />
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
-          <div className="p-6 border-b">
-            <div className="flex items-start gap-6">
-              {/* Sub Logo - Larger */}
-              {subLogoUrl && (
-                <Logo
-                  size="lg"
-                  customSrc={subLogoUrl}
-                  variant="full"
-                  className="shrink-0"
-                />
-              )}
-
-              {/* Title and Description - Larger */}
-              <div className="flex-1 text-center">
-                {canEdit ? (
-                  <Input
-                    value={gembaDoc.title}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    className="text-3xl font-bold text-center border-none bg-transparent h-auto py-2"
-                    placeholder="Document Title"
-                  />
-                ) : (
-                  <h1 className="text-3xl font-bold">{gembaDoc.title}</h1>
-                )}
-
-                {canEdit ? (
-                  <Textarea
-                    value={gembaDoc.description || ""}
-                    onChange={(e) => handleDescriptionChange(e.target.value)}
-                    className="text-base text-muted-foreground text-center border-none bg-transparent resize-none mt-2"
-                    placeholder="Add a description..."
-                    rows={1}
-                  />
-                ) : (
-                  gembaDoc.description && (
-                    <p className="text-base text-muted-foreground mt-2">
-                      {gembaDoc.description}
-                    </p>
-                  )
-                )}
-              </div>
-
-              {/* Spacer to balance layout */}
-              <div className="w-20 shrink-0" />
-            </div>
-          </div>
-
-          {/* Grid Area */}
-          <div className="flex-1 overflow-auto">
-            <GembaDocGrid
-              cells={
-                cells?.map((c) => ({
-                  id: c.id,
-                  position: c.position,
-                  image_url: c.image_url,
-                  image_annotations: c.image_annotations as object[] | null,
-                  step_text: c.step_text,
-                })) || []
-              }
-              gridRows={gridRows}
-              gridCols={gridCols}
-              isLocked={isLocked}
-              isAdmin={isAdmin}
-              onCellImageUpload={handleCellImageUpload}
-              onCellImageDelete={handleCellImageDelete}
-              onCellAnnotate={handleCellAnnotate}
-              onCellStepTextChange={handleStepTextChange}
-              uploadingPositions={uploadingPositions}
-            />
-          </div>
-
-          {/* Page Navigation */}
-          <div className="p-4 border-t flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <span className="text-sm text-muted-foreground">
-              Page {currentPage} of {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-
-            {canEdit && currentPage === totalPages && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => addPageMutation.mutate()}
-                disabled={addPageMutation.isPending}
-                className="ml-4"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Page
-              </Button>
-            )}
-
-            {canEdit && totalPages > 1 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeletePageDialogOpen(true)}
-                className="ml-2 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Page
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Print View (hidden, used for printing) */}
-      <div className="hidden print:block">
+    <>
+      {/* Print view - OUTSIDE DashboardLayout so no header/menu/back button */}
+      <div className="hidden print:block print:p-0 print:m-0">
         <GembaDocPrintView
           ref={printRef}
           title={gembaDoc.title}
@@ -553,46 +405,196 @@ function GembaDocEditorContent() {
         />
       </div>
 
-      {/* Annotation Modal */}
-      {annotatingCell && (
-        <ImageAnnotationModal
-          open={!!annotatingCell}
-          onOpenChange={(open) => !open && setAnnotatingCell(null)}
-          imageUrl={annotatingCell.imageUrl}
-          initialAnnotations={annotatingCell.annotations}
-          onSave={handleSaveAnnotations}
-        />
-      )}
+      {/* Screen view (hidden on print) */}
+      <div className="print:hidden">
+        <DashboardLayout>
+          <div className="max-w-6xl mx-auto">
+            {/* Header: Sub-logo left, Title centered */}
+            <div className="relative flex items-start mb-8">
+              {/* Sub-logo on the left */}
+              <div className="flex-shrink-0">
+                {subLogoUrl ? (
+                  <img 
+                    src={subLogoUrl} 
+                    alt="Organization Logo" 
+                    className="h-16 md:h-20 w-auto object-contain"
+                  />
+                ) : (
+                  <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
+                    <span className="text-muted-foreground text-xs">Logo</span>
+                  </div>
+                )}
+              </div>
 
-      {/* Delete Page Confirmation */}
-      <AlertDialog open={deletePageDialogOpen} onOpenChange={setDeletePageDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Page</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete page {currentPage}? All content on this
-              page will be permanently removed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deletePageMutation.mutate()}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </DashboardLayout>
+              {/* Centered title and description */}
+              <div className="flex-1 text-center">
+                {canEdit ? (
+                  <Input
+                    value={gembaDoc.title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    className="text-2xl md:text-3xl font-bold text-center border-none bg-transparent h-auto py-1 text-foreground"
+                    placeholder="Document Title"
+                  />
+                ) : (
+                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                    {gembaDoc.title}
+                  </h1>
+                )}
+                {canEdit ? (
+                  <Textarea
+                    value={gembaDoc.description || ""}
+                    onChange={(e) => handleDescriptionChange(e.target.value)}
+                    className="text-muted-foreground text-center border-none bg-transparent resize-none mt-1"
+                    placeholder="Add a description..."
+                    rows={1}
+                  />
+                ) : (
+                  gembaDoc.description && (
+                    <p className="text-muted-foreground mt-1">
+                      {gembaDoc.description}
+                    </p>
+                  )
+                )}
+                <p className="text-sm text-muted-foreground mt-2">
+                  Page {currentPage} of {totalPages}
+                </p>
+              </div>
+
+              {/* Spacer for symmetry */}
+              <div className="flex-shrink-0 w-16 md:w-20" />
+            </div>
+
+            {/* Main content with sidebar */}
+            <div className="flex gap-6">
+              {/* Sidebar */}
+              <GembaDocSidebar
+                isLocked={isLocked}
+                onLockChange={(locked) => updateDocMutation.mutate({ is_locked: locked })}
+                orientation={orientation}
+                onOrientationChange={(o) => updateDocMutation.mutate({ orientation: o })}
+                gridRows={gridRows}
+                gridCols={gridCols}
+                onGridChange={(rows, cols) =>
+                  updateDocMutation.mutate({ grid_rows: rows, grid_columns: cols })
+                }
+                doubleSided={doubleSided}
+                onDoubleSidedChange={setDoubleSided}
+                onPrint={handlePrint}
+                isAdmin={isAdmin}
+              />
+
+              {/* Grid content */}
+              <div className="flex-1 space-y-4">
+                <GembaDocGrid
+                  cells={
+                    cells?.map((c) => ({
+                      id: c.id,
+                      position: c.position,
+                      image_url: c.image_url,
+                      image_annotations: c.image_annotations as object[] | null,
+                      step_text: c.step_text,
+                    })) || []
+                  }
+                  gridRows={gridRows}
+                  gridCols={gridCols}
+                  isLocked={isLocked}
+                  isAdmin={isAdmin}
+                  onCellImageUpload={handleCellImageUpload}
+                  onCellImageDelete={handleCellImageDelete}
+                  onCellAnnotate={handleCellAnnotate}
+                  onCellStepTextChange={handleStepTextChange}
+                  uploadingPositions={uploadingPositions}
+                />
+
+                {/* Page Navigation */}
+                <div className="flex items-center justify-center gap-4 py-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage >= totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+
+                  {canEdit && currentPage === totalPages && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => addPageMutation.mutate()}
+                      disabled={addPageMutation.isPending}
+                      className="ml-4"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Page
+                    </Button>
+                  )}
+
+                  {canEdit && totalPages > 1 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeletePageDialogOpen(true)}
+                      className="ml-2 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Page
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Annotation Modal */}
+          {annotatingCell && (
+            <ImageAnnotationModal
+              open={!!annotatingCell}
+              onOpenChange={(open) => !open && setAnnotatingCell(null)}
+              imageUrl={annotatingCell.imageUrl}
+              initialAnnotations={annotatingCell.annotations}
+              onSave={handleSaveAnnotations}
+            />
+          )}
+
+          {/* Delete Page Confirmation */}
+          <AlertDialog open={deletePageDialogOpen} onOpenChange={setDeletePageDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Page</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete page {currentPage}? All content on this
+                  page will be permanently removed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => deletePageMutation.mutate()}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </DashboardLayout>
+      </div>
+    </>
   );
 }
 
-export default function GembaDocEditor() {
-  return (
-    <SidebarProvider>
-      <GembaDocEditorContent />
-    </SidebarProvider>
-  );
-}
+export default GembaDocEditorContent;
