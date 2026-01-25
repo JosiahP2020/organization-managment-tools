@@ -161,7 +161,7 @@ const CreateOrganization = () => {
                       setOrgName(e.target.value);
                       setError("");
                     }}
-                    placeholder="e.g., ShellStar Cabinets"
+                    placeholder="e.g., Shellstar"
                     className="input-field"
                     autoFocus
                   />
