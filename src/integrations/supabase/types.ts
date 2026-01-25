@@ -156,6 +156,132 @@ export type Database = {
           },
         ]
       }
+      gemba_doc_cells: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_annotations: Json | null
+          image_url: string | null
+          page_id: string
+          position: number
+          step_number: string | null
+          step_text: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_annotations?: Json | null
+          image_url?: string | null
+          page_id: string
+          position: number
+          step_number?: string | null
+          step_text?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_annotations?: Json | null
+          image_url?: string | null
+          page_id?: string
+          position?: number
+          step_number?: string | null
+          step_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gemba_doc_cells_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "gemba_doc_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gemba_doc_pages: {
+        Row: {
+          created_at: string | null
+          gemba_doc_id: string
+          id: string
+          page_number: number
+        }
+        Insert: {
+          created_at?: string | null
+          gemba_doc_id: string
+          id?: string
+          page_number?: number
+        }
+        Update: {
+          created_at?: string | null
+          gemba_doc_id?: string
+          id?: string
+          page_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gemba_doc_pages_gemba_doc_id_fkey"
+            columns: ["gemba_doc_id"]
+            isOneToOne: false
+            referencedRelation: "gemba_docs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gemba_docs: {
+        Row: {
+          archived_at: string | null
+          category: Database["public"]["Enums"]["document_category"]
+          created_at: string | null
+          created_by: string
+          description: string | null
+          grid_columns: number
+          grid_rows: number
+          id: string
+          is_locked: boolean | null
+          organization_id: string
+          orientation: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          category: Database["public"]["Enums"]["document_category"]
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          grid_columns?: number
+          grid_rows?: number
+          id?: string
+          is_locked?: boolean | null
+          organization_id: string
+          orientation?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          category?: Database["public"]["Enums"]["document_category"]
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          grid_columns?: number
+          grid_rows?: number
+          id?: string
+          is_locked?: boolean | null
+          organization_id?: string
+          orientation?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gemba_docs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           accent_color: string | null
