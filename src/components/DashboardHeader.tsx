@@ -24,62 +24,67 @@ export function DashboardHeader() {
 
   return (
     <>
-      {/* Floating header with just menu and settings buttons */}
-      <div className="sticky top-0 z-40 flex items-center justify-between p-4 bg-surface-subtle">
-        {/* Left side - Menu Button or Back Button */}
-        <div className="flex items-center gap-2">
+      {/* Floating buttons without header background */}
+      <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 pointer-events-none">
+        {/* Left side - Menu Button */}
+        <div className="flex items-center gap-2 pointer-events-auto">
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
             onClick={() => setMenuOpen(true)}
-            className="h-12 w-12 text-foreground hover:bg-accent"
+            className="h-14 w-14 text-foreground bg-background border-border shadow-md hover:bg-accent"
             aria-label="Open menu"
           >
-            <Menu className="h-7 w-7" />
+            <Menu className="h-8 w-8" />
           </Button>
           {showBackButton && <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />}
         </div>
 
         {/* Settings Dropdown - Right */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-12 w-12 text-foreground hover:bg-accent"
-              aria-label="Settings"
-            >
-              <Settings className="h-7 w-7" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 bg-background border-border z-50">
-            <DropdownMenuItem asChild>
-              <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
-                <Settings className="h-4 w-4" />
-                Settings
-              </Link>
-            </DropdownMenuItem>
-            
-            {isAdmin && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/admin/users" className="flex items-center gap-2 cursor-pointer">
-                    <Users className="h-4 w-4" />
-                    User Management
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/admin/organization" className="flex items-center gap-2 cursor-pointer">
-                    <Building2 className="h-4 w-4" />
-                    Organization Settings
-                  </Link>
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="pointer-events-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-14 w-14 text-foreground bg-background border-border shadow-md hover:bg-accent"
+                aria-label="Settings"
+              >
+                <Settings className="h-8 w-8" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 bg-background border-border z-50">
+              <DropdownMenuItem asChild>
+                <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+              
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/users" className="flex items-center gap-2 cursor-pointer">
+                      <Users className="h-4 w-4" />
+                      User Management
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin/organization" className="flex items-center gap-2 cursor-pointer">
+                      <Building2 className="h-4 w-4" />
+                      Organization Settings
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
+      
+      {/* Spacer to prevent content from going under fixed buttons */}
+      <div className="h-20" />
 
       <AppNavigationMenu open={menuOpen} onOpenChange={setMenuOpen} />
     </>
