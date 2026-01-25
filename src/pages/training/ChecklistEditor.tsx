@@ -210,6 +210,7 @@ const ChecklistEditor = () => {
           checklist={checklist}
           sections={sections || []}
           logoUrl={subLogoUrl}
+          showImages={!hideAllImages}
         />
       </div>
 
