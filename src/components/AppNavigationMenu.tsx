@@ -7,6 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { useThemeLogos } from "@/hooks/useThemeLogos";
 import {
   LayoutDashboard,
   GraduationCap,
@@ -53,6 +54,7 @@ function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
 
 export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
   const { profile, isAdmin, signOut, organization } = useAuth();
+  const { subLogoUrl } = useThemeLogos();
   const navigate = useNavigate();
   const [isProfileHovered, setIsProfileHovered] = useState(false);
 
@@ -79,8 +81,8 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
       .slice(0, 2);
   };
 
-  // Use organization sub_logo_url if available, otherwise fall back to default SCC logo
-  const sidebarLogo = organization?.sub_logo_url || organization?.logo_url || sccLogo;
+  // Use theme-aware sub logo from hook, fall back to default SCC logo
+  const sidebarLogo = subLogoUrl || sccLogo;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
