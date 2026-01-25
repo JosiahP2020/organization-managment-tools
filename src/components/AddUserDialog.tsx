@@ -19,7 +19,7 @@ interface AddUserDialogProps {
 }
 
 export function AddUserDialog({ open, onOpenChange, onUserAdded }: AddUserDialogProps) {
-  const { organization, signUp } = useAuth();
+  const { organization, createUserAsAdmin } = useAuth();
   const { toast } = useToast();
   
   const [email, setEmail] = useState("");
@@ -53,7 +53,7 @@ export function AddUserDialog({ open, onOpenChange, onUserAdded }: AddUserDialog
     setIsLoading(true);
 
     try {
-      const { error } = await signUp(email, password, fullName, organization.id, role === "admin");
+      const { error } = await createUserAsAdmin(email, password, fullName, organization.id, role === "admin");
 
       if (error) {
         throw error;

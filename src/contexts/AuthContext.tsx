@@ -38,6 +38,7 @@ interface AuthContextType {
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, organizationId: string, isAdmin?: boolean) => Promise<{ error: Error | null }>;
+  createUserAsAdmin: (email: string, password: string, fullName: string, organizationId: string, isAdmin?: boolean) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshOrganization: () => Promise<void>;
 }
@@ -192,6 +193,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: null };
   };
 
+  // Create user as admin - preserves admin session
+  const createUserAsAdmin = async (
+    email: string,
+    password: string,
+    fullName: string,
+    organizationId: string,
+    isAdmin: boolean = false
+  ) => {
+    // Store current session before creating new user
+    const currentSession = session;
+    
+    const redirectUrl = `${window.location.origin}/`;
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl,
+      },
+    });
+
+    if (authError) return { error: authError as Error };
+
+    if (authData.user) {
+      // Create profile
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: authData.user.id,
+        organization_id: organizationId,
+        full_name: fullName,
+      });
+
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+      }
+
+      // Create user role
+      const { error: roleError } = await supabase.from("user_roles").insert({
+        user_id: authData.user.id,
+        organization_id: organizationId,
+        role: isAdmin ? "admin" : "employee",
+      });
+
+      if (roleError) {
+        console.error("Error creating user role:", roleError);
+      }
+    }
+
+    // Restore admin session if it was active
+    if (currentSession?.refresh_token) {
+      await supabase.auth.setSession({
+        access_token: currentSession.access_token,
+        refresh_token: currentSession.refresh_token,
+      });
+    }
+
+    return { error: null };
+  };
+
   const signOut = async () => {
     // Clear state first to prevent UI from trying to use stale data
     setProfile(null);
@@ -216,6 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin,
         signIn,
         signUp,
+        createUserAsAdmin,
         signOut,
         refreshOrganization,
       }}

@@ -168,6 +168,20 @@ const UserManagement = () => {
     }
   };
 
+  const handlePermissionChange = (userId: string, permission: 'canCreate' | 'canDelete' | 'canArchive', value: boolean) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === userId 
+          ? { ...user, permissions: { ...user.permissions, [permission]: value } }
+          : user
+      )
+    );
+    toast({
+      title: "Permission updated",
+      description: "Permission changes will be persisted once the database is set up.",
+    });
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -256,9 +270,7 @@ const UserManagement = () => {
                             <Switch
                               checked={user.permissions.canCreate}
                               disabled={user.id === currentUser?.id}
-                              onCheckedChange={() => {
-                                // Permission toggle logic to be implemented
-                              }}
+                              onCheckedChange={(checked) => handlePermissionChange(user.id, 'canCreate', checked)}
                             />
                           </div>
                           <div className="flex flex-col items-center gap-1">
@@ -266,9 +278,7 @@ const UserManagement = () => {
                             <Switch
                               checked={user.permissions.canDelete}
                               disabled={user.id === currentUser?.id}
-                              onCheckedChange={() => {
-                                // Permission toggle logic to be implemented
-                              }}
+                              onCheckedChange={(checked) => handlePermissionChange(user.id, 'canDelete', checked)}
                             />
                           </div>
                           <div className="flex flex-col items-center gap-1">
@@ -276,9 +286,7 @@ const UserManagement = () => {
                             <Switch
                               checked={user.permissions.canArchive}
                               disabled={user.id === currentUser?.id}
-                              onCheckedChange={() => {
-                                // Permission toggle logic to be implemented
-                              }}
+                              onCheckedChange={(checked) => handlePermissionChange(user.id, 'canArchive', checked)}
                             />
                           </div>
                         </div>
