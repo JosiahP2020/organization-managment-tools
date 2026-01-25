@@ -41,6 +41,7 @@ export function ChecklistSection({
   const [notes, setNotes] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(section.title);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -427,34 +428,50 @@ export function ChecklistSection({
           </Button>
         )}
 
-        {/* Section Images - multiple images with hover delete */}
+        {/* Section Images - multiple images with hover/tap delete */}
         {!hideAllImages && images.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-3">
-            {images.map((imageUrl, index) => (
-              <div 
-                key={index} 
-                className="relative group inline-block"
-              >
-                <img 
-                  src={imageUrl} 
-                  alt={`${section.title} image ${index + 1}`}
-                  className="max-h-48 rounded-lg border border-border"
-                />
-                {/* Delete button - visible on hover (desktop) or always visible (mobile) */}
-                {canEdit && (
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className={`absolute top-2 right-2 h-8 w-8 transition-opacity ${
-                      isMobile ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                    }`}
-                    onClick={() => removeImageMutation.mutate(imageUrl)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
+            {images.map((imageUrl, index) => {
+              const handleImageClick = () => {
+                if (isMobile && canEdit) {
+                  setSelectedImageIndex(prev => prev === index ? null : index);
+                }
+              };
+              
+              const isSelected = selectedImageIndex === index;
+              
+              return (
+                <div 
+                  key={index} 
+                  className="relative group inline-block"
+                  onClick={handleImageClick}
+                >
+                  <img 
+                    src={imageUrl} 
+                    alt={`${section.title} image ${index + 1}`}
+                    className="max-h-48 rounded-lg border border-border"
+                  />
+                  {/* Delete button - visible on hover (desktop) or on tap (mobile) */}
+                  {canEdit && (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className={`absolute top-2 right-2 h-8 w-8 transition-opacity ${
+                        isMobile 
+                          ? (isSelected ? "opacity-100" : "opacity-0 pointer-events-none") 
+                          : "opacity-0 group-hover:opacity-100"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeImageMutation.mutate(imageUrl);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

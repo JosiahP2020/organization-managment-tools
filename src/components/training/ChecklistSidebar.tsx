@@ -54,6 +54,27 @@ export function ChecklistSidebar({
           />
         </div>
 
+        {/* Lock Toggle - Admin only */}
+        {canEdit && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isLocked ? (
+                <Lock className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <LockOpen className="h-4 w-4 text-muted-foreground" />
+              )}
+              <Label htmlFor="lock-checklist" className="text-sm cursor-pointer">
+                {isLocked ? "Unlock List" : "Lock List"}
+              </Label>
+            </div>
+            <Switch
+              id="lock-checklist"
+              checked={isLocked}
+              onCheckedChange={onToggleLock}
+            />
+          </div>
+        )}
+
         {/* Show Section Images Toggle */}
         {hasAnyImages && (
           <div className="flex items-center justify-between">
@@ -71,27 +92,6 @@ export function ChecklistSidebar({
               id="show-images"
               checked={!hideAllImages}
               onCheckedChange={() => onToggleHideImages()}
-            />
-          </div>
-        )}
-
-        {/* Lock Toggle - Admin only */}
-        {canEdit && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {isLocked ? (
-                <Lock className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <LockOpen className="h-4 w-4 text-muted-foreground" />
-              )}
-              <Label htmlFor="lock-checklist" className="text-sm cursor-pointer">
-                {isLocked ? "Unlock" : "Lock"}
-              </Label>
-            </div>
-            <Switch
-              id="lock-checklist"
-              checked={isLocked}
-              onCheckedChange={onToggleLock}
             />
           </div>
         )}
