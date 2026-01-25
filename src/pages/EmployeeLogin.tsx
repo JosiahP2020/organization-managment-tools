@@ -1,18 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { ArrowLeft, Eye, EyeOff, Building2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const EmployeeLogin = () => {
   const navigate = useNavigate();
   const { organizationName } = useParams<{ organizationName: string }>();
-  const decodedOrgName = organizationName ? decodeURIComponent(organizationName) : "";
-
+  const { user, organization } = useAuth();
+  
+  const [orgData, setOrgData] = useState<{ id: string; name: string; slug: string } | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingOrg, setIsCheckingOrg] = useState(true);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && organization) {
+      navigate(`/dashboard/${organization.slug}`);
+    }
+  }, [user, organization, navigate]);
+
+  // Fetch organization data
+  useEffect(() => {
+    const fetchOrg = async () => {
+      if (!organizationName) {
+        navigate("/login");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name, slug")
+        .eq("slug", organizationName)
+        .maybeSingle();
+
+      if (error || !data) {
+        navigate("/login");
+        return;
+      }
+
+      setOrgData(data);
+      setIsCheckingOrg(false);
+    };
+
+    fetchOrg();
+  }, [organizationName, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +67,29 @@ const EmployeeLogin = () => {
 
     setIsLoading(true);
 
-    // Simulate login - this will be connected to backend later
-    setTimeout(() => {
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    if (authError) {
       setIsLoading(false);
-      // For now, just show a message that backend needs to be connected
-      setError("Backend not connected yet. Enable Lovable Cloud to add authentication.");
-    }, 1000);
+      setError(authError.message === "Invalid login credentials" 
+        ? "Invalid email or password" 
+        : authError.message);
+      return;
+    }
+
+    // Auth state change will handle redirect
   };
+
+  if (isCheckingOrg) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-subtle">
+        <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-surface-subtle flex flex-col items-center justify-center p-4">
@@ -60,7 +113,7 @@ const EmployeeLogin = () => {
           {/* Organization Badge */}
           <div className="flex items-center justify-center gap-2 bg-accent text-accent-foreground px-4 py-2 rounded-full mb-6 mx-auto w-fit">
             <Building2 className="w-4 h-4" />
-            <span className="text-sm font-medium">{decodedOrgName}</span>
+            <span className="text-sm font-medium">{orgData?.name}</span>
           </div>
 
           <div className="text-center mb-8">
@@ -91,6 +144,7 @@ const EmployeeLogin = () => {
                 placeholder="you@company.com"
                 className="input-field"
                 autoFocus
+                disabled={isLoading}
               />
             </div>
 
@@ -112,6 +166,7 @@ const EmployeeLogin = () => {
                   }}
                   placeholder="••••••••"
                   className="input-field pr-12"
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
