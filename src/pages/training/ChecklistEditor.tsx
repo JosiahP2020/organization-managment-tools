@@ -43,6 +43,7 @@ const ChecklistEditor = () => {
   
   const [hideCompleted, setHideCompleted] = useState(false);
   const [hideAllImages, setHideAllImages] = useState(false);
+  const [showAllImagesGallery, setShowAllImagesGallery] = useState(false);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
 
   // Use sub_logo_url for the checklist display
@@ -182,8 +183,9 @@ const ChecklistEditor = () => {
     acc + section.items.filter(item => item.is_completed).length, 0
   ) || 0;
 
-  // Check if any section has an image
-  const hasAnyImages = sections?.some(section => section.image_url) || false;
+  // Collect all sections with images for the gallery
+  const sectionsWithImages = sections?.filter(section => section.image_url) || [];
+  const hasAnyImages = sectionsWithImages.length > 0;
 
   const isLocked = checklist?.is_locked || false;
   const displayMode = ((checklist as any)?.display_mode || "checkbox") as "checkbox" | "numbered";
@@ -293,6 +295,7 @@ const ChecklistEditor = () => {
                     section={section}
                     hideCompleted={hideCompleted}
                     canEdit={canEdit}
+                    isLocked={isLocked}
                     checklistId={checklistId!}
                     isFirst={index === 0}
                     isLast={index === sections.length - 1}
@@ -307,11 +310,10 @@ const ChecklistEditor = () => {
                 </div>
               )}
 
-              {/* Add Section Button */}
+              {/* Add Section Button - Orange styled */}
               {canEdit && (
                 <Button
-                  variant="outline"
-                  className="w-full border-dashed gap-2"
+                  className="w-full border-dashed gap-2 bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
                   onClick={() => setAddSectionOpen(true)}
                 >
                   <Plus className="h-4 w-4" />
@@ -319,7 +321,7 @@ const ChecklistEditor = () => {
                 </Button>
               )}
 
-              {/* Hide/View All Images Button - at bottom */}
+              {/* Hide/View All Images Toggle (for within sections) */}
               {hasAnyImages && (
                 <div className="flex justify-center pt-4">
                   <Button
@@ -330,15 +332,50 @@ const ChecklistEditor = () => {
                     {hideAllImages ? (
                       <>
                         <Image className="h-4 w-4" />
-                        View All Images
+                        Show Section Images
                       </>
                     ) : (
                       <>
                         <ImageOff className="h-4 w-4" />
-                        Hide All Images
+                        Hide Section Images
                       </>
                     )}
                   </Button>
+                </div>
+              )}
+
+              {/* View All Images Gallery Button */}
+              {hasAnyImages && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAllImagesGallery(!showAllImagesGallery)}
+                    className="gap-2"
+                  >
+                    <Image className="h-4 w-4" />
+                    {showAllImagesGallery ? "Hide Image Gallery" : "View All Images"}
+                  </Button>
+                </div>
+              )}
+
+              {/* All Images Gallery */}
+              {showAllImagesGallery && hasAnyImages && (
+                <div className="mt-6 p-4 border border-border rounded-lg bg-muted/30">
+                  <h3 className="text-lg font-semibold mb-4">All Section Images</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {sectionsWithImages.map((section) => (
+                      <div key={section.id} className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {section.title}
+                        </p>
+                        <img
+                          src={section.image_url!}
+                          alt={`${section.title} image`}
+                          className="w-full rounded-lg border border-border"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Minus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ interface ChecklistItemProps {
   getChildItems: (parentId: string) => ChecklistItemType[];
   hideCompleted: boolean;
   canEdit: boolean;
+  isLocked: boolean;
   checklistId: string;
   sectionId: string;
   depth: number;
@@ -33,6 +34,7 @@ export function ChecklistItem({
   getChildItems,
   hideCompleted,
   canEdit,
+  isLocked,
   checklistId,
   sectionId,
   depth,
@@ -59,7 +61,7 @@ export function ChecklistItem({
     }
   }, [isEditing]);
 
-  // Toggle completion mutation
+  // Toggle completion mutation - always allowed (even when locked)
   const toggleCompletionMutation = useMutation({
     mutationFn: async (isCompleted: boolean) => {
       const { error } = await supabase
@@ -98,25 +100,6 @@ export function ChecklistItem({
     },
   });
 
-  // Toggle item type mutation
-  const toggleTypeMutation = useMutation({
-    mutationFn: async () => {
-      const newType = (item as any).item_type === "dash" ? "checkbox" : "dash";
-      const { error } = await supabase
-        .from("checklist_items")
-        .update({ item_type: newType })
-        .eq("id", item.id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
-    },
-    onError: () => {
-      toast.error("Failed to toggle item type");
-    },
-  });
-
   // Delete item mutation
   const deleteItemMutation = useMutation({
     mutationFn: async () => {
@@ -137,7 +120,7 @@ export function ChecklistItem({
   });
 
   const handleToggle = () => {
-    if (!canEdit && item.is_completed) return; // Non-admins can't uncheck
+    // Toggle is always allowed - checking/unchecking items works even when locked
     toggleCompletionMutation.mutate(!item.is_completed);
   };
 
@@ -148,6 +131,7 @@ export function ChecklistItem({
   };
 
   const handleTextClick = () => {
+    // Only allow text editing if canEdit (admin and not locked)
     if (canEdit) {
       setEditedText(item.text);
       setIsEditing(true);
@@ -173,8 +157,6 @@ export function ChecklistItem({
     }
   };
 
-  const itemType = (item as any).item_type || "checkbox";
-
   // Determine what to display in place of checkbox
   const getDisplayPrefix = () => {
     if (displayMode === "numbered") {
@@ -192,21 +174,16 @@ export function ChecklistItem({
   return (
     <div className={cn("group", depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
       <div className="flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
-        {/* Checkbox, Dash, or Number */}
+        {/* Checkbox or Number */}
         {displayMode === "numbered" ? (
           <div className="mt-0.5 w-5 flex justify-center">
             <span className="text-sm font-medium text-muted-foreground">{displayPrefix}</span>
-          </div>
-        ) : itemType === "dash" ? (
-          <div className="mt-1.5 w-5 flex justify-center">
-            <Minus className="h-4 w-4 text-muted-foreground" />
           </div>
         ) : (
           <Checkbox
             checked={item.is_completed}
             onCheckedChange={handleToggle}
             className="mt-0.5"
-            disabled={!canEdit && item.is_completed}
           />
         )}
 
@@ -236,40 +213,29 @@ export function ChecklistItem({
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          {canEdit && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => toggleTypeMutation.mutate()}
-                title={itemType === "dash" ? "Switch to checkbox" : "Switch to dash"}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setAddSubItemOpen(true)}
-                title="Add sub-item"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                onClick={handleDelete}
-                title="Delete item"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
+        {/* Actions - only show when canEdit (admin and not locked) */}
+        {canEdit && (
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={() => setAddSubItemOpen(true)}
+              title="Add sub-item"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={handleDelete}
+              title="Delete item"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Child items (always visible) */}
@@ -282,6 +248,7 @@ export function ChecklistItem({
               getChildItems={getChildItems}
               hideCompleted={hideCompleted}
               canEdit={canEdit}
+              isLocked={isLocked}
               checklistId={checklistId}
               sectionId={sectionId}
               depth={depth + 1}

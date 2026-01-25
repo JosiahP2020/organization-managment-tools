@@ -41,47 +41,49 @@ export function DashboardHeader() {
           {showBackButton && <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />}
         </div>
 
-        {/* Settings Dropdown - Right */}
-        <div className="pointer-events-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-14 w-14 text-foreground bg-background border-border shadow-md hover:bg-accent"
-                aria-label="Settings"
-              >
-                <Settings className="h-8 w-8" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-background border-border z-50">
-              <DropdownMenuItem asChild>
-                <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              
-              {isAdmin && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin/users" className="flex items-center gap-2 cursor-pointer">
-                      <Users className="h-4 w-4" />
-                      User Management
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/admin/organization" className="flex items-center gap-2 cursor-pointer">
-                      <Building2 className="h-4 w-4" />
-                      Organization Settings
-                    </Link>
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {/* Settings Dropdown - Right - Only show on main dashboard */}
+        {isMainDashboard && (
+          <div className="pointer-events-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-14 w-14 text-foreground bg-background border-border shadow-md hover:bg-accent"
+                  aria-label="Settings"
+                >
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-background border-border z-50">
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                
+                {isAdmin && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/users" className="flex items-center gap-2 cursor-pointer">
+                        <Users className="h-4 w-4" />
+                        User Management
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/organization" className="flex items-center gap-2 cursor-pointer">
+                        <Building2 className="h-4 w-4" />
+                        Organization Settings
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
       
       {/* Spacer to prevent content from going under fixed buttons */}
