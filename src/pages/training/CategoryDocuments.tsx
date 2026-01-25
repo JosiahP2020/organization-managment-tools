@@ -253,55 +253,51 @@ const CategoryDocuments = () => {
                 className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md"
                 onClick={() => handleChecklistClick(checklist.id)}
               >
-                <CardHeader className="pb-2">
+                <CardHeader className={checklist.description ? "pb-2" : ""}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
                         <FileText className="w-5 h-5 text-primary" />
                       </div>
-                      <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          {checklist.title}
-                          {checklist.is_locked && (
-                            <Lock className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </CardTitle>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        {checklist.title}
+                        {checklist.is_locked && (
+                          <Lock className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </CardTitle>
+                    </div>
+                    {/* Action buttons - only visible to admin */}
+                    {isAdmin && (
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => handleEdit(e, checklist.id)}
+                          title="Edit"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => handleArchive(e, { id: checklist.id, title: checklist.title })}
+                          title="Archive"
+                        >
+                          <Archive className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          onClick={(e) => handleDelete(e, { id: checklist.id, title: checklist.title })}
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {/* Action buttons - only visible to admin */}
-                      {isAdmin && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => handleEdit(e, checklist.id)}
-                            title="Edit"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => handleArchive(e, { id: checklist.id, title: checklist.title })}
-                            title="Archive"
-                          >
-                            <Archive className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={(e) => handleDelete(e, { id: checklist.id, title: checklist.title })}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </CardHeader>
                 {checklist.description && (
