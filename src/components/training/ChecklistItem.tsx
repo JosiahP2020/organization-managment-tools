@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Hash } from "lucide-react";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ interface ChecklistItemProps {
   displayMode: "checkbox" | "numbered";
   itemNumber: number;
   parentLetter?: string;
+  onToggleDisplayMode?: () => void;
 }
 
 // Helper to convert number to letter (1 -> A, 2 -> B, etc.)
@@ -41,6 +42,7 @@ export function ChecklistItem({
   displayMode,
   itemNumber,
   parentLetter,
+  onToggleDisplayMode,
 }: ChecklistItemProps) {
   const [addSubItemOpen, setAddSubItemOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -234,6 +236,18 @@ export function ChecklistItem({
             >
               <Trash2 className="h-4 w-4" />
             </Button>
+            {/* Toggle display mode button (# symbol) - only on top-level items */}
+            {depth === 0 && onToggleDisplayMode && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-7 w-7 ${displayMode === "numbered" ? "text-primary bg-primary/10" : "text-muted-foreground"}`}
+                onClick={onToggleDisplayMode}
+                title={displayMode === "numbered" ? "Switch to checkboxes" : "Switch to numbered list"}
+              >
+                <Hash className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         )}
       </div>

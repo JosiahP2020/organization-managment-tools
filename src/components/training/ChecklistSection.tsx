@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X, MessageSquare, Hash } from "lucide-react";
+import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X, MessageSquare } from "lucide-react";
 import { ChecklistItem } from "@/components/training/ChecklistItem";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistSectionType, ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
@@ -372,6 +372,7 @@ export function ChecklistSection({
                 depth={0}
                 displayMode={displayMode}
                 itemNumber={index + 1}
+                onToggleDisplayMode={() => toggleDisplayModeMutation.mutate()}
               />
             ))}
           </div>
@@ -381,29 +382,17 @@ export function ChecklistSection({
           </p>
         )}
 
-        {/* Add Item Button with # toggle - only when canEdit */}
+        {/* Add Item Button - only when canEdit */}
         {canEdit && (
-          <div className="flex items-center gap-1 mt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 justify-start gap-2 text-muted-foreground hover:text-foreground"
-              onClick={() => setAddItemOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              Add Item
-            </Button>
-            {/* Toggle display mode button (# symbol) */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`h-8 w-8 ${displayMode === "numbered" ? "text-primary bg-primary/10" : "text-muted-foreground"}`}
-              onClick={() => toggleDisplayModeMutation.mutate()}
-              title={displayMode === "numbered" ? "Switch to checkboxes" : "Switch to numbered list"}
-            >
-              <Hash className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground mt-2"
+            onClick={() => setAddItemOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Add Item
+          </Button>
         )}
 
         {/* Section Image - at bottom (always visible, even when locked) */}
