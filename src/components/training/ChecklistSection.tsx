@@ -310,31 +310,17 @@ export function ChecklistSection({
           </div>
         )}
 
-        {/* Image upload button - at bottom */}
-        {canEdit && !section.image_url && (
-          <div className="mt-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="gap-2"
-            >
-              <Upload className="h-4 w-4" />
-              {uploading ? "Uploading..." : "Add Image"}
-            </Button>
-          </div>
-        )}
+        {/* Hidden file input for image upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
 
-        {/* Section Notes - at bottom */}
-        <div className="mt-4 border-t border-border pt-4">
+        {/* Bottom action bar - Notes and Add Image buttons side by side */}
+        <div className="mt-4 border-t border-border pt-4 flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -344,19 +330,32 @@ export function ChecklistSection({
             <MessageSquare className="h-4 w-4" />
             {showNotes ? "Hide Notes" : "Show Notes"}
           </Button>
-          
-          {showNotes && (
-            <div className="mt-2">
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add section notes..."
-                className="text-sm min-h-[80px]"
-                disabled={!canEdit}
-              />
-            </div>
+
+          {canEdit && !section.image_url && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : "Add Image"}
+            </Button>
           )}
         </div>
+          
+        {showNotes && (
+          <div className="mt-2">
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add section notes..."
+              className="text-sm min-h-[80px]"
+              disabled={!canEdit}
+            />
+          </div>
+        )}
       </CardContent>
 
       {/* Add Item Dialog */}
