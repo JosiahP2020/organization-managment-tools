@@ -90,6 +90,13 @@
     --input: 0 0% 18%;
     --ring: 22 90% 54%;
 
+    /* Custom tokens - dark */
+    --brand-black: 0 0% 96%;
+    --brand-orange: 22 90% 54%;
+    --brand-orange-hover: 22 90% 60%;
+    --surface-elevated: 0 0% 10%;
+    --surface-subtle: 0 0% 6%;
+
     --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 96%;
     --sidebar-primary: 22 76% 48%;
