@@ -72,6 +72,7 @@ export type Database = {
           display_mode: string
           id: string
           image_url: string | null
+          images: Json | null
           sort_order: number
           title: string
         }
@@ -81,6 +82,7 @@ export type Database = {
           display_mode?: string
           id?: string
           image_url?: string | null
+          images?: Json | null
           sort_order?: number
           title: string
         }
@@ -90,6 +92,7 @@ export type Database = {
           display_mode?: string
           id?: string
           image_url?: string | null
+          images?: Json | null
           sort_order?: number
           title?: string
         }
