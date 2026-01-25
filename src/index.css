@@ -190,3 +190,55 @@
     }
   }
 }
+
+/* =============================================
+   PRINT STYLES - Checklist Print Format
+   Clean, professional output for lamination
+   ============================================= */
+@media print {
+  /* Hide all navigation and interactive elements */
+  .print\\:hidden,
+  .dashboard-header,
+  header,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show print-only content */
+  .print\\:block {
+    display: block !important;
+  }
+
+  /* Reset page for clean print */
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  /* Ensure proper page breaks */
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+
+  /* Fixed footer for page numbers */
+  .print-footer {
+    position: fixed;
+    bottom: 0.25in;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10px;
+    color: #999;
+  }
+}
