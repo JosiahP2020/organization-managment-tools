@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X, MessageSquare } from "lucide-react";
+import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X, MessageSquare, Hash } from "lucide-react";
 import { ChecklistItem } from "@/components/training/ChecklistItem";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistSectionType, ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
@@ -21,7 +21,6 @@ interface ChecklistSectionProps {
   isLast: boolean;
   totalSections: number;
   hideAllImages: boolean;
-  displayMode: "checkbox" | "numbered";
 }
 
 export function ChecklistSection({
@@ -34,7 +33,6 @@ export function ChecklistSection({
   isLast,
   totalSections,
   hideAllImages,
-  displayMode,
 }: ChecklistSectionProps) {
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -45,6 +43,9 @@ export function ChecklistSection({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+
+  // Get display mode from section (with fallback to checkbox)
+  const displayMode = ((section as any).display_mode || "checkbox") as "checkbox" | "numbered";
 
   // Focus input when editing starts
   useEffect(() => {
@@ -89,6 +90,25 @@ export function ChecklistSection({
       toast.error("Failed to update section title");
       setEditedTitle(section.title);
       setIsEditingTitle(false);
+    },
+  });
+
+  // Toggle display mode mutation (per section)
+  const toggleDisplayModeMutation = useMutation({
+    mutationFn: async () => {
+      const newMode = displayMode === "numbered" ? "checkbox" : "numbered";
+      const { error } = await supabase
+        .from("checklist_sections")
+        .update({ display_mode: newMode })
+        .eq("id", section.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
+    },
+    onError: () => {
+      toast.error("Failed to update display mode");
     },
   });
 
@@ -185,7 +205,8 @@ export function ChecklistSection({
       toast.success("Image uploaded");
       setUploading(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Upload error:", error);
       toast.error("Failed to upload image");
       setUploading(false);
     },
@@ -360,17 +381,29 @@ export function ChecklistSection({
           </p>
         )}
 
-        {/* Add Item Button - only when canEdit */}
+        {/* Add Item Button with # toggle - only when canEdit */}
         {canEdit && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-            onClick={() => setAddItemOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            Add Item
-          </Button>
+          <div className="flex items-center gap-1 mt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1 justify-start gap-2 text-muted-foreground hover:text-foreground"
+              onClick={() => setAddItemOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Add Item
+            </Button>
+            {/* Toggle display mode button (# symbol) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-8 w-8 ${displayMode === "numbered" ? "text-primary bg-primary/10" : "text-muted-foreground"}`}
+              onClick={() => toggleDisplayModeMutation.mutate()}
+              title={displayMode === "numbered" ? "Switch to checkboxes" : "Switch to numbered list"}
+            >
+              <Hash className="h-4 w-4" />
+            </Button>
+          </div>
         )}
 
         {/* Section Image - at bottom (always visible, even when locked) */}
