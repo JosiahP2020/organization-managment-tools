@@ -70,6 +70,7 @@ const CategoryDocuments = () => {
         .select("*")
         .eq("organization_id", organization.id)
         .eq("category", category as "machine_operation" | "machine_maintenance" | "sop_training")
+        .is("archived_at", null) // Only show non-archived checklists
         .order("created_at", { ascending: false });
       
       if (error) throw error;
@@ -127,11 +128,9 @@ const CategoryDocuments = () => {
 
   const archiveMutation = useMutation({
     mutationFn: async (checklistId: string) => {
-      // Since checklists table doesn't have archived_at, we'll delete for now
-      // In a real scenario, you'd add an archived_at column to checklists table
       const { error } = await supabase
         .from("checklists")
-        .delete()
+        .update({ archived_at: new Date().toISOString() })
         .eq("id", checklistId);
       if (error) throw error;
     },

@@ -108,6 +108,7 @@ export type Database = {
       }
       checklists: {
         Row: {
+          archived_at: string | null
           category: Database["public"]["Enums"]["document_category"]
           created_at: string | null
           created_by: string
@@ -120,6 +121,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          archived_at?: string | null
           category: Database["public"]["Enums"]["document_category"]
           created_at?: string | null
           created_by: string
@@ -132,6 +134,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          archived_at?: string | null
           category?: Database["public"]["Enums"]["document_category"]
           created_at?: string | null
           created_by?: string
