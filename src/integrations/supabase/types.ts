@@ -155,6 +155,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          accent_color: string | null
           created_at: string
           display_name: string | null
           id: string
@@ -166,6 +167,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
@@ -177,6 +179,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
           created_at?: string
           display_name?: string | null
           id?: string

@@ -14,6 +14,7 @@ interface Organization {
   main_logo_url: string | null;
   sub_logo_url: string | null;
   display_name: string | null;
+  accent_color: string | null;
 }
 
 interface Profile {
