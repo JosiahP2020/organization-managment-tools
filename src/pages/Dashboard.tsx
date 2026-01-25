@@ -75,8 +75,8 @@ const Dashboard = () => {
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <CategoryCard
             icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
-            title="SOP/Training"
-            description="Access SOPs, training materials, and operational guides."
+            title="Training"
+            description="Access SOPs, training, machine maintenance, and machine operation checklists."
             onClick={() => navigate("/training")}
           />
           <CategoryCard

@@ -1,11 +1,10 @@
-import { useState, useRef } from "react";
-import { Upload, X, FileText } from "lucide-react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,20 +30,7 @@ export function CreateDocumentDialog({
   const { toast } = useToast();
   const { organization, user } = useAuth();
   const [title, setTitle] = useState("");
-  const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      // Auto-fill title from filename if empty
-      if (!title) {
-        setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
-      }
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,32 +56,6 @@ export function CreateDocumentDialog({
     setIsLoading(true);
 
     try {
-      let fileUrl = null;
-      let fileName = null;
-      let fileType = null;
-
-      // Upload file if provided
-      if (file) {
-        const fileExt = file.name.split('.').pop();
-        const filePath = `${organization.id}/${category}/${Date.now()}-${file.name}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("training-documents")
-          .upload(filePath, file);
-
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data: urlData } = supabase.storage
-          .from("training-documents")
-          .getPublicUrl(filePath);
-
-        fileUrl = urlData.publicUrl;
-        fileName = file.name;
-        fileType = file.type;
-      }
-
       // Create document record
       const { error: insertError } = await supabase
         .from("training_documents")
@@ -103,9 +63,6 @@ export function CreateDocumentDialog({
           organization_id: organization.id,
           category,
           title: title.trim(),
-          file_url: fileUrl,
-          file_name: fileName,
-          file_type: fileType,
           created_by: user.id,
         });
 
@@ -120,7 +77,6 @@ export function CreateDocumentDialog({
 
       // Reset and close
       setTitle("");
-      setFile(null);
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
@@ -137,7 +93,6 @@ export function CreateDocumentDialog({
 
   const handleClose = () => {
     setTitle("");
-    setFile(null);
     onOpenChange(false);
   };
 
@@ -146,6 +101,9 @@ export function CreateDocumentDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Document</DialogTitle>
+          <DialogDescription>
+            Add a new document to this category.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -160,45 +118,7 @@ export function CreateDocumentDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>File (optional)</Label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              onChange={handleFileChange}
-              className="hidden"
-              disabled={isLoading}
-            />
-            
-            {file ? (
-              <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <span className="flex-1 truncate text-sm">{file.name}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setFile(null)}
-                  disabled={isLoading}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                Upload File
-              </Button>
-            )}
-          </div>
-
-          <DialogFooter>
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -210,7 +130,7 @@ export function CreateDocumentDialog({
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Creating..." : "Create"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
