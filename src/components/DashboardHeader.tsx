@@ -1,4 +1,4 @@
-import { Menu, Settings, User, Users, Building2 } from "lucide-react";
+import { Menu, Settings, Users, Building2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppNavigationMenu } from "@/components/AppNavigationMenu";
@@ -32,10 +32,10 @@ export function DashboardHeader() {
             variant="ghost"
             size="icon"
             onClick={() => setMenuOpen(true)}
-            className="h-11 w-11 text-foreground hover:bg-accent"
+            className="h-12 w-12 text-foreground hover:bg-accent"
             aria-label="Open menu"
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="h-7 w-7" />
           </Button>
           {showBackButton && <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />}
         </div>
@@ -46,23 +46,17 @@ export function DashboardHeader() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 text-foreground hover:bg-accent"
+              className="h-12 w-12 text-foreground hover:bg-accent"
               aria-label="Settings"
             >
-              <Settings className="h-6 w-6" />
+              <Settings className="h-7 w-7" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-background border-border z-50">
             <DropdownMenuItem asChild>
-              <Link to="/settings/account" className="flex items-center gap-2 cursor-pointer">
+              <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
                 <Settings className="h-4 w-4" />
-                Account Settings
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/settings/preferences" className="flex items-center gap-2 cursor-pointer">
-                <User className="h-4 w-4" />
-                Profile Settings
+                Settings
               </Link>
             </DropdownMenuItem>
             

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import sccLogo from "@/assets/scc-logo.gif";
+import { useState } from "react";
 
 interface NavigationMenuProps {
   open: boolean;
@@ -53,6 +54,7 @@ function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
 export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
   const { profile, isAdmin, signOut, organization } = useAuth();
   const navigate = useNavigate();
+  const [isProfileHovered, setIsProfileHovered] = useState(false);
 
   const handleClose = () => onOpenChange(false);
 
@@ -64,7 +66,7 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
 
   const handleSettingsClick = () => {
     handleClose();
-    navigate("/settings/user");
+    navigate("/settings");
   };
 
   const getInitials = (name: string | undefined) => {
@@ -96,7 +98,11 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
 
         {/* User Profile Section - Right below the logo */}
         <div className="px-6 pb-4">
-          <div className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-xl">
+          <div 
+            className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-xl relative group"
+            onMouseEnter={() => setIsProfileHovered(true)}
+            onMouseLeave={() => setIsProfileHovered(false)}
+          >
             <Avatar className="h-10 w-10">
               {profile?.avatar_url ? (
                 <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
@@ -116,14 +122,16 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
                 {isAdmin ? "Admin" : "Employee"}
               </p>
             </div>
-            {/* Settings gear icon */}
+            {/* Settings gear icon - only visible on hover */}
             <Button
               variant="ghost"
               size="icon"
               onClick={handleSettingsClick}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className={`h-9 w-9 text-muted-foreground hover:text-foreground transition-opacity ${
+                isProfileHovered ? "opacity-100" : "opacity-0"
+              }`}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-5 w-5" />
             </Button>
           </div>
         </div>

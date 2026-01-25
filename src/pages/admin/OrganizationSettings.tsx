@@ -7,15 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Calendar, Key, Image, Save } from "lucide-react";
+import { Building2, Calendar, Key, Image, Save, Type } from "lucide-react";
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
 
 const OrganizationSettings = () => {
-  const { organization } = useAuth();
+  const { organization, refreshOrganization } = useAuth();
   const { toast } = useToast();
   
-  const [orgName, setOrgName] = useState(organization?.name || "");
+  const [displayName, setDisplayName] = useState("");
+  const [orgCode, setOrgCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [mainLogoUrl, setMainLogoUrl] = useState<string | null>(null);
   const [subLogoUrl, setSubLogoUrl] = useState<string | null>(null);
@@ -24,7 +25,8 @@ const OrganizationSettings = () => {
   // Initialize state from organization data
   useEffect(() => {
     if (organization) {
-      setOrgName(organization.name || "");
+      setDisplayName(organization.display_name || organization.name || "");
+      setOrgCode(organization.slug || "");
       setMainLogoUrl(organization.main_logo_url || organization.logo_url || null);
       setSubLogoUrl(organization.sub_logo_url || null);
     }
@@ -34,54 +36,74 @@ const OrganizationSettings = () => {
   useEffect(() => {
     if (!organization) return;
     
+    const originalDisplayName = organization.display_name || organization.name || "";
+    const originalCode = organization.slug || "";
     const originalMainLogo = organization.main_logo_url || organization.logo_url || null;
     const originalSubLogo = organization.sub_logo_url || null;
     
     const changed = 
-      orgName !== organization.name ||
+      displayName !== originalDisplayName ||
+      orgCode !== originalCode ||
       mainLogoUrl !== originalMainLogo ||
       subLogoUrl !== originalSubLogo;
     
     setHasChanges(changed);
-  }, [orgName, mainLogoUrl, subLogoUrl, organization]);
+  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, organization]);
 
   const handleSaveAll = async () => {
     if (!organization) return;
 
-    if (!orgName.trim()) {
+    if (!displayName.trim()) {
       toast({
         title: "Error",
-        description: "Please enter an organization name",
+        description: "Please enter a display name",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSaving(true);
+    if (!orgCode.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an organization code",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Generate new slug from name
-    const newSlug = orgName.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    // Validate org code format
+    const cleanCode = orgCode.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    if (cleanCode !== orgCode.trim().toLowerCase()) {
+      setOrgCode(cleanCode);
+    }
+
+    setIsSaving(true);
 
     const { error } = await supabase
       .from("organizations")
       .update({ 
-        name: orgName.trim(), 
-        slug: newSlug,
+        display_name: displayName.trim(),
+        name: displayName.trim(), // Keep name in sync for backward compatibility
+        slug: cleanCode,
         main_logo_url: mainLogoUrl,
         sub_logo_url: subLogoUrl,
         logo_url: mainLogoUrl, // Keep legacy field in sync
       })
       .eq("id", organization.id);
 
-    setIsSaving(false);
-
     if (error) {
+      setIsSaving(false);
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
     } else {
+      // Refresh organization data to reflect changes immediately
+      if (refreshOrganization) {
+        await refreshOrganization();
+      }
+      setIsSaving(false);
       toast({
         title: "Success",
         description: "Organization settings saved successfully",
@@ -126,30 +148,63 @@ const OrganizationSettings = () => {
             )}
           </div>
 
-          {/* Organization Info */}
+          {/* Display Name */}
           <div className="bg-card border border-border rounded-xl p-6 mb-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                <Building2 className="w-5 h-5 text-primary" />
+                <Type className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-semibold text-foreground">Organization Details</h2>
-                <p className="text-sm text-muted-foreground">Update your organization information</p>
+                <h2 className="font-semibold text-foreground">Company Display Name</h2>
+                <p className="text-sm text-muted-foreground">
+                  The name shown on your dashboard and throughout the app
+                </p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="orgName">Organization Name</Label>
-                <Input
-                  id="orgName"
-                  type="text"
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  placeholder="ShellStar Custom Cabinets"
-                  className="mt-1"
-                />
+            <div>
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Shell Star Custom Cabinets"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                This is the full name of your company for display purposes
+              </p>
+            </div>
+          </div>
+
+          {/* Organization Code */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                <Key className="w-5 h-5 text-primary" />
               </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Organization Code</h2>
+                <p className="text-sm text-muted-foreground">
+                  The unique code employees use to sign in
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="orgCode">Organization Code</Label>
+              <Input
+                id="orgCode"
+                type="text"
+                value={orgCode}
+                onChange={(e) => setOrgCode(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                placeholder="shellstar"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Employees will enter this code during login. Use lowercase letters, numbers, and hyphens only.
+              </p>
             </div>
           </div>
 
@@ -160,14 +215,11 @@ const OrganizationSettings = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-                  <Key className="w-4 h-4 text-muted-foreground" />
+                  <Building2 className="w-4 h-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Organization Code</p>
-                  <p className="font-medium text-foreground">{organization?.slug}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    This is the code employees use to sign in to your organization
-                  </p>
+                  <p className="text-sm text-muted-foreground">Organization ID</p>
+                  <p className="font-mono text-xs text-foreground">{organization?.id}</p>
                 </div>
               </div>
 
