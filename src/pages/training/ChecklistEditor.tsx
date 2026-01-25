@@ -11,7 +11,7 @@ import { AddSectionDialog } from "@/components/training/AddSectionDialog";
 import { ChecklistPrintView } from "@/components/training/ChecklistPrintView";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Plus, Image, ImageOff } from "lucide-react";
+import { Plus, Image } from "lucide-react";
 
 export interface ChecklistItem {
   id: string;
@@ -258,7 +258,10 @@ const ChecklistEditor = () => {
             <ChecklistSidebar
               isLocked={isLocked}
               hideCompleted={hideCompleted}
+              hideAllImages={hideAllImages}
+              hasAnyImages={hasAnyImages}
               onToggleHideCompleted={() => setHideCompleted(!hideCompleted)}
+              onToggleHideImages={() => setHideAllImages(!hideAllImages)}
               onToggleLock={handleToggleLock}
               onReset={handleReset}
               onPrint={handlePrint}
@@ -300,28 +303,6 @@ const ChecklistEditor = () => {
                 </Button>
               )}
 
-              {/* Hide/View All Images Toggle (for within sections) */}
-              {hasAnyImages && (
-                <div className="flex justify-center pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setHideAllImages(!hideAllImages)}
-                    className="gap-2"
-                  >
-                    {hideAllImages ? (
-                      <>
-                        <Image className="h-4 w-4" />
-                        Show Section Images
-                      </>
-                    ) : (
-                      <>
-                        <ImageOff className="h-4 w-4" />
-                        Hide Section Images
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
 
               {/* View All Images Gallery Button */}
               {hasAnyImages && (

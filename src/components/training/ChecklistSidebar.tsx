@@ -2,12 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, LockOpen, RotateCcw, Printer } from "lucide-react";
+import { Eye, EyeOff, Lock, LockOpen, RotateCcw, Printer, Image, ImageOff } from "lucide-react";
 
 interface ChecklistSidebarProps {
   isLocked: boolean;
   hideCompleted: boolean;
+  hideAllImages: boolean;
+  hasAnyImages: boolean;
   onToggleHideCompleted: () => void;
+  onToggleHideImages: () => void;
   onToggleLock: () => void;
   onReset: () => void;
   onPrint: () => void;
@@ -17,7 +20,10 @@ interface ChecklistSidebarProps {
 export function ChecklistSidebar({
   isLocked,
   hideCompleted,
+  hideAllImages,
+  hasAnyImages,
   onToggleHideCompleted,
+  onToggleHideImages,
   onToggleLock,
   onReset,
   onPrint,
@@ -47,6 +53,27 @@ export function ChecklistSidebar({
             onCheckedChange={onToggleHideCompleted}
           />
         </div>
+
+        {/* Show Section Images Toggle */}
+        {hasAnyImages && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {hideAllImages ? (
+                <ImageOff className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Image className="h-4 w-4 text-muted-foreground" />
+              )}
+              <Label htmlFor="show-images" className="text-sm cursor-pointer">
+                Show Images
+              </Label>
+            </div>
+            <Switch
+              id="show-images"
+              checked={!hideAllImages}
+              onCheckedChange={() => onToggleHideImages()}
+            />
+          </div>
+        )}
 
         {/* Lock Toggle - Admin only */}
         {canEdit && (
