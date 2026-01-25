@@ -430,9 +430,9 @@ function GembaDocEditorContent() {
 
             {/* Main content - centered */}
             <div className="max-w-4xl mx-auto">
-              {/* Header: Sublogo and title centered together */}
-              <div className="flex justify-center items-start gap-4 mb-8">
-                {/* Sub-logo - directly before title */}
+              {/* Header: Sub-logo left, Title centered */}
+              <div className="relative flex items-start mb-8">
+                {/* Sub-logo on the left */}
                 <div className="flex-shrink-0">
                   {subLogoUrl ? (
                     <img 
@@ -447,13 +447,13 @@ function GembaDocEditorContent() {
                   )}
                 </div>
 
-                {/* Title and description - immediately after logo */}
-                <div className="text-left">
+                {/* Centered title and description */}
+                <div className="flex-1 text-center">
                   {canEdit ? (
                     <Input
                       value={gembaDoc.title}
                       onChange={(e) => handleTitleChange(e.target.value)}
-                      className="text-2xl md:text-3xl font-bold border-none bg-transparent h-auto py-1 text-foreground"
+                      className="text-2xl md:text-3xl font-bold text-center border-none bg-transparent h-auto py-1 text-foreground"
                       placeholder="Document Title"
                     />
                   ) : (
@@ -465,7 +465,7 @@ function GembaDocEditorContent() {
                     <Textarea
                       value={gembaDoc.description || ""}
                       onChange={(e) => handleDescriptionChange(e.target.value)}
-                      className="text-muted-foreground border-none bg-transparent resize-none mt-1"
+                      className="text-muted-foreground text-center border-none bg-transparent resize-none mt-1"
                       placeholder="Add a description..."
                       rows={1}
                     />
@@ -477,6 +477,9 @@ function GembaDocEditorContent() {
                     )
                   )}
                 </div>
+
+                {/* Spacer for symmetry */}
+                <div className="flex-shrink-0 w-16 md:w-20" />
               </div>
 
               {/* Grid content */}
