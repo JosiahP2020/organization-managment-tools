@@ -17,6 +17,7 @@ export type Database = {
       organizations: {
         Row: {
           created_at: string
+          display_name: string | null
           id: string
           logo_url: string | null
           main_logo_url: string | null
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          display_name?: string | null
           id?: string
           logo_url?: string | null
           main_logo_url?: string | null
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          display_name?: string | null
           id?: string
           logo_url?: string | null
           main_logo_url?: string | null

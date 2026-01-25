@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -13,6 +13,7 @@ interface Organization {
   logo_url: string | null;
   main_logo_url: string | null;
   sub_logo_url: string | null;
+  display_name: string | null;
 }
 
 interface Profile {
@@ -38,6 +39,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, organizationId: string, isAdmin?: boolean) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  refreshOrganization: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,6 +53,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const isAdmin = userRole?.role === "admin";
+
+  // Fetch organization data
+  const fetchOrganization = useCallback(async (organizationId: string) => {
+    const { data: orgData, error: orgError } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("id", organizationId)
+      .maybeSingle();
+
+    if (orgError) throw orgError;
+    setOrganization(orgData);
+  }, []);
+
+  // Refresh organization data (useful after updates)
+  const refreshOrganization = useCallback(async () => {
+    if (profile?.organization_id) {
+      await fetchOrganization(profile.organization_id);
+    }
+  }, [profile?.organization_id, fetchOrganization]);
 
   // Fetch user profile, organization, and role
   const fetchUserData = async (userId: string) => {
@@ -68,14 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(profileData);
 
         // Fetch organization
-        const { data: orgData, error: orgError } = await supabase
-          .from("organizations")
-          .select("*")
-          .eq("id", profileData.organization_id)
-          .maybeSingle();
-
-        if (orgError) throw orgError;
-        setOrganization(orgData);
+        await fetchOrganization(profileData.organization_id);
 
         // Fetch user role
         const { data: roleData, error: roleError } = await supabase
@@ -203,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signUp,
         signOut,
+        refreshOrganization,
       }}
     >
       {children}
