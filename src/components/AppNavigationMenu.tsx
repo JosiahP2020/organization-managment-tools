@@ -61,7 +61,7 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
   const handleSignOut = async () => {
     handleClose();
     await signOut();
-    navigate("/login");
+    navigate("/");
   };
 
   const handleSettingsClick = () => {
