@@ -235,9 +235,9 @@ const ChecklistEditor = () => {
 
             {/* Checklist content - Independent centered container */}
             <div className="max-w-4xl mx-auto">
-              {/* Header: Sub-logo left, Title centered, Completion below */}
-              <div className="relative flex items-start mb-8">
-                {/* Sub-logo on the left */}
+              {/* Header: Sublogo and title centered together */}
+              <div className="flex justify-center items-start gap-4 mb-8">
+                {/* Sub-logo - directly before title */}
                 <div className="flex-shrink-0">
                   {subLogoUrl ? (
                     <img 
@@ -252,8 +252,8 @@ const ChecklistEditor = () => {
                   )}
                 </div>
 
-                {/* Centered title and completion count */}
-                <div className="flex-1 text-center">
+                {/* Title, description, and completion count - immediately after logo */}
+                <div className="text-left">
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground">
                     {checklist.title}
                   </h1>
@@ -266,9 +266,6 @@ const ChecklistEditor = () => {
                     {completedItems} of {totalItems} completed
                   </p>
                 </div>
-
-                {/* Spacer for symmetry */}
-                <div className="flex-shrink-0 w-16 md:w-20" />
               </div>
 
               {/* Sections */}
