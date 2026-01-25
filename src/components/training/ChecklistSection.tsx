@@ -259,28 +259,30 @@ export function ChecklistSection({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between gap-4">
           {/* Section title - clickable to edit */}
-          {isEditingTitle ? (
-            <Input
-              ref={titleInputRef}
-              value={editedTitle}
-              onChange={(e) => setEditedTitle(e.target.value)}
-              onBlur={handleTitleSave}
-              onKeyDown={handleTitleKeyDown}
-              className="text-xl md:text-2xl font-bold h-auto py-1 px-2"
-            />
-          ) : (
-            <h3
-              onClick={handleTitleClick}
-              className={`text-xl md:text-2xl font-bold ${canEdit ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
-              title={canEdit ? "Click to edit" : undefined}
-            >
-              {section.title}
-            </h3>
-          )}
+          <div className="flex-1 min-w-0">
+            {isEditingTitle ? (
+              <Input
+                ref={titleInputRef}
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onBlur={handleTitleSave}
+                onKeyDown={handleTitleKeyDown}
+                className="text-xl md:text-2xl font-bold h-auto py-1 px-2 max-w-full"
+              />
+            ) : (
+              <h3
+                onClick={handleTitleClick}
+                className={`text-xl md:text-2xl font-bold ${canEdit ? "cursor-pointer hover:text-primary transition-colors" : ""}`}
+                title={canEdit ? "Click to edit" : undefined}
+              >
+                {section.title}
+              </h3>
+            )}
+          </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Progress count */}
             <span className="text-sm text-muted-foreground">
               {completedCount}/{totalCount} completed

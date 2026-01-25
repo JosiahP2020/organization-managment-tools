@@ -19,6 +19,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_completed: boolean | null
+          item_type: string
           notes: string | null
           parent_item_id: string | null
           section_id: string
@@ -29,6 +30,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_completed?: boolean | null
+          item_type?: string
           notes?: string | null
           parent_item_id?: string | null
           section_id: string
@@ -39,6 +41,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_completed?: boolean | null
+          item_type?: string
           notes?: string | null
           parent_item_id?: string | null
           section_id?: string

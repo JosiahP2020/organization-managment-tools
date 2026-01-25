@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Minus } from "lucide-react";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
 import { cn } from "@/lib/utils";
@@ -87,6 +87,25 @@ export function ChecklistItem({
     },
   });
 
+  // Toggle item type mutation
+  const toggleTypeMutation = useMutation({
+    mutationFn: async () => {
+      const newType = (item as any).item_type === "dash" ? "checkbox" : "dash";
+      const { error } = await supabase
+        .from("checklist_items")
+        .update({ item_type: newType })
+        .eq("id", item.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
+    },
+    onError: () => {
+      toast.error("Failed to toggle item type");
+    },
+  });
+
   // Delete item mutation
   const deleteItemMutation = useMutation({
     mutationFn: async () => {
@@ -143,16 +162,24 @@ export function ChecklistItem({
     }
   };
 
+  const itemType = (item as any).item_type || "checkbox";
+
   return (
     <div className={cn("group", depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
       <div className="flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
-        {/* Checkbox */}
-        <Checkbox
-          checked={item.is_completed}
-          onCheckedChange={handleToggle}
-          className="mt-0.5"
-          disabled={!canEdit && item.is_completed}
-        />
+        {/* Checkbox or Dash */}
+        {itemType === "dash" ? (
+          <div className="mt-1.5 w-5 flex justify-center">
+            <Minus className="h-4 w-4 text-muted-foreground" />
+          </div>
+        ) : (
+          <Checkbox
+            checked={item.is_completed}
+            onCheckedChange={handleToggle}
+            className="mt-0.5"
+            disabled={!canEdit && item.is_completed}
+          />
+        )}
 
         {/* Text - clickable to edit */}
         <div className="flex-1 min-w-0">
@@ -184,6 +211,15 @@ export function ChecklistItem({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {canEdit && (
             <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => toggleTypeMutation.mutate()}
+                title={itemType === "dash" ? "Switch to checkbox" : "Switch to dash"}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
