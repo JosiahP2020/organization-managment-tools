@@ -49,7 +49,7 @@ function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
   );
 }
 
-export function NavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
+export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
   const { profile, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
