@@ -43,18 +43,6 @@ const Index = () => {
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="organization">Organization Name</Label>
-              <Input
-                id="organization"
-                type="text"
-                placeholder="Enter your organization name"
-                value={organizationName}
-                onChange={(e) => setOrganizationName(e.target.value)}
-                className="input-field"
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"
@@ -74,6 +62,18 @@ const Index = () => {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="input-field"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="organization">Organization Name</Label>
+              <Input
+                id="organization"
+                type="text"
+                placeholder="Enter your organization name"
+                value={organizationName}
+                onChange={(e) => setOrganizationName(e.target.value)}
                 className="input-field"
               />
             </div>
