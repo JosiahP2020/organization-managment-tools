@@ -1,7 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { BackButton } from "@/components/BackButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cog, Wrench, FileText, ChevronRight } from "lucide-react";
+import { Logo } from "@/components/Logo";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CategorySectionProps {
   icon: React.ReactNode;
@@ -35,10 +37,30 @@ function CategorySection({ icon, title, description, onClick }: CategorySectionP
 }
 
 const Training = () => {
+  const { organization } = useAuth();
+  const navigate = useNavigate();
+
+  // Use main_logo_url if available, otherwise fall back to logo_url
+  const mainLogoUrl = organization?.main_logo_url || organization?.logo_url || null;
+
+  const handleCategoryClick = (category: string) => {
+    if (organization?.slug) {
+      navigate(`/dashboard/${organization.slug}/training/${category}`);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
-        <BackButton />
+        {/* Organization Logo - Centered */}
+        <div className="flex justify-center mb-6 md:mb-8">
+          <Logo 
+            size="xl" 
+            customSrc={mainLogoUrl} 
+            variant="full"
+            className="max-h-32 md:max-h-40"
+          />
+        </div>
         
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -50,22 +72,27 @@ const Training = () => {
         </div>
 
         <div className="space-y-4">
-          <CategorySection
-            icon={<Cog className="w-5 h-5" />}
-            title="Machine Operation"
-            description="Operating guides, startup procedures, and machine-specific documentation."
-          />
-          
-          <CategorySection
-            icon={<Wrench className="w-5 h-5" />}
-            title="Machine Maintenance"
-            description="Maintenance schedules, troubleshooting guides, and repair documentation."
-          />
-          
+          {/* SOP/Training first */}
           <CategorySection
             icon={<FileText className="w-5 h-5" />}
             title="SOP/Training"
             description="Standard operating procedures, training materials, and certification documents."
+          />
+          
+          {/* Machine Operation - navigates to checklist */}
+          <CategorySection
+            icon={<Cog className="w-5 h-5" />}
+            title="Machine Operation"
+            description="Operating guides, startup procedures, and machine-specific documentation."
+            onClick={() => handleCategoryClick('machine_operation')}
+          />
+          
+          {/* Machine Maintenance - navigates to checklist */}
+          <CategorySection
+            icon={<Wrench className="w-5 h-5" />}
+            title="Machine Maintenance"
+            description="Maintenance schedules, troubleshooting guides, and repair documentation."
+            onClick={() => handleCategoryClick('machine_maintenance')}
           />
         </div>
       </div>
