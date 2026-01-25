@@ -63,13 +63,15 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="max-w-5xl mx-auto">
         {/* Organization Logo - Centered */}
-        <div className="flex justify-center mb-6 md:mb-8">
-          <Logo 
-            size="xl" 
-            customSrc={mainLogoUrl} 
-            variant="full"
-            className="max-h-32 md:max-h-40"
-          />
+          <div className="flex justify-center mb-6 md:mb-8">
+            <div className="bg-white/80 dark:bg-white/90 rounded-2xl p-4 md:p-6 shadow-sm">
+              <Logo 
+                size="xl" 
+                customSrc={mainLogoUrl} 
+                variant="full"
+                className="max-h-32 md:max-h-40"
+              />
+            </div>
         </div>
 
         {/* Dashboard Title */}
