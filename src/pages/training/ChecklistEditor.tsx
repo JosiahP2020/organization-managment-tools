@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChecklistSidebar } from "@/components/training/ChecklistSidebar";
@@ -39,6 +40,7 @@ export interface ChecklistSectionType {
 const ChecklistEditor = () => {
   const { checklistId } = useParams<{ checklistId: string }>();
   const { organization, isAdmin } = useAuth();
+  const { subLogoUrl } = useThemeLogos();
   const queryClient = useQueryClient();
   const printRef = useRef<HTMLDivElement>(null);
   
@@ -46,9 +48,6 @@ const ChecklistEditor = () => {
   const [hideAllImages, setHideAllImages] = useState(false);
   const [showAllImagesGallery, setShowAllImagesGallery] = useState(false);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
-
-  // Use sub_logo_url for the checklist display
-  const subLogoUrl = organization?.sub_logo_url || organization?.logo_url || null;
 
   // Fetch checklist
   const { data: checklist, isLoading: checklistLoading } = useQuery({
