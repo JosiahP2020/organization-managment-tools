@@ -85,6 +85,56 @@ export type Database = {
           },
         ]
       }
+      training_documents: {
+        Row: {
+          archived_at: string | null
+          category: Database["public"]["Enums"]["document_category"]
+          created_at: string
+          created_by: string
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          organization_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          category: Database["public"]["Enums"]["document_category"]
+          created_at?: string
+          created_by: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          organization_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          category?: Database["public"]["Enums"]["document_category"]
+          created_at?: string
+          created_by?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          organization_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -137,6 +187,10 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "employee"
+      document_category:
+        | "machine_operation"
+        | "machine_maintenance"
+        | "sop_training"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -265,6 +319,11 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "employee"],
+      document_category: [
+        "machine_operation",
+        "machine_maintenance",
+        "sop_training",
+      ],
     },
   },
 } as const
