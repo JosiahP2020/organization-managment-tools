@@ -18,9 +18,10 @@ export function DashboardHeader() {
   const { isAdmin, organization } = useAuth();
   const location = useLocation();
   
-  // Show back button on all pages except the main dashboard
-  const isDashboard = location.pathname.startsWith("/dashboard");
-  const showBackButton = !isDashboard;
+  // Show back button on sub-pages, not on main dashboard (/dashboard/:orgSlug)
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const isMainDashboard = pathParts.length === 2 && pathParts[0] === 'dashboard';
+  const showBackButton = !isMainDashboard;
 
   return (
     <>
