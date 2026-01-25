@@ -25,8 +25,11 @@ const Index = () => {
       {/* Main container */}
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
-        <div className="flex justify-center mb-10">
+        <div className="flex flex-col items-center mb-10">
           <Logo size="lg" />
+          <h2 className="text-lg font-medium text-muted-foreground mt-3">
+            Company Management Tools
+          </h2>
         </div>
 
         {/* Login Card */}
