@@ -1,7 +1,7 @@
 import { Menu, Settings, User, Users, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { NavigationMenu } from "@/components/NavigationMenu";
+import { AppNavigationMenu } from "@/components/AppNavigationMenu";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
@@ -90,7 +90,7 @@ export function DashboardHeader() {
         </DropdownMenu>
       </header>
 
-      <NavigationMenu open={menuOpen} onOpenChange={setMenuOpen} />
+      <AppNavigationMenu open={menuOpen} onOpenChange={setMenuOpen} />
     </>
   );
 }
