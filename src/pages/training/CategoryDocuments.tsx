@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
+import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText, Clock, Lock } from "lucide-react";
@@ -20,10 +21,10 @@ const categoryLabels: Record<string, string> = {
 const CategoryDocuments = () => {
   const { category, orgSlug } = useParams<{ category: string; orgSlug: string }>();
   const { organization, isAdmin } = useAuth();
+  const { mainLogoUrl } = useThemeLogos();
   const navigate = useNavigate();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
-  const mainLogoUrl = organization?.main_logo_url || organization?.logo_url || null;
   const categoryLabel = categoryLabels[category || ""] || category;
 
   const { data: checklists, isLoading, refetch } = useQuery({

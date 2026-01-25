@@ -1,7 +1,7 @@
 import { Home, Settings, User, Users, Building2, LogOut } from "lucide-react";
-import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
+import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { Logo } from "@/components/Logo";
 import {
   Sidebar,
@@ -37,13 +37,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { profile, organization, isAdmin, signOut } = useAuth();
-  const { resolvedTheme } = useTheme();
-
-  // Use dark mode sub-logo if available and in dark mode, otherwise fall back to light logo
-  const subLogoUrl = 
-    resolvedTheme === "dark" && organization?.sub_logo_dark_url
-      ? organization.sub_logo_dark_url
-      : organization?.sub_logo_url || null;
+  const { subLogoUrl } = useThemeLogos();
 
   const getInitials = (name: string) => {
     return name

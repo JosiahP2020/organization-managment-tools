@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cog, Wrench, FileText, ChevronRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
+import { useThemeLogos } from "@/hooks/useThemeLogos";
 
 interface CategorySectionProps {
   icon: React.ReactNode;
@@ -39,9 +40,7 @@ function CategorySection({ icon, title, description, onClick }: CategorySectionP
 const Training = () => {
   const { organization } = useAuth();
   const navigate = useNavigate();
-
-  // Use main_logo_url if available, otherwise fall back to logo_url
-  const mainLogoUrl = organization?.main_logo_url || organization?.logo_url || null;
+  const { mainLogoUrl } = useThemeLogos();
 
   const handleCategoryClick = (category: string) => {
     if (organization?.slug) {
