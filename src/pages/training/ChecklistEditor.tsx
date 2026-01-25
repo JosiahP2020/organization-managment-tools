@@ -223,13 +223,11 @@ const ChecklistEditor = () => {
               {/* Sub-logo on the left */}
               <div className="flex-shrink-0">
                 {subLogoUrl ? (
-                  <div className="inline-flex items-center justify-center rounded-lg p-2 dark:bg-[#242424]">
-                    <img 
-                      src={subLogoUrl} 
-                      alt="Organization Logo" 
-                      className="h-16 md:h-20 w-auto object-contain"
-                    />
-                  </div>
+                  <img 
+                    src={subLogoUrl} 
+                    alt="Organization Logo" 
+                    className="h-16 md:h-20 w-auto object-contain"
+                  />
                 ) : (
                   <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
                     <span className="text-muted-foreground text-xs">Logo</span>

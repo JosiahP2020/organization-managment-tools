@@ -3,7 +3,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cog, Wrench, FileText, ChevronRight } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { LogoContainer } from "@/components/LogoContainer";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface CategorySectionProps {
@@ -55,14 +54,12 @@ const Training = () => {
       <div className="max-w-4xl mx-auto">
         {/* Organization Logo - Centered */}
         <div className="flex justify-center mb-6 md:mb-8">
-          <LogoContainer>
-            <Logo 
-              size="xl" 
-              customSrc={mainLogoUrl} 
-              variant="full"
-              className="max-h-32 md:max-h-40"
-            />
-          </LogoContainer>
+          <Logo 
+            size="xl" 
+            customSrc={mainLogoUrl} 
+            variant="full"
+            className="max-h-32 md:max-h-40"
+          />
         </div>
         
         <div className="mb-6">

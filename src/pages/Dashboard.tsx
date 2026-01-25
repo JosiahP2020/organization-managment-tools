@@ -4,7 +4,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
-import { LogoContainer } from "@/components/LogoContainer";
 
 interface CategoryCardProps {
   icon: React.ReactNode;
@@ -65,14 +64,12 @@ const Dashboard = () => {
       <div className="max-w-5xl mx-auto">
         {/* Organization Logo - Centered */}
         <div className="flex justify-center mb-6 md:mb-8">
-          <LogoContainer>
-            <Logo 
-              size="xl" 
-              customSrc={mainLogoUrl} 
-              variant="full"
-              className="max-h-32 md:max-h-40"
-            />
-          </LogoContainer>
+          <Logo 
+            size="xl" 
+            customSrc={mainLogoUrl} 
+            variant="full"
+            className="max-h-32 md:max-h-40"
+          />
         </div>
 
         {/* Dashboard Title */}
