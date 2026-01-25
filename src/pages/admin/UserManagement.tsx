@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Shield, User, MoreVertical, Trash2, UserCog, UserPlus, FilePlus, FileX, Archive } from "lucide-react";
+import { Users, Shield, User, MoreVertical, Trash2, UserCog, UserPlus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -250,42 +250,36 @@ const UserManagement = () => {
                         </span>
                       </div>
                       <div className="col-span-5">
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-6">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Create</span>
                             <Switch
                               checked={user.permissions.canCreate}
                               disabled={user.id === currentUser?.id}
                               onCheckedChange={() => {
                                 // Permission toggle logic to be implemented
                               }}
-                              className="h-4 w-7"
                             />
-                            <FilePlus className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">Create</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Delete</span>
                             <Switch
                               checked={user.permissions.canDelete}
                               disabled={user.id === currentUser?.id}
                               onCheckedChange={() => {
                                 // Permission toggle logic to be implemented
                               }}
-                              className="h-4 w-7"
                             />
-                            <FileX className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">Delete</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Archive</span>
                             <Switch
                               checked={user.permissions.canArchive}
                               disabled={user.id === currentUser?.id}
                               onCheckedChange={() => {
                                 // Permission toggle logic to be implemented
                               }}
-                              className="h-4 w-7"
                             />
-                            <Archive className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">Archive</span>
                           </div>
                         </div>
                       </div>
