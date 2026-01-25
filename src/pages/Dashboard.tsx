@@ -68,8 +68,8 @@ const Dashboard = () => {
           </h1>
         </div>
 
-        {/* Category Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        {/* Category Cards Grid - 2 columns on mobile, 3 on desktop */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           <CategoryCard
             icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
             title="Training"
@@ -82,12 +82,16 @@ const Dashboard = () => {
             description="Browse and order cabinet hardware, materials, and supplies."
             comingSoon
           />
-          <CategoryCard
-            icon={<Wrench className="w-8 h-8 md:w-10 md:h-10" />}
-            title="Install"
-            description="Installation guides, schedules, and project management tools."
-            comingSoon
-          />
+          <div className="col-span-2 lg:col-span-1 flex justify-center">
+            <div className="w-full max-w-sm lg:max-w-none">
+              <CategoryCard
+                icon={<Wrench className="w-8 h-8 md:w-10 md:h-10" />}
+                title="Install"
+                description="Installation guides, schedules, and project management tools."
+                comingSoon
+              />
+            </div>
+          </div>
         </div>
       </div>
 

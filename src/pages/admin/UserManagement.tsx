@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Shield, User, MoreVertical, Trash2, UserCog, UserPlus } from "lucide-react";
+import { Users, Shield, User, MoreVertical, Trash2, UserCog, UserPlus, FilePlus, FileX, Archive } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,12 +30,19 @@ import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
+interface UserPermissions {
+  canCreate: boolean;
+  canDelete: boolean;
+  canArchive: boolean;
+}
+
 interface UserWithRole {
   id: string;
   full_name: string;
   avatar_url: string | null;
   role: AppRole;
   user_id: string;
+  permissions: UserPermissions;
 }
 
 const UserManagement = () => {
@@ -71,12 +79,19 @@ const UserManagement = () => {
 
     const usersWithRoles: UserWithRole[] = profiles.map((profile) => {
       const userRole = roles.find((r) => r.user_id === profile.id);
+      // Default permissions - admins have all, employees have none (for now)
+      const isAdmin = userRole?.role === "admin";
       return {
         id: profile.id,
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
         role: userRole?.role || "employee",
         user_id: profile.id,
+        permissions: {
+          canCreate: isAdmin,
+          canDelete: isAdmin,
+          canArchive: isAdmin,
+        },
       };
     });
 
@@ -185,9 +200,9 @@ const UserManagement = () => {
           <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="px-6 py-4 border-b border-border bg-muted/30">
               <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground">
-                <div className="col-span-5">User</div>
-                <div className="col-span-3">Role</div>
-                <div className="col-span-3">Status</div>
+                <div className="col-span-4">User</div>
+                <div className="col-span-2">Role</div>
+                <div className="col-span-5">Permissions</div>
                 <div className="col-span-1"></div>
               </div>
             </div>
@@ -206,7 +221,7 @@ const UserManagement = () => {
                 {users.map((user) => (
                   <div key={user.id} className="px-6 py-4 hover:bg-muted/20 transition-colors">
                     <div className="grid grid-cols-12 gap-4 items-center">
-                      <div className="col-span-5 flex items-center gap-3">
+                      <div className="col-span-4 flex items-center gap-3">
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={user.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/10 text-primary">
@@ -220,7 +235,7 @@ const UserManagement = () => {
                           )}
                         </div>
                       </div>
-                      <div className="col-span-3">
+                      <div className="col-span-2">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
                           user.role === "admin"
                             ? "bg-primary/10 text-primary"
@@ -234,10 +249,45 @@ const UserManagement = () => {
                           {user.role === "admin" ? "Admin" : "Employee"}
                         </span>
                       </div>
-                      <div className="col-span-3">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                          Active
-                        </span>
+                      <div className="col-span-5">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              checked={user.permissions.canCreate}
+                              disabled={user.id === currentUser?.id}
+                              onCheckedChange={() => {
+                                // Permission toggle logic to be implemented
+                              }}
+                              className="h-4 w-7"
+                            />
+                            <FilePlus className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Create</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              checked={user.permissions.canDelete}
+                              disabled={user.id === currentUser?.id}
+                              onCheckedChange={() => {
+                                // Permission toggle logic to be implemented
+                              }}
+                              className="h-4 w-7"
+                            />
+                            <FileX className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Delete</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Switch
+                              checked={user.permissions.canArchive}
+                              disabled={user.id === currentUser?.id}
+                              onCheckedChange={() => {
+                                // Permission toggle logic to be implemented
+                              }}
+                              className="h-4 w-7"
+                            />
+                            <Archive className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">Archive</span>
+                          </div>
+                        </div>
                       </div>
                       <div className="col-span-1 flex justify-end">
                         {user.id !== currentUser?.id && (
