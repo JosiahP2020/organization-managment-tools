@@ -1,4 +1,4 @@
-import { GraduationCap, ShoppingBag, Wrench } from "lucide-react";
+import { GraduationCap, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -80,29 +80,19 @@ const Dashboard = () => {
         </div>
 
         {/* Category Cards Grid - 2 columns on mobile, 3 on desktop */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 gap-4 md:gap-6">
+          <CategoryCard
+            icon={<ShoppingBag className="w-8 h-8 md:w-10 md:h-10" />}
+            title="Shop/Install"
+            description="Browse supplies, installation guides, and project management tools."
+            comingSoon
+          />
           <CategoryCard
             icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
-            title="SOP/Training"
+            title="SOP"
             description="Access training materials, courses, and certification programs."
             onClick={handleTrainingClick}
           />
-          <CategoryCard
-            icon={<ShoppingBag className="w-8 h-8 md:w-10 md:h-10" />}
-            title="Shop"
-            description="Browse and order cabinet hardware, materials, and supplies."
-            comingSoon
-          />
-          <div className="col-span-2 lg:col-span-1 flex justify-center">
-            <div className="w-full max-w-sm lg:max-w-none">
-              <CategoryCard
-                icon={<Wrench className="w-8 h-8 md:w-10 md:h-10" />}
-                title="Install"
-                description="Installation guides, schedules, and project management tools."
-                comingSoon
-              />
-            </div>
-          </div>
         </div>
       </div>
     </DashboardLayout>
