@@ -106,6 +106,7 @@ export type Database = {
           created_at: string | null
           created_by: string
           description: string | null
+          display_mode: string
           id: string
           is_locked: boolean | null
           organization_id: string
@@ -117,6 +118,7 @@ export type Database = {
           created_at?: string | null
           created_by: string
           description?: string | null
+          display_mode?: string
           id?: string
           is_locked?: boolean | null
           organization_id: string
@@ -128,6 +130,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string
           description?: string | null
+          display_mode?: string
           id?: string
           is_locked?: boolean | null
           organization_id?: string
