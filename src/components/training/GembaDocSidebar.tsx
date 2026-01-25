@@ -1,27 +1,10 @@
+import { useState, useEffect } from "react";
 import { Lock, LockOpen, Printer, RectangleVertical, RectangleHorizontal, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-const GRID_PRESETS = [
-  { label: "1×1", rows: 1, cols: 1, value: "1x1" },
-  { label: "1×2", rows: 1, cols: 2, value: "1x2" },
-  { label: "2×1", rows: 2, cols: 1, value: "2x1" },
-  { label: "2×2", rows: 2, cols: 2, value: "2x2" },
-  { label: "2×3", rows: 2, cols: 3, value: "2x3" },
-  { label: "3×2", rows: 3, cols: 2, value: "3x2" },
-  { label: "3×3", rows: 3, cols: 3, value: "3x3" },
-  { label: "4×4", rows: 4, cols: 4, value: "4x4" },
-  { label: "6×6", rows: 6, cols: 6, value: "6x6" },
-];
 
 interface GembaDocSidebarProps {
   isLocked: boolean;
@@ -50,12 +33,31 @@ export function GembaDocSidebar({
   onPrint,
   isAdmin,
 }: GembaDocSidebarProps) {
-  const currentGridValue = `${gridRows}x${gridCols}`;
+  const [rowsInput, setRowsInput] = useState(String(gridRows));
+  const [colsInput, setColsInput] = useState(String(gridCols));
 
-  const handleGridChange = (value: string) => {
-    const preset = GRID_PRESETS.find((p) => p.value === value);
-    if (preset) {
-      onGridChange(preset.rows, preset.cols);
+  // Sync local state when props change
+  useEffect(() => {
+    setRowsInput(String(gridRows));
+  }, [gridRows]);
+
+  useEffect(() => {
+    setColsInput(String(gridCols));
+  }, [gridCols]);
+
+  const handleRowsChange = (value: string) => {
+    setRowsInput(value);
+    const num = parseInt(value, 10);
+    if (!isNaN(num) && num >= 1 && num <= 10) {
+      onGridChange(num, gridCols);
+    }
+  };
+
+  const handleColsChange = (value: string) => {
+    setColsInput(value);
+    const num = parseInt(value, 10);
+    if (!isNaN(num) && num >= 1 && num <= 10) {
+      onGridChange(gridRows, num);
     }
   };
 
@@ -67,23 +69,32 @@ export function GembaDocSidebar({
       <CardContent className="space-y-4">
         {/* Grid Layout - Admin only when unlocked */}
         {isAdmin && !isLocked && (
-          <div className="flex items-center justify-between">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Grid3X3 className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm">Grid</Label>
+              <Label className="text-sm">Grid Size</Label>
             </div>
-            <Select value={currentGridValue} onValueChange={handleGridChange}>
-              <SelectTrigger className="w-20 h-8">
-                <SelectValue placeholder="Grid" />
-              </SelectTrigger>
-              <SelectContent>
-                {GRID_PRESETS.map((preset) => (
-                  <SelectItem key={preset.value} value={preset.value}>
-                    {preset.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min={1}
+                max={10}
+                value={rowsInput}
+                onChange={(e) => handleRowsChange(e.target.value)}
+                className="w-16 h-8 text-center"
+                placeholder="Rows"
+              />
+              <span className="text-muted-foreground">×</span>
+              <Input
+                type="number"
+                min={1}
+                max={10}
+                value={colsInput}
+                onChange={(e) => handleColsChange(e.target.value)}
+                className="w-16 h-8 text-center"
+                placeholder="Cols"
+              />
+            </div>
           </div>
         )}
 
