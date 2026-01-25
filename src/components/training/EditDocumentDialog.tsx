@@ -2,9 +2,9 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,9 @@ export function EditDocumentDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Document</DialogTitle>
+          <DialogDescription>
+            Update the document title.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,7 +94,7 @@ export function EditDocumentDialog({
             />
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
@@ -103,7 +106,7 @@ export function EditDocumentDialog({
             <Button type="submit" disabled={isLoading}>
               {isLoading ? "Saving..." : "Save"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

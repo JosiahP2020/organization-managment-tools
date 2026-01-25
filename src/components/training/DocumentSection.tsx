@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Pencil, Archive, Trash2, FileText, Download, ExternalLink } from "lucide-react";
+import { Search, Plus, Pencil, Archive, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,6 +8,7 @@ import { useTrainingDocuments } from "@/hooks/useTrainingDocuments";
 import { CreateDocumentDialog } from "./CreateDocumentDialog";
 import { EditDocumentDialog } from "./EditDocumentDialog";
 import { DeleteDocumentDialog } from "./DeleteDocumentDialog";
+import { ArchiveDocumentDialog } from "./ArchiveDocumentDialog";
 import type { DocumentCategory } from "@/pages/training/SOPTraining";
 
 interface DocumentSectionProps {
@@ -22,16 +23,11 @@ export function DocumentSection({ title, category }: DocumentSectionProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<{ id: string; title: string } | null>(null);
   const [deletingDocument, setDeletingDocument] = useState<{ id: string; title: string } | null>(null);
+  const [archivingDocument, setArchivingDocument] = useState<{ id: string; title: string } | null>(null);
 
   const filteredDocuments = documents.filter(doc =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleDocumentClick = (fileUrl: string | null) => {
-    if (fileUrl) {
-      window.open(fileUrl, '_blank');
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -50,15 +46,17 @@ export function DocumentSection({ title, category }: DocumentSectionProps) {
         />
       </div>
 
-      {/* Create Button - Admin only */}
+      {/* Create Button - Admin only, compact width */}
       {isAdmin && (
-        <Button 
-          onClick={() => setCreateDialogOpen(true)}
-          className="w-full bg-primary hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create
-        </Button>
+        <div className="flex justify-center">
+          <Button 
+            onClick={() => setCreateDialogOpen(true)}
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create
+          </Button>
+        </div>
       )}
 
       {/* Document List */}
@@ -75,47 +73,36 @@ export function DocumentSection({ title, category }: DocumentSectionProps) {
               key={doc.id} 
               className="flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
             >
-              <div 
-                className="flex items-center gap-3 flex-1 cursor-pointer min-w-0"
-                onClick={() => handleDocumentClick(doc.file_url)}
-              >
-                <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                <span className="text-foreground truncate">{doc.title}</span>
-              </div>
+              <span className="text-foreground truncate flex-1 min-w-0">{doc.title}</span>
 
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {doc.file_url && (
+              {isAdmin && (
+                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDocumentClick(doc.file_url)}
-                    title="Open file"
+                    onClick={() => setEditingDocument({ id: doc.id, title: doc.title })}
+                    title="Edit"
                   >
-                    <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                    <Pencil className="h-4 w-4 text-muted-foreground" />
                   </Button>
-                )}
-                
-                {isAdmin && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingDocument({ id: doc.id, title: doc.title })}
-                      title="Edit"
-                    >
-                      <Pencil className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeletingDocument({ id: doc.id, title: doc.title })}
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </>
-                )}
-              </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setArchivingDocument({ id: doc.id, title: doc.title })}
+                    title="Archive"
+                  >
+                    <Archive className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDeletingDocument({ id: doc.id, title: doc.title })}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              )}
             </Card>
           ))
         )}
@@ -135,6 +122,16 @@ export function DocumentSection({ title, category }: DocumentSectionProps) {
           onOpenChange={(open) => !open && setEditingDocument(null)}
           documentId={editingDocument.id}
           currentTitle={editingDocument.title}
+          onSuccess={refetch}
+        />
+      )}
+
+      {archivingDocument && (
+        <ArchiveDocumentDialog
+          open={!!archivingDocument}
+          onOpenChange={(open) => !open && setArchivingDocument(null)}
+          documentId={archivingDocument.id}
+          documentTitle={archivingDocument.title}
           onSuccess={refetch}
         />
       )}
