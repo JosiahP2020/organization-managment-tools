@@ -30,7 +30,7 @@ export function ChecklistSidebar({
   canEdit,
 }: ChecklistSidebarProps) {
   return (
-    <Card className="w-64 shrink-0 h-fit sticky top-24">
+    <Card className="w-64 shrink-0 h-fit">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Actions</CardTitle>
       </CardHeader>

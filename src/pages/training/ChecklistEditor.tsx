@@ -216,46 +216,9 @@ const ChecklistEditor = () => {
       {/* Screen view (hidden on print) */}
       <div className="print:hidden">
         <DashboardLayout>
-          <div className="max-w-6xl mx-auto">
-            {/* Header: Sub-logo left, Title centered, Completion below */}
-            <div className="relative flex items-start mb-8">
-              {/* Sub-logo on the left */}
-              <div className="flex-shrink-0">
-                {subLogoUrl ? (
-                  <img 
-                    src={subLogoUrl} 
-                    alt="Organization Logo" 
-                    className="h-16 md:h-20 w-auto object-contain"
-                  />
-                ) : (
-                  <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
-                    <span className="text-muted-foreground text-xs">Logo</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Centered title and completion count */}
-              <div className="flex-1 text-center">
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                  {checklist.title}
-                </h1>
-                {checklist.description && (
-                  <p className="text-muted-foreground mt-1">
-                    {checklist.description}
-                  </p>
-                )}
-                <p className="text-sm text-muted-foreground mt-2">
-                  {completedItems} of {totalItems} completed
-                </p>
-              </div>
-
-              {/* Spacer for symmetry */}
-              <div className="flex-shrink-0 w-16 md:w-20" />
-            </div>
-
-            {/* Main content with sidebar */}
-            <div className="flex gap-6">
-              {/* Sidebar */}
+          <div className="relative">
+            {/* Sidebar - Positioned absolutely on the left, independent from content */}
+            <div className="absolute left-0 top-[10.5rem]">
               <ChecklistSidebar
                 isLocked={isLocked}
                 hideCompleted={hideCompleted}
@@ -268,9 +231,48 @@ const ChecklistEditor = () => {
                 onPrint={handlePrint}
                 canEdit={isAdmin}
               />
+            </div>
 
-              {/* Checklist content */}
-              <div className="flex-1 space-y-4">
+            {/* Checklist content - Independent centered container */}
+            <div className="max-w-4xl mx-auto">
+              {/* Header: Sub-logo left, Title centered, Completion below */}
+              <div className="relative flex items-start mb-8">
+                {/* Sub-logo on the left */}
+                <div className="flex-shrink-0">
+                  {subLogoUrl ? (
+                    <img 
+                      src={subLogoUrl} 
+                      alt="Organization Logo" 
+                      className="h-16 md:h-20 w-auto object-contain"
+                    />
+                  ) : (
+                    <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
+                      <span className="text-muted-foreground text-xs">Logo</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Centered title and completion count */}
+                <div className="flex-1 text-center">
+                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                    {checklist.title}
+                  </h1>
+                  {checklist.description && (
+                    <p className="text-muted-foreground mt-1">
+                      {checklist.description}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {completedItems} of {totalItems} completed
+                  </p>
+                </div>
+
+                {/* Spacer for symmetry */}
+                <div className="flex-shrink-0 w-16 md:w-20" />
+              </div>
+
+              {/* Sections */}
+              <div className="space-y-4">
                 {sections && sections.length > 0 ? (
                   sections.map((section, index) => (
                     <ChecklistSection
@@ -303,7 +305,6 @@ const ChecklistEditor = () => {
                     Add Section
                   </Button>
                 )}
-
 
                 {/* View All Images Gallery Button */}
                 {hasAnyImages && (
