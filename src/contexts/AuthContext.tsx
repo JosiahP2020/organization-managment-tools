@@ -5,6 +5,12 @@ import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
 
+// Theme-aware color mappings for SVG logos
+interface ThemeColorMappings {
+  light: Record<string, string>;
+  dark: Record<string, string>;
+}
+
 interface Organization {
   id: string;
   name: string;
@@ -17,8 +23,8 @@ interface Organization {
   sub_logo_dark_url: string | null;
   display_name: string | null;
   accent_color: string | null;
-  main_logo_colors: Record<string, string> | null;
-  sub_logo_colors: Record<string, string> | null;
+  main_logo_colors: ThemeColorMappings | null;
+  sub_logo_colors: ThemeColorMappings | null;
 }
 
 interface Profile {
@@ -60,6 +66,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = userRole?.role === "admin";
 
+  // Helper to parse theme color mappings from JSON
+  const parseThemeColors = (data: unknown): ThemeColorMappings | null => {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return null;
+    }
+    
+    const obj = data as Record<string, unknown>;
+    
+    // Check if it has the new light/dark structure
+    if (obj.light || obj.dark) {
+      return {
+        light: obj.light && typeof obj.light === 'object' && !Array.isArray(obj.light)
+          ? obj.light as Record<string, string>
+          : {},
+        dark: obj.dark && typeof obj.dark === 'object' && !Array.isArray(obj.dark)
+          ? obj.dark as Record<string, string>
+          : {},
+      };
+    }
+    
+    // Legacy format - treat as light mode only
+    return {
+      light: obj as Record<string, string>,
+      dark: {},
+    };
+  };
+
   // Fetch organization data
   const fetchOrganization = useCallback(async (organizationId: string) => {
     const { data: orgData, error: orgError } = await supabase
@@ -74,12 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Cast JSON fields to proper types
       const organization: Organization = {
         ...orgData,
-        main_logo_colors: orgData.main_logo_colors && typeof orgData.main_logo_colors === 'object' && !Array.isArray(orgData.main_logo_colors)
-          ? orgData.main_logo_colors as Record<string, string>
-          : null,
-        sub_logo_colors: orgData.sub_logo_colors && typeof orgData.sub_logo_colors === 'object' && !Array.isArray(orgData.sub_logo_colors)
-          ? orgData.sub_logo_colors as Record<string, string>
-          : null,
+        main_logo_colors: parseThemeColors(orgData.main_logo_colors),
+        sub_logo_colors: parseThemeColors(orgData.sub_logo_colors),
       };
       setOrganization(organization);
     } else {
