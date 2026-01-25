@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronDown, ChevronRight, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { MessageSquare, Plus, Trash2 } from "lucide-react";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,6 @@ export function ChecklistItem({
 }: ChecklistItemProps) {
   const [showNotes, setShowNotes] = useState(!!item.notes);
   const [notes, setNotes] = useState(item.notes || "");
-  const [isExpanded, setIsExpanded] = useState(true);
   const [addSubItemOpen, setAddSubItemOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -39,7 +38,6 @@ export function ChecklistItem({
   const visibleChildren = hideCompleted
     ? childItems.filter(child => !child.is_completed)
     : childItems;
-  const hasChildren = childItems.length > 0;
 
   // Toggle completion mutation
   const toggleCompletionMutation = useMutation({
@@ -116,23 +114,7 @@ export function ChecklistItem({
   return (
     <div className={cn("group", depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
       <div className="flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
-        {/* Expand/collapse for items with children */}
-        <div className="w-5 h-5 flex items-center justify-center shrink-0">
-          {hasChildren ? (
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-            </button>
-          ) : null}
-        </div>
-
-        {/* Checkbox */}
+        {/* Checkbox (square by default from Radix) */}
         <Checkbox
           checked={item.is_completed}
           onCheckedChange={handleToggle}
@@ -203,8 +185,8 @@ export function ChecklistItem({
         </div>
       </div>
 
-      {/* Child items */}
-      {hasChildren && isExpanded && (
+      {/* Child items (always visible, no expand/collapse) */}
+      {visibleChildren.length > 0 && (
         <div className="space-y-1">
           {visibleChildren.map((child) => (
             <ChecklistItem

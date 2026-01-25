@@ -1,24 +1,22 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X } from "lucide-react";
 import { ChecklistItem } from "@/components/training/ChecklistItem";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistSectionType, ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 
 interface ChecklistSectionProps {
   section: ChecklistSectionType;
   hideCompleted: boolean;
   canEdit: boolean;
   checklistId: string;
+  isFirst: boolean;
+  isLast: boolean;
+  totalSections: number;
 }
 
 export function ChecklistSection({
@@ -26,9 +24,13 @@ export function ChecklistSection({
   hideCompleted,
   canEdit,
   checklistId,
+  isFirst,
+  isLast,
+  totalSections,
 }: ChecklistSectionProps) {
-  const [isOpen, setIsOpen] = useState(true);
   const [addItemOpen, setAddItemOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   // Build a tree of items (top-level items with their children)
@@ -67,9 +69,125 @@ export function ChecklistSection({
     },
   });
 
+  // Reorder section mutation
+  const reorderSectionMutation = useMutation({
+    mutationFn: async (direction: "up" | "down") => {
+      // Get current sections
+      const { data: allSections, error: fetchError } = await supabase
+        .from("checklist_sections")
+        .select("id, sort_order")
+        .eq("checklist_id", checklistId)
+        .order("sort_order", { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      const currentIndex = allSections.findIndex(s => s.id === section.id);
+      const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (targetIndex < 0 || targetIndex >= allSections.length) return;
+
+      const currentSection = allSections[currentIndex];
+      const targetSection = allSections[targetIndex];
+
+      // Swap sort_order values
+      const { error: updateError1 } = await supabase
+        .from("checklist_sections")
+        .update({ sort_order: targetSection.sort_order })
+        .eq("id", currentSection.id);
+
+      if (updateError1) throw updateError1;
+
+      const { error: updateError2 } = await supabase
+        .from("checklist_sections")
+        .update({ sort_order: currentSection.sort_order })
+        .eq("id", targetSection.id);
+
+      if (updateError2) throw updateError2;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
+    },
+    onError: () => {
+      toast.error("Failed to reorder section");
+    },
+  });
+
+  // Image upload mutation
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      setUploading(true);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `section-${section.id}-${Date.now()}.${fileExt}`;
+      const filePath = `checklist-sections/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("training-documents")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+        .from("training-documents")
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("checklist_sections")
+        .update({ image_url: publicUrl.publicUrl })
+        .eq("id", section.id);
+
+      if (updateError) throw updateError;
+
+      return publicUrl.publicUrl;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
+      toast.success("Image uploaded");
+      setUploading(false);
+    },
+    onError: () => {
+      toast.error("Failed to upload image");
+      setUploading(false);
+    },
+  });
+
+  // Remove image mutation
+  const removeImageMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("checklist_sections")
+        .update({ image_url: null })
+        .eq("id", section.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
+      toast.success("Image removed");
+    },
+    onError: () => {
+      toast.error("Failed to remove image");
+    },
+  });
+
   const handleDeleteSection = () => {
     if (window.confirm(`Are you sure you want to delete "${section.title}"? All items in this section will be deleted.`)) {
       deleteSectionMutation.mutate();
+    }
+  };
+
+  const handleMoveUp = () => {
+    reorderSectionMutation.mutate("up");
+  };
+
+  const handleMoveDown = () => {
+    reorderSectionMutation.mutate("down");
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadImageMutation.mutate(file);
     }
   };
 
@@ -78,77 +196,138 @@ export function ChecklistSection({
 
   return (
     <Card>
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CollapsibleTrigger asChild>
-              <button className="flex items-center gap-2 hover:text-primary transition-colors">
-                {isOpen ? (
-                  <ChevronDown className="h-5 w-5" />
-                ) : (
-                  <ChevronRight className="h-5 w-5" />
-                )}
-                <CardTitle className="text-lg">{section.title}</CardTitle>
-              </button>
-            </CollapsibleTrigger>
-            
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">
-                {completedCount}/{totalCount} completed
-              </span>
-              
-              {canEdit && (
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          {/* Section title (no collapse) */}
+          <CardTitle className="text-lg">{section.title}</CardTitle>
+          
+          <div className="flex items-center gap-2">
+            {/* Progress count */}
+            <span className="text-sm text-muted-foreground">
+              {completedCount}/{totalCount} completed
+            </span>
+
+            {/* Reorder arrows */}
+            {canEdit && totalSections > 1 && (
+              <>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={handleDeleteSection}
+                  className="h-8 w-8"
+                  onClick={handleMoveUp}
+                  disabled={isFirst}
+                  title="Move up"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <ArrowUp className="h-4 w-4" />
                 </Button>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CollapsibleContent>
-          <CardContent className="pt-0">
-            {visibleItems.length > 0 ? (
-              <div className="space-y-1">
-                {visibleItems.map((item) => (
-                  <ChecklistItem
-                    key={item.id}
-                    item={item}
-                    getChildItems={getChildItems}
-                    hideCompleted={hideCompleted}
-                    canEdit={canEdit}
-                    checklistId={checklistId}
-                    sectionId={section.id}
-                    depth={0}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground py-2">
-                {hideCompleted ? "All items completed" : "No items in this section"}
-              </p>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleMoveDown}
+                  disabled={isLast}
+                  title="Move down"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
+              </>
             )}
-
-            {/* Add Item Button */}
+            
+            {/* Delete button */}
             {canEdit && (
               <Button
                 variant="ghost"
-                size="sm"
-                className="mt-2 w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-                onClick={() => setAddItemOpen(true)}
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={handleDeleteSection}
               >
-                <Plus className="h-4 w-4" />
-                Add Item
+                <Trash2 className="h-4 w-4" />
               </Button>
             )}
-          </CardContent>
-        </CollapsibleContent>
-      </Collapsible>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="pt-0">
+        {/* Section image */}
+        {section.image_url && (
+          <div className="relative mb-4 inline-block">
+            <img 
+              src={section.image_url} 
+              alt={`${section.title} image`}
+              className="max-h-48 rounded-lg border border-border"
+            />
+            {canEdit && (
+              <Button
+                variant="destructive"
+                size="icon"
+                className="absolute -top-2 -right-2 h-6 w-6"
+                onClick={() => removeImageMutation.mutate()}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Image upload button */}
+        {canEdit && !section.image_url && (
+          <div className="mb-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : "Add Image"}
+            </Button>
+          </div>
+        )}
+
+        {/* Items (always visible, no collapse) */}
+        {visibleItems.length > 0 ? (
+          <div className="space-y-1">
+            {visibleItems.map((item) => (
+              <ChecklistItem
+                key={item.id}
+                item={item}
+                getChildItems={getChildItems}
+                hideCompleted={hideCompleted}
+                canEdit={canEdit}
+                checklistId={checklistId}
+                sectionId={section.id}
+                depth={0}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground py-2">
+            {hideCompleted ? "All items completed" : "No items in this section"}
+          </p>
+        )}
+
+        {/* Add Item Button */}
+        {canEdit && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+            onClick={() => setAddItemOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Add Item
+          </Button>
+        )}
+      </CardContent>
 
       {/* Add Item Dialog */}
       <AddItemDialog

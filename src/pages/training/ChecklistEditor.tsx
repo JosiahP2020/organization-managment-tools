@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,19 +30,21 @@ export interface ChecklistSectionType {
   title: string;
   sort_order: number;
   created_at: string;
+  image_url: string | null;
   items: ChecklistItem[];
 }
 
 const ChecklistEditor = () => {
   const { checklistId } = useParams<{ checklistId: string }>();
-  const { organization, isAdmin, user } = useAuth();
+  const { organization, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const printRef = useRef<HTMLDivElement>(null);
   
   const [hideCompleted, setHideCompleted] = useState(false);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
 
-  const mainLogoUrl = organization?.main_logo_url || organization?.logo_url || null;
+  // Use sub_logo_url for the checklist display
+  const subLogoUrl = organization?.sub_logo_url || organization?.logo_url || null;
 
   // Fetch checklist
   const { data: checklist, isLoading: checklistLoading } = useQuery({
@@ -154,6 +155,12 @@ const ChecklistEditor = () => {
     }
   };
 
+  // Calculate total completion
+  const totalItems = sections?.reduce((acc, section) => acc + section.items.length, 0) || 0;
+  const completedItems = sections?.reduce((acc, section) => 
+    acc + section.items.filter(item => item.is_completed).length, 0
+  ) || 0;
+
   const isLocked = checklist?.is_locked || false;
   const canEdit = isAdmin && !isLocked;
 
@@ -194,33 +201,47 @@ const ChecklistEditor = () => {
           ref={printRef}
           checklist={checklist}
           sections={sections || []}
-          logoUrl={mainLogoUrl}
+          logoUrl={subLogoUrl}
         />
       </div>
 
       {/* Screen view (hidden on print) */}
       <div className="print:hidden">
         <div className="max-w-6xl mx-auto">
-          {/* Organization Logo */}
-          <div className="flex justify-center mb-6 md:mb-8">
-            <Logo 
-              size="xl" 
-              customSrc={mainLogoUrl} 
-              variant="full"
-              className="max-h-32 md:max-h-40"
-            />
-          </div>
+          {/* New Header Layout: Sub-logo left, Title centered, Completion below */}
+          <div className="relative flex items-start mb-8">
+            {/* Sub-logo on the left */}
+            <div className="flex-shrink-0">
+              {subLogoUrl ? (
+                <img 
+                  src={subLogoUrl} 
+                  alt="Organization Logo" 
+                  className="h-16 md:h-20 w-auto object-contain"
+                />
+              ) : (
+                <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
+                  <span className="text-muted-foreground text-xs">Logo</span>
+                </div>
+              )}
+            </div>
 
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {checklist.title}
-            </h1>
-            {checklist.description && (
-              <p className="text-muted-foreground mt-1">
-                {checklist.description}
+            {/* Centered title and completion count */}
+            <div className="flex-1 text-center">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                {checklist.title}
+              </h1>
+              {checklist.description && (
+                <p className="text-muted-foreground mt-1">
+                  {checklist.description}
+                </p>
+              )}
+              <p className="text-sm text-muted-foreground mt-2">
+                {completedItems} of {totalItems} completed
               </p>
-            )}
+            </div>
+
+            {/* Spacer for symmetry */}
+            <div className="flex-shrink-0 w-16 md:w-20" />
           </div>
 
           {/* Main content with sidebar */}
@@ -239,13 +260,16 @@ const ChecklistEditor = () => {
             {/* Checklist content */}
             <div className="flex-1 space-y-4">
               {sections && sections.length > 0 ? (
-                sections.map((section) => (
+                sections.map((section, index) => (
                   <ChecklistSection
                     key={section.id}
                     section={section}
                     hideCompleted={hideCompleted}
                     canEdit={canEdit}
                     checklistId={checklistId!}
+                    isFirst={index === 0}
+                    isLast={index === sections.length - 1}
+                    totalSections={sections.length}
                   />
                 ))
               ) : (
