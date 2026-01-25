@@ -8,27 +8,46 @@ export function useAccentColor() {
   
   useEffect(() => {
     const accentColor = organization?.accent_color || DEFAULT_ACCENT;
-    
-    // Apply accent color to CSS variables
     const root = document.documentElement;
-    
-    // Primary color (main accent)
-    root.style.setProperty("--primary", accentColor);
-    root.style.setProperty("--ring", accentColor);
-    root.style.setProperty("--brand-orange", accentColor);
-    root.style.setProperty("--sidebar-ring", accentColor);
-    
-    // Accent background (light tint of the color)
-    // Parse the HSL and create a lighter version for accent background
     const [h] = accentColor.split(" ");
-    root.style.setProperty("--accent", `${h} 90% 96%`);
-    root.style.setProperty("--accent-foreground", `${h} 90% 40%`);
     
-    // Darker hover variant
-    root.style.setProperty("--brand-orange-hover", `${h} 90% 48%`);
+    const applyColors = () => {
+      const isDarkMode = root.classList.contains("dark");
+      
+      // Primary color (main accent) - always use brand color
+      root.style.setProperty("--primary", accentColor);
+      root.style.setProperty("--ring", accentColor);
+      root.style.setProperty("--brand-orange", accentColor);
+      root.style.setProperty("--sidebar-ring", accentColor);
+      root.style.setProperty("--brand-orange-hover", `${h} 90% 48%`);
+      
+      // Accent colors - use neutral gray in dark mode to avoid washing out text
+      if (isDarkMode) {
+        root.style.setProperty("--accent", "0 0% 32%");
+        root.style.setProperty("--accent-foreground", "0 0% 96%");
+      } else {
+        root.style.setProperty("--accent", `${h} 90% 96%`);
+        root.style.setProperty("--accent-foreground", `${h} 90% 40%`);
+      }
+    };
+    
+    // Apply immediately
+    applyColors();
+    
+    // Watch for dark mode changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          applyColors();
+        }
+      });
+    });
+    
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
     
     // Cleanup on unmount
     return () => {
+      observer.disconnect();
       root.style.removeProperty("--primary");
       root.style.removeProperty("--ring");
       root.style.removeProperty("--brand-orange");
