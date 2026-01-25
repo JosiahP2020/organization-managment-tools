@@ -76,6 +76,7 @@ const Training = () => {
             icon={<FileText className="w-5 h-5" />}
             title="SOP"
             description="Standard operating procedures, training materials, and certification documents."
+            onClick={() => handleCategoryClick('sop_training')}
           />
           
           {/* Machine Operation - navigates to checklist */}
