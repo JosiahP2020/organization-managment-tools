@@ -8,7 +8,7 @@ import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FileText, Clock, Lock, Search, Pencil, Archive, Trash2, ArrowUpDown } from "lucide-react";
+import { Plus, FileText, Lock, Search, Pencil, Archive, Trash2, ArrowUpDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateChecklistDialog } from "@/components/training/CreateChecklistDialog";
 import {
@@ -27,7 +27,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
 const categoryLabels: Record<string, string> = {
@@ -302,18 +301,16 @@ const CategoryDocuments = () => {
                           </Button>
                         </div>
                       )}
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        {format(new Date(checklist.updated_at), "MMM d, yyyy")}
-                      </div>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {checklist.description || "No description provided."}
-                  </p>
-                </CardContent>
+                {checklist.description && (
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      {checklist.description}
+                    </p>
+                  </CardContent>
+                )}
               </Card>
             ))}
           </div>
