@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
+import { DevOrientationToggle } from "@/components/DevOrientationToggle";
 
 interface CategoryCardProps {
   icon: React.ReactNode;
@@ -44,6 +45,9 @@ function CategoryCard({ icon, title, description, comingSoon = false }: Category
 const Dashboard = () => {
   const { organization } = useAuth();
 
+  // Use main_logo_url if available, otherwise fall back to logo_url
+  const mainLogoUrl = organization?.main_logo_url || organization?.logo_url || null;
+
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto">
@@ -51,7 +55,7 @@ const Dashboard = () => {
         <div className="flex justify-center mb-6 md:mb-8">
           <Logo 
             size="xl" 
-            customSrc={organization?.logo_url} 
+            customSrc={mainLogoUrl} 
             variant="full"
             className="max-h-32 md:max-h-40"
           />
@@ -86,6 +90,9 @@ const Dashboard = () => {
           />
         </div>
       </div>
+
+      {/* Development Orientation Toggle */}
+      <DevOrientationToggle />
     </DashboardLayout>
   );
 };

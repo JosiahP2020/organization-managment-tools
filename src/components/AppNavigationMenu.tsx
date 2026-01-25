@@ -14,6 +14,7 @@ import {
   Wrench,
   LogOut,
   User,
+  Settings,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import sccLogo from "@/assets/scc-logo.gif";
@@ -61,6 +62,11 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
     navigate("/login");
   };
 
+  const handleSettingsClick = () => {
+    handleClose();
+    navigate("/settings/user");
+  };
+
   const getInitials = (name: string | undefined) => {
     if (!name) return "U";
     return name
@@ -71,8 +77,8 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
       .slice(0, 2);
   };
 
-  // Use organization logo if available, otherwise fall back to default SCC logo
-  const sidebarLogo = organization?.logo_url || sccLogo;
+  // Use organization sub_logo_url if available, otherwise fall back to default SCC logo
+  const sidebarLogo = organization?.sub_logo_url || organization?.logo_url || sccLogo;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -110,6 +116,15 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
                 {isAdmin ? "Admin" : "Employee"}
               </p>
             </div>
+            {/* Settings gear icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSettingsClick}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 

@@ -6,13 +6,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Shield, User, MoreVertical } from "lucide-react";
+import { Users, Shield, User, MoreVertical, Trash2, UserCog, UserPlus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AddUserDialog } from "@/components/AddUserDialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -30,6 +42,9 @@ const UserManagement = () => {
   const { toast } = useToast();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
   const fetchUsers = async () => {
     if (!organization) return;
@@ -91,9 +106,50 @@ const UserManagement = () => {
     } else {
       toast({
         title: "Success",
-        description: "User role updated successfully",
+        description: `User role updated to ${newRole}`,
       });
       fetchUsers();
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteUserId || !organization) return;
+
+    setIsDeleting(true);
+
+    try {
+      // Delete user role first (due to foreign key constraints)
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", deleteUserId)
+        .eq("organization_id", organization.id);
+
+      if (roleError) throw roleError;
+
+      // Delete profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", deleteUserId);
+
+      if (profileError) throw profileError;
+
+      toast({
+        title: "User deleted",
+        description: "The user has been removed from the organization",
+      });
+
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteUserId(null);
     }
   };
 
@@ -106,6 +162,8 @@ const UserManagement = () => {
       .slice(0, 2);
   };
 
+  const userToDelete = users.find(u => u.id === deleteUserId);
+
   return (
     <AdminRoute>
       <DashboardLayout>
@@ -117,9 +175,9 @@ const UserManagement = () => {
                 Manage users in {organization?.name}
               </p>
             </div>
-            <Button className="gap-2">
-              <Users className="w-4 h-4" />
-              Invite User
+            <Button className="gap-2" onClick={() => setIsAddUserOpen(true)}>
+              <UserPlus className="w-4 h-4" />
+              Add User
             </Button>
           </div>
 
@@ -189,14 +247,24 @@ const UserManagement = () => {
                                 <MoreVertical className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="bg-popover">
                               <DropdownMenuItem
                                 onClick={() => handleRoleChange(
                                   user.id,
                                   user.role === "admin" ? "employee" : "admin"
                                 )}
+                                className="gap-2"
                               >
+                                <UserCog className="w-4 h-4" />
                                 {user.role === "admin" ? "Demote to Employee" : "Promote to Admin"}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setDeleteUserId(user.id)}
+                                className="gap-2 text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete User
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -209,6 +277,40 @@ const UserManagement = () => {
             )}
           </div>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deleteUserId} onOpenChange={(open) => !open && setDeleteUserId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete User</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{userToDelete?.full_name}</strong>? 
+                This action cannot be undone and will remove all their data from the organization.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteUser}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <div className="w-4 h-4 border-2 border-destructive-foreground/30 border-t-destructive-foreground rounded-full animate-spin" />
+                ) : (
+                  "Delete"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Add User Dialog */}
+        <AddUserDialog
+          open={isAddUserOpen}
+          onOpenChange={setIsAddUserOpen}
+          onUserAdded={fetchUsers}
+        />
       </DashboardLayout>
     </AdminRoute>
   );
