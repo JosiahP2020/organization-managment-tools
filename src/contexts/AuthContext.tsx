@@ -177,10 +177,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Clear state first to prevent UI from trying to use stale data
     setProfile(null);
     setOrganization(null);
     setUserRole(null);
+    setUser(null);
+    setSession(null);
+    
+    // Then sign out from Supabase
+    await supabase.auth.signOut();
   };
 
   return (

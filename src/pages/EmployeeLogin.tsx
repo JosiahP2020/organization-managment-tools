@@ -17,6 +17,7 @@ const EmployeeLogin = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingOrg, setIsCheckingOrg] = useState(true);
+  const [orgNotFound, setOrgNotFound] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -33,19 +34,20 @@ const EmployeeLogin = () => {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from("organizations")
         .select("id, name, slug")
         .eq("slug", organizationName)
         .maybeSingle();
 
-      if (error || !data) {
-        navigate("/login");
+      setIsCheckingOrg(false);
+
+      if (fetchError || !data) {
+        setOrgNotFound(true);
         return;
       }
 
       setOrgData(data);
-      setIsCheckingOrg(false);
     };
 
     fetchOrg();
@@ -87,6 +89,43 @@ const EmployeeLogin = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-subtle">
         <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Show error if organization not found
+  if (orgNotFound) {
+    return (
+      <div className="min-h-screen bg-surface-subtle flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md animate-fade-in">
+          <div className="flex justify-center mb-10">
+            <Logo size="lg" />
+          </div>
+          <div className="login-card text-center">
+            <button
+              onClick={() => navigate("/login")}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back</span>
+            </button>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/10 flex items-center justify-center">
+              <Building2 className="w-8 h-8 text-destructive" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              Organization Not Found
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              We couldn't find an organization with that name. Please check the name and try again.
+            </p>
+            <button
+              onClick={() => navigate("/login")}
+              className="btn-primary w-full"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

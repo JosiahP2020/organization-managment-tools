@@ -41,19 +41,16 @@ function CategoryCard({ icon, title, description, comingSoon = false }: Category
 }
 
 const Dashboard = () => {
-  const { profile, organization } = useAuth();
+  const { organization } = useAuth();
 
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto">
-        {/* Welcome Header */}
+        {/* Dashboard Title */}
         <div className="mb-6 md:mb-8">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">
-            Welcome back, {profile?.full_name?.split(" ")[0] || "User"}!
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             {organization?.name || "Your Organization"} Dashboard
-          </p>
+          </h1>
         </div>
 
         {/* Category Cards Grid */}

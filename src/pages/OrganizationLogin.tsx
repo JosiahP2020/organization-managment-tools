@@ -39,7 +39,8 @@ const OrganizationLogin = () => {
     }
 
     if (!org) {
-      setError("Organization not found. Please check the name or create a new one.");
+      setError("Invalid organization name. Please check and try again.");
+      setIsLoading(false);
       return;
     }
 

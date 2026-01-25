@@ -1,10 +1,10 @@
 import { Menu, Settings, User, Users, Building2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { AppNavigationMenu } from "@/components/AppNavigationMenu";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Logo } from "@/components/Logo";
+import { BackButton } from "@/components/BackButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,31 +16,28 @@ import {
 export function DashboardHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAdmin, organization } = useAuth();
+  const location = useLocation();
+  
+  // Show back button on all pages except the main dashboard
+  const isDashboard = location.pathname.startsWith("/dashboard");
+  const showBackButton = !isDashboard;
 
   return (
     <>
-      <header className="h-14 flex items-center justify-between px-4 border-b border-border bg-background sticky top-0 z-40">
-        {/* Menu Button - Left */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMenuOpen(true)}
-          className="h-11 w-11 text-foreground hover:bg-accent"
-          aria-label="Open menu"
-        >
-          <Menu className="h-6 w-6" />
-        </Button>
-
-        {/* Logo - Center (positioned absolutely for overflow effect) */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1">
-          <Link to="/dashboard" className="flex items-center">
-            <Logo 
-              variant="full" 
-              size="xl" 
-              customSrc={organization?.logo_url}
-              className="drop-shadow-sm"
-            />
-          </Link>
+      {/* Floating header with just menu and settings buttons */}
+      <div className="sticky top-0 z-40 flex items-center justify-between p-4 bg-surface-subtle">
+        {/* Left side - Menu Button or Back Button */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMenuOpen(true)}
+            className="h-11 w-11 text-foreground hover:bg-accent"
+            aria-label="Open menu"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+          {showBackButton && <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />}
         </div>
 
         {/* Settings Dropdown - Right */}
@@ -63,7 +60,7 @@ export function DashboardHeader() {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/settings/user" className="flex items-center gap-2 cursor-pointer">
+              <Link to="/settings/preferences" className="flex items-center gap-2 cursor-pointer">
                 <User className="h-4 w-4" />
                 Profile Settings
               </Link>
@@ -88,7 +85,7 @@ export function DashboardHeader() {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-      </header>
+      </div>
 
       <AppNavigationMenu open={menuOpen} onOpenChange={setMenuOpen} />
     </>
