@@ -408,65 +408,9 @@ function GembaDocEditorContent() {
       {/* Screen view (hidden on print) */}
       <div className="print:hidden">
         <DashboardLayout>
-          <div className="max-w-6xl mx-auto">
-            {/* Header: Sub-logo left, Title centered */}
-            <div className="relative flex items-start mb-8">
-              {/* Sub-logo on the left */}
-              <div className="flex-shrink-0">
-                {subLogoUrl ? (
-                  <img 
-                    src={subLogoUrl} 
-                    alt="Organization Logo" 
-                    className="h-16 md:h-20 w-auto object-contain"
-                  />
-                ) : (
-                  <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
-                    <span className="text-muted-foreground text-xs">Logo</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Centered title and description */}
-              <div className="flex-1 text-center">
-                {canEdit ? (
-                  <Input
-                    value={gembaDoc.title}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    className="text-2xl md:text-3xl font-bold text-center border-none bg-transparent h-auto py-1 text-foreground"
-                    placeholder="Document Title"
-                  />
-                ) : (
-                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    {gembaDoc.title}
-                  </h1>
-                )}
-                {canEdit ? (
-                  <Textarea
-                    value={gembaDoc.description || ""}
-                    onChange={(e) => handleDescriptionChange(e.target.value)}
-                    className="text-muted-foreground text-center border-none bg-transparent resize-none mt-1"
-                    placeholder="Add a description..."
-                    rows={1}
-                  />
-                ) : (
-                  gembaDoc.description && (
-                    <p className="text-muted-foreground mt-1">
-                      {gembaDoc.description}
-                    </p>
-                  )
-                )}
-                <p className="text-sm text-muted-foreground mt-2">
-                  Page {currentPage} of {totalPages}
-                </p>
-              </div>
-
-              {/* Spacer for symmetry */}
-              <div className="flex-shrink-0 w-16 md:w-20" />
-            </div>
-
-            {/* Main content with sidebar */}
-            <div className="flex gap-6">
-              {/* Sidebar */}
+          <div className="relative">
+            {/* Sidebar - Positioned absolutely on the left */}
+            <div className="absolute left-0 top-0">
               <GembaDocSidebar
                 isLocked={isLocked}
                 onLockChange={(locked) => updateDocMutation.mutate({ is_locked: locked })}
@@ -482,9 +426,64 @@ function GembaDocEditorContent() {
                 onPrint={handlePrint}
                 isAdmin={isAdmin}
               />
+            </div>
+
+            {/* Main content - centered */}
+            <div className="max-w-4xl mx-auto">
+              {/* Header: Sub-logo left, Title centered */}
+              <div className="relative flex items-start mb-8">
+                {/* Sub-logo on the left */}
+                <div className="flex-shrink-0">
+                  {subLogoUrl ? (
+                    <img 
+                      src={subLogoUrl} 
+                      alt="Organization Logo" 
+                      className="h-16 md:h-20 w-auto object-contain"
+                    />
+                  ) : (
+                    <div className="h-16 md:h-20 w-16 md:w-20 bg-muted rounded-lg flex items-center justify-center">
+                      <span className="text-muted-foreground text-xs">Logo</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Centered title and description */}
+                <div className="flex-1 text-center">
+                  {canEdit ? (
+                    <Input
+                      value={gembaDoc.title}
+                      onChange={(e) => handleTitleChange(e.target.value)}
+                      className="text-2xl md:text-3xl font-bold text-center border-none bg-transparent h-auto py-1 text-foreground"
+                      placeholder="Document Title"
+                    />
+                  ) : (
+                    <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                      {gembaDoc.title}
+                    </h1>
+                  )}
+                  {canEdit ? (
+                    <Textarea
+                      value={gembaDoc.description || ""}
+                      onChange={(e) => handleDescriptionChange(e.target.value)}
+                      className="text-muted-foreground text-center border-none bg-transparent resize-none mt-1"
+                      placeholder="Add a description..."
+                      rows={1}
+                    />
+                  ) : (
+                    gembaDoc.description && (
+                      <p className="text-muted-foreground mt-1">
+                        {gembaDoc.description}
+                      </p>
+                    )
+                  )}
+                </div>
+
+                {/* Spacer for symmetry */}
+                <div className="flex-shrink-0 w-16 md:w-20" />
+              </div>
 
               {/* Grid content */}
-              <div className="flex-1 space-y-4">
+              <div className="space-y-4">
                 <GembaDocGrid
                   cells={
                     cells?.map((c) => ({
