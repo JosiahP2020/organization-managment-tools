@@ -50,7 +50,7 @@ function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
 }
 
 export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
-  const { profile, isAdmin, signOut } = useAuth();
+  const { profile, isAdmin, signOut, organization } = useAuth();
   const navigate = useNavigate();
 
   const handleClose = () => onOpenChange(false);
@@ -71,16 +71,19 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
       .slice(0, 2);
   };
 
+  // Use organization logo if available, otherwise fall back to default SCC logo
+  const sidebarLogo = organization?.logo_url || sccLogo;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 p-0 flex flex-col">
-        {/* Header with SCC Star Logo - aligned left */}
+        {/* Header with Logo - aligned left */}
         <SheetHeader className="p-6 pb-4">
           <div className="flex justify-start">
             <img
-              src={sccLogo}
-              alt="SCC"
-              className="h-16 w-auto"
+              src={sidebarLogo}
+              alt={organization?.name || "SCC"}
+              className="h-16 w-auto max-w-[200px] object-contain"
             />
           </div>
         </SheetHeader>
