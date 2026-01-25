@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useCallback, useEffect, useRef } from "react";
 
 interface BackButtonProps {
   fallbackPath?: string;
@@ -9,15 +10,28 @@ interface BackButtonProps {
 
 export function BackButton({ fallbackPath = "/", className = "" }: BackButtonProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const hasNavigatedRef = useRef(false);
+  const previousPathRef = useRef<string | null>(null);
 
-  const handleBack = () => {
-    // Check if there's history to go back to
-    if (window.history.length > 2) {
+  // Track if we've navigated within the app
+  useEffect(() => {
+    if (previousPathRef.current !== null && previousPathRef.current !== location.pathname) {
+      hasNavigatedRef.current = true;
+    }
+    previousPathRef.current = location.pathname;
+  }, [location.pathname]);
+
+  const handleBack = useCallback(() => {
+    // Simple approach: try to go back, if we have in-app history use it
+    // Otherwise navigate to the fallback path
+    if (hasNavigatedRef.current) {
       navigate(-1);
     } else {
-      navigate(fallbackPath);
+      // No in-app navigation history, go to fallback
+      navigate(fallbackPath, { replace: true });
     }
-  };
+  }, [navigate, fallbackPath]);
 
   return (
     <Button
