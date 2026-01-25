@@ -9,6 +9,7 @@ import { Plus, Trash2, Hash } from "lucide-react";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChecklistItemProps {
   item: ChecklistItemType;
@@ -49,6 +50,7 @@ export function ChecklistItem({
   const [editedText, setEditedText] = useState(item.text);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const childItems = getChildItems(item.id);
   const visibleChildren = hideCompleted
@@ -174,8 +176,9 @@ export function ChecklistItem({
   const displayPrefix = getDisplayPrefix();
 
   return (
-    <div className={cn("group", depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
-      <div className="flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
+    <div className={cn(depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
+      {/* Use group/item to isolate hover effect to this specific item row */}
+      <div className="group/item flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
         {/* Checkbox or Number */}
         {displayMode === "numbered" ? (
           <div className="mt-0.5 w-5 flex justify-center">
@@ -216,8 +219,12 @@ export function ChecklistItem({
         </div>
 
         {/* Actions - only show when canEdit (admin and not locked) */}
+        {/* On mobile: always visible. On desktop: visible on hover */}
         {canEdit && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className={cn(
+            "flex items-center gap-1 transition-opacity",
+            isMobile ? "opacity-100" : "opacity-0 group-hover/item:opacity-100"
+          )}>
             <Button
               variant="ghost"
               size="icon"
