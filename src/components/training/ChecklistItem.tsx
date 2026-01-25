@@ -4,8 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
 import { cn } from "@/lib/utils";
@@ -29,8 +28,6 @@ export function ChecklistItem({
   sectionId,
   depth,
 }: ChecklistItemProps) {
-  const [showNotes, setShowNotes] = useState(!!item.notes);
-  const [notes, setNotes] = useState(item.notes || "");
   const [addSubItemOpen, setAddSubItemOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -54,24 +51,6 @@ export function ChecklistItem({
     },
     onError: () => {
       toast.error("Failed to update item");
-    },
-  });
-
-  // Update notes mutation
-  const updateNotesMutation = useMutation({
-    mutationFn: async (newNotes: string) => {
-      const { error } = await supabase
-        .from("checklist_items")
-        .update({ notes: newNotes || null })
-        .eq("id", item.id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["checklist-sections", checklistId] });
-    },
-    onError: () => {
-      toast.error("Failed to save notes");
     },
   });
 
@@ -99,12 +78,6 @@ export function ChecklistItem({
     toggleCompletionMutation.mutate(!item.is_completed);
   };
 
-  const handleNotesBlur = () => {
-    if (notes !== item.notes) {
-      updateNotesMutation.mutate(notes);
-    }
-  };
-
   const handleDelete = () => {
     if (window.confirm("Delete this item?")) {
       deleteItemMutation.mutate();
@@ -114,7 +87,7 @@ export function ChecklistItem({
   return (
     <div className={cn("group", depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
       <div className="flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors">
-        {/* Checkbox (square by default from Radix) */}
+        {/* Square Checkbox */}
         <Checkbox
           checked={item.is_completed}
           onCheckedChange={handleToggle}
@@ -132,34 +105,10 @@ export function ChecklistItem({
           >
             {item.text}
           </span>
-
-          {/* Notes section */}
-          {showNotes && (
-            <div className="mt-2">
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                onBlur={handleNotesBlur}
-                placeholder="Add notes..."
-                className="text-sm min-h-[60px]"
-                disabled={!canEdit}
-              />
-            </div>
-          )}
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setShowNotes(!showNotes)}
-            title={showNotes ? "Hide notes" : "Show notes"}
-          >
-            <MessageSquare className="h-4 w-4" />
-          </Button>
-
           {canEdit && (
             <>
               <Button
@@ -185,7 +134,7 @@ export function ChecklistItem({
         </div>
       </div>
 
-      {/* Child items (always visible, no expand/collapse) */}
+      {/* Child items (always visible) */}
       {visibleChildren.length > 0 && (
         <div className="space-y-1">
           {visibleChildren.map((child) => (

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowUp, ArrowDown, Plus, Trash2, Upload, X, MessageSquare } from "lucide-react";
 import { ChecklistItem } from "@/components/training/ChecklistItem";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistSectionType, ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
@@ -17,6 +18,7 @@ interface ChecklistSectionProps {
   isFirst: boolean;
   isLast: boolean;
   totalSections: number;
+  hideAllImages: boolean;
 }
 
 export function ChecklistSection({
@@ -27,9 +29,12 @@ export function ChecklistSection({
   isFirst,
   isLast,
   totalSections,
+  hideAllImages,
 }: ChecklistSectionProps) {
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [notes, setNotes] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -198,8 +203,8 @@ export function ChecklistSection({
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          {/* Section title (no collapse) */}
-          <CardTitle className="text-lg">{section.title}</CardTitle>
+          {/* Section title - bigger */}
+          <CardTitle className="text-xl md:text-2xl font-bold">{section.title}</CardTitle>
           
           <div className="flex items-center gap-2">
             {/* Progress count */}
@@ -249,51 +254,7 @@ export function ChecklistSection({
       </CardHeader>
       
       <CardContent className="pt-0">
-        {/* Section image */}
-        {section.image_url && (
-          <div className="relative mb-4 inline-block">
-            <img 
-              src={section.image_url} 
-              alt={`${section.title} image`}
-              className="max-h-48 rounded-lg border border-border"
-            />
-            {canEdit && (
-              <Button
-                variant="destructive"
-                size="icon"
-                className="absolute -top-2 -right-2 h-6 w-6"
-                onClick={() => removeImageMutation.mutate()}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Image upload button */}
-        {canEdit && !section.image_url && (
-          <div className="mb-4">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="gap-2"
-            >
-              <Upload className="h-4 w-4" />
-              {uploading ? "Uploading..." : "Add Image"}
-            </Button>
-          </div>
-        )}
-
-        {/* Items (always visible, no collapse) */}
+        {/* Items */}
         {visibleItems.length > 0 ? (
           <div className="space-y-1">
             {visibleItems.map((item) => (
@@ -327,6 +288,75 @@ export function ChecklistSection({
             Add Item
           </Button>
         )}
+
+        {/* Section Image - at bottom */}
+        {!hideAllImages && section.image_url && (
+          <div className="relative mt-4 inline-block">
+            <img 
+              src={section.image_url} 
+              alt={`${section.title} image`}
+              className="max-h-48 rounded-lg border border-border"
+            />
+            {canEdit && (
+              <Button
+                variant="destructive"
+                size="icon"
+                className="absolute -top-2 -right-2 h-6 w-6"
+                onClick={() => removeImageMutation.mutate()}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Image upload button - at bottom */}
+        {canEdit && !section.image_url && (
+          <div className="mt-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="gap-2"
+            >
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading..." : "Add Image"}
+            </Button>
+          </div>
+        )}
+
+        {/* Section Notes - at bottom */}
+        <div className="mt-4 border-t border-border pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowNotes(!showNotes)}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <MessageSquare className="h-4 w-4" />
+            {showNotes ? "Hide Notes" : "Show Notes"}
+          </Button>
+          
+          {showNotes && (
+            <div className="mt-2">
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add section notes..."
+                className="text-sm min-h-[80px]"
+                disabled={!canEdit}
+              />
+            </div>
+          )}
+        </div>
       </CardContent>
 
       {/* Add Item Dialog */}
