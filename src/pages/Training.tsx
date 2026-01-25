@@ -63,10 +63,10 @@ const Training = () => {
         
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            SOP
+            Training
           </h1>
           <p className="text-muted-foreground mt-1">
-            Access training materials, documentation, and standard operating procedures.
+            SOP, Machine Operation, and Machine Maintenance.
           </p>
         </div>
 
