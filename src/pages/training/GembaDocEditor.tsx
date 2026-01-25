@@ -410,7 +410,7 @@ function GembaDocEditorContent() {
         <DashboardLayout>
           <div className="relative">
             {/* Sidebar - Positioned absolutely on the left, aligned with grid top */}
-            <div className="absolute left-0 top-[7.5rem]">
+            <div className="absolute left-0 top-[10.5rem]">
               <GembaDocSidebar
                 isLocked={isLocked}
                 onLockChange={(locked) => updateDocMutation.mutate({ is_locked: locked })}
