@@ -12,9 +12,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Camera, Eye, EyeOff, Mail, Lock, Moon, Sun } from "lucide-react";
 
 const Settings = () => {
-  const { profile, user } = useAuth();
+  const { profile, user, organization } = useAuth();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  
+  // Check if dark mode logos are available
+  const hasDarkModeLogos = !!(organization?.main_logo_dark_url || organization?.sub_logo_dark_url);
   
   // Profile state
   const [fullName, setFullName] = useState(profile?.full_name || "");
@@ -221,11 +224,16 @@ const Settings = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium text-foreground">Dark Mode</p>
-              <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
+              <p className="text-sm text-muted-foreground">
+                {hasDarkModeLogos 
+                  ? "Switch between light and dark themes" 
+                  : "Dark mode logos must be uploaded by an admin first"}
+              </p>
             </div>
             <Switch
               checked={theme === "dark"}
               onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+              disabled={!hasDarkModeLogos}
             />
           </div>
         </div>
