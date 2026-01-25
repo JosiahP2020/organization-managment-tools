@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Camera, Eye, EyeOff, Mail, Lock, Settings as SettingsIcon } from "lucide-react";
+import { User, Camera, Eye, EyeOff, Mail, Lock, Moon, Sun } from "lucide-react";
 
 const Settings = () => {
   const { profile, user } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   
   // Profile state
   const [fullName, setFullName] = useState(profile?.full_name || "");
@@ -197,6 +200,33 @@ const Settings = () => {
           </div>
           <div className="bg-muted/50 rounded-lg px-4 py-3">
             <p className="text-foreground">{user?.email}</p>
+          </div>
+        </div>
+
+        {/* Appearance Section */}
+        <div className="bg-card border border-border rounded-xl p-6 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+              {theme === "dark" ? (
+                <Moon className="w-5 h-5 text-primary" />
+              ) : (
+                <Sun className="w-5 h-5 text-primary" />
+              )}
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">Appearance</h2>
+              <p className="text-sm text-muted-foreground">Customize the look and feel</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-foreground">Dark Mode</p>
+              <p className="text-sm text-muted-foreground">Switch between light and dark themes</p>
+            </div>
+            <Switch
+              checked={theme === "dark"}
+              onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+            />
           </div>
         </div>
 
