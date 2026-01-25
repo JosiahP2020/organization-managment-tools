@@ -1,18 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Step = "org-details" | "admin-account";
 
 const CreateOrganization = () => {
   const navigate = useNavigate();
+  const { user, organization } = useAuth();
   const [step, setStep] = useState<Step>("org-details");
 
   // Organization details
   const [orgName, setOrgName] = useState("");
 
   // Admin account details
+  const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,7 +26,14 @@ const CreateOrganization = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleOrgDetailsSubmit = (e: React.FormEvent) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && organization) {
+      navigate(`/dashboard/${organization.slug}`);
+    }
+  }, [user, organization, navigate]);
+
+  const handleOrgDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -36,12 +47,35 @@ const CreateOrganization = () => {
       return;
     }
 
+    // Generate slug and check if it exists
+    const slug = orgName.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    
+    setIsLoading(true);
+    
+    const { data: existingOrg } = await supabase
+      .from("organizations")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+
+    setIsLoading(false);
+
+    if (existingOrg) {
+      setError("An organization with this name already exists");
+      return;
+    }
+
     setStep("admin-account");
   };
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!adminName.trim()) {
+      setError("Please enter your name");
+      return;
+    }
 
     if (!adminEmail.trim()) {
       setError("Please enter your email");
@@ -65,11 +99,85 @@ const CreateOrganization = () => {
 
     setIsLoading(true);
 
-    // Simulate account creation - this will be connected to backend later
-    setTimeout(() => {
+    // Generate slug from organization name
+    const slug = orgName.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+    // 1. Create organization first (using service role via edge function would be ideal, 
+    // but for now we'll create after signup using the user's auth)
+    
+    // First sign up the user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: adminEmail.trim(),
+      password: adminPassword,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
+
+    if (authError) {
       setIsLoading(false);
-      setError("Backend not connected yet. Enable Lovable Cloud to add authentication.");
-    }, 1000);
+      if (authError.message.includes("already registered")) {
+        setError("This email is already registered. Please sign in instead.");
+      } else {
+        setError(authError.message);
+      }
+      return;
+    }
+
+    if (!authData.user) {
+      setIsLoading(false);
+      setError("Failed to create account. Please try again.");
+      return;
+    }
+
+    // 2. Create organization
+    const { data: orgData, error: orgError } = await supabase
+      .from("organizations")
+      .insert({
+        name: orgName.trim(),
+        slug: slug,
+      })
+      .select()
+      .single();
+
+    if (orgError) {
+      setIsLoading(false);
+      setError("Failed to create organization. Please try again.");
+      return;
+    }
+
+    // 3. Create profile
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: authData.user.id,
+        organization_id: orgData.id,
+        full_name: adminName.trim(),
+      });
+
+    if (profileError) {
+      setIsLoading(false);
+      setError("Failed to create profile. Please try again.");
+      return;
+    }
+
+    // 4. Create admin role
+    const { error: roleError } = await supabase
+      .from("user_roles")
+      .insert({
+        user_id: authData.user.id,
+        organization_id: orgData.id,
+        role: "admin",
+      });
+
+    if (roleError) {
+      setIsLoading(false);
+      setError("Failed to assign admin role. Please try again.");
+      return;
+    }
+
+    // Success! Auth state change will handle redirect
+    setIsLoading(false);
   };
 
   return (
@@ -164,6 +272,7 @@ const CreateOrganization = () => {
                     placeholder="Shellstar Custom Cabinets"
                     className="input-field"
                     autoFocus
+                    disabled={isLoading}
                   />
                   <p className="text-xs text-muted-foreground mt-2">
                     This name will be used for employees to login to your workspace
@@ -173,8 +282,16 @@ const CreateOrganization = () => {
                   )}
                 </div>
 
-                <button type="submit" className="btn-primary w-full">
-                  Continue
+                <button 
+                  type="submit" 
+                  className="btn-primary w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mx-auto" />
+                  ) : (
+                    "Continue"
+                  )}
                 </button>
               </form>
             </>
@@ -195,6 +312,28 @@ const CreateOrganization = () => {
               <form onSubmit={handleCreateAccount} className="space-y-5">
                 <div>
                   <label
+                    htmlFor="adminName"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
+                    Your Name
+                  </label>
+                  <input
+                    id="adminName"
+                    type="text"
+                    value={adminName}
+                    onChange={(e) => {
+                      setAdminName(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="John Doe"
+                    className="input-field"
+                    autoFocus
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div>
+                  <label
                     htmlFor="adminEmail"
                     className="block text-sm font-medium text-foreground mb-2"
                   >
@@ -210,7 +349,7 @@ const CreateOrganization = () => {
                     }}
                     placeholder="admin@company.com"
                     className="input-field"
-                    autoFocus
+                    disabled={isLoading}
                   />
                 </div>
 
@@ -232,6 +371,7 @@ const CreateOrganization = () => {
                       }}
                       placeholder="••••••••"
                       className="input-field pr-12"
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
@@ -268,6 +408,7 @@ const CreateOrganization = () => {
                       }}
                       placeholder="••••••••"
                       className="input-field pr-12"
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
