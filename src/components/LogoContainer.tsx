@@ -16,7 +16,7 @@ export const LogoContainer = forwardRef<HTMLDivElement, LogoContainerProps>(
       <div
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-lg p-2 dark:bg-[hsl(0,0%,85%)]",
+          "inline-flex items-center justify-center rounded-lg p-2 dark:bg-[#242424]",
           className
         )}
       >
