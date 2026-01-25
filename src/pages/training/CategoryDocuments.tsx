@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Logo } from "@/components/Logo";
+import { LogoContainer } from "@/components/LogoContainer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -53,12 +54,14 @@ const CategoryDocuments = () => {
       <div className="max-w-4xl mx-auto">
         {/* Organization Logo */}
         <div className="flex justify-center mb-6 md:mb-8">
-          <Logo 
-            size="xl" 
-            customSrc={mainLogoUrl} 
-            variant="full"
-            className="max-h-32 md:max-h-40"
-          />
+          <LogoContainer>
+            <Logo 
+              size="xl" 
+              customSrc={mainLogoUrl} 
+              variant="full"
+              className="max-h-32 md:max-h-40"
+            />
+          </LogoContainer>
         </div>
 
         {/* Header with title and create button */}
