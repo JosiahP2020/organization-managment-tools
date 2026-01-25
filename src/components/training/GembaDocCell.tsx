@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Upload, Trash2, Pencil, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,7 +34,42 @@ export function GembaDocCell({
   isUploading = false,
 }: GembaDocCellProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [localText, setLocalText] = useState(stepText || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync local state when prop changes (e.g., from server)
+  useEffect(() => {
+    setLocalText(stepText || "");
+  }, [stepText]);
+
+  // Debounced save function
+  const debouncedSave = useCallback(
+    (value: string) => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+      debounceRef.current = setTimeout(() => {
+        onStepTextChange(value);
+      }, 500); // 500ms debounce
+    },
+    [onStepTextChange]
+  );
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setLocalText(value);
+    debouncedSave(value);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -139,8 +174,8 @@ export function GembaDocCell({
       <div className="p-2 border-t">
         {canEdit ? (
           <Textarea
-            value={stepText || ""}
-            onChange={(e) => onStepTextChange(e.target.value)}
+            value={localText}
+            onChange={handleTextChange}
             placeholder="Enter step description..."
             className="min-h-[60px] text-sm resize-none"
             onClick={(e) => e.stopPropagation()}
