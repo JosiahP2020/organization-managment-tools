@@ -3,7 +3,6 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
-import { DevOrientationToggle } from "@/components/DevOrientationToggle";
 
 interface CategoryCardProps {
   icon: React.ReactNode;
@@ -94,9 +93,6 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-
-      {/* Development Orientation Toggle */}
-      <DevOrientationToggle />
     </DashboardLayout>
   );
 };
