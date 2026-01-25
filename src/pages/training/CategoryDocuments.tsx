@@ -8,9 +8,19 @@ import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, FileText, Lock, Search, Pencil, Archive, Trash2, ArrowUpDown } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Plus, FileText, Lock, Search, Pencil, Archive, Trash2, ArrowUpDown, ChevronDown, ArchiveRestore } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateChecklistDialog } from "@/components/training/CreateChecklistDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +37,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { toast } from "@/hooks/use-toast";
 
 const categoryLabels: Record<string, string> = {
@@ -56,9 +71,17 @@ const CategoryDocuments = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [selectedChecklist, setSelectedChecklist] = useState<{ id: string; title: string } | null>(null);
+  const [archivedOpen, setArchivedOpen] = useState(false);
+  
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingChecklist, setEditingChecklist] = useState<{ id: string; title: string; description: string | null } | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   const categoryLabel = categoryLabels[category || ""] || category;
 
+  // Fetch active checklists
   const { data: checklists, isLoading, refetch } = useQuery({
     queryKey: ["checklists", category, organization?.id],
     queryFn: async () => {
@@ -69,8 +92,28 @@ const CategoryDocuments = () => {
         .select("*")
         .eq("organization_id", organization.id)
         .eq("category", category as "machine_operation" | "machine_maintenance" | "sop_training")
-        .is("archived_at", null) // Only show non-archived checklists
+        .is("archived_at", null)
         .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!organization?.id && !!category,
+  });
+
+  // Fetch archived checklists
+  const { data: archivedChecklists, refetch: refetchArchived } = useQuery({
+    queryKey: ["checklists-archived", category, organization?.id],
+    queryFn: async () => {
+      if (!organization?.id || !category) return [];
+      
+      const { data, error } = await supabase
+        .from("checklists")
+        .select("*")
+        .eq("organization_id", organization.id)
+        .eq("category", category as "machine_operation" | "machine_maintenance" | "sop_training")
+        .not("archived_at", "is", null)
+        .order("archived_at", { ascending: false });
       
       if (error) throw error;
       return data;
@@ -116,6 +159,7 @@ const CategoryDocuments = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checklists"] });
+      queryClient.invalidateQueries({ queryKey: ["checklists-archived"] });
       toast({ title: "Checklist deleted successfully" });
       setDeleteDialogOpen(false);
       setSelectedChecklist(null);
@@ -135,6 +179,7 @@ const CategoryDocuments = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checklists"] });
+      queryClient.invalidateQueries({ queryKey: ["checklists-archived"] });
       toast({ title: "Checklist archived successfully" });
       setArchiveDialogOpen(false);
       setSelectedChecklist(null);
@@ -144,13 +189,63 @@ const CategoryDocuments = () => {
     },
   });
 
+  const restoreMutation = useMutation({
+    mutationFn: async (checklistId: string) => {
+      const { error } = await supabase
+        .from("checklists")
+        .update({ archived_at: null })
+        .eq("id", checklistId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklists"] });
+      queryClient.invalidateQueries({ queryKey: ["checklists-archived"] });
+      toast({ title: "Checklist restored successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Failed to restore checklist", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, title, description }: { id: string; title: string; description: string | null }) => {
+      const { error } = await supabase
+        .from("checklists")
+        .update({ title, description })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["checklists"] });
+      queryClient.invalidateQueries({ queryKey: ["checklists-archived"] });
+      toast({ title: "Checklist updated successfully" });
+      setEditDialogOpen(false);
+      setEditingChecklist(null);
+    },
+    onError: (error) => {
+      toast({ title: "Failed to update checklist", description: error.message, variant: "destructive" });
+    },
+  });
+
   const handleChecklistClick = (checklistId: string) => {
     navigate(`/dashboard/${orgSlug}/training/${category}/${checklistId}`);
   };
 
-  const handleEdit = (e: React.MouseEvent, checklistId: string) => {
+  const handleEdit = (e: React.MouseEvent, checklist: { id: string; title: string; description: string | null }) => {
     e.stopPropagation();
-    navigate(`/dashboard/${orgSlug}/training/${category}/${checklistId}`);
+    setEditingChecklist(checklist);
+    setEditTitle(checklist.title);
+    setEditDescription(checklist.description || "");
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingChecklist || !editTitle.trim()) return;
+    updateMutation.mutate({
+      id: editingChecklist.id,
+      title: editTitle.trim(),
+      description: editDescription.trim() || null,
+    });
   };
 
   const handleArchive = (e: React.MouseEvent, checklist: { id: string; title: string }) => {
@@ -163,6 +258,11 @@ const CategoryDocuments = () => {
     e.stopPropagation();
     setSelectedChecklist(checklist);
     setDeleteDialogOpen(true);
+  };
+
+  const handleRestore = (e: React.MouseEvent, checklistId: string) => {
+    e.stopPropagation();
+    restoreMutation.mutate(checklistId);
   };
 
   return (
@@ -273,7 +373,7 @@ const CategoryDocuments = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={(e) => handleEdit(e, checklist.id)}
+                          onClick={(e) => handleEdit(e, { id: checklist.id, title: checklist.title, description: checklist.description })}
                           title="Edit"
                         >
                           <Pencil className="h-4 w-4" />
@@ -344,6 +444,72 @@ const CategoryDocuments = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Archived Checklists Dropdown */}
+        {archivedChecklists && archivedChecklists.length > 0 && (
+          <Collapsible open={archivedOpen} onOpenChange={setArchivedOpen} className="mt-8">
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  <Archive className="h-4 w-4" />
+                  Archived ({archivedChecklists.length})
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${archivedOpen ? "rotate-180" : ""}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4 space-y-3">
+              {archivedChecklists.map((checklist) => (
+                <Card 
+                  key={checklist.id}
+                  className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md opacity-70"
+                  onClick={() => handleChecklistClick(checklist.id)}
+                >
+                  <CardHeader className={checklist.description ? "pb-2" : ""}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <Archive className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <CardTitle className="text-lg flex items-center gap-2 text-muted-foreground">
+                          {checklist.title}
+                        </CardTitle>
+                      </div>
+                      {isAdmin && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={(e) => handleRestore(e, checklist.id)}
+                            title="Restore"
+                          >
+                            <ArchiveRestore className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={(e) => handleDelete(e, { id: checklist.id, title: checklist.title })}
+                            title="Delete Permanently"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  {checklist.description && (
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {checklist.description}
+                      </p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </div>
 
       {/* Create Checklist Dialog */}
@@ -356,6 +522,47 @@ const CategoryDocuments = () => {
           setCreateDialogOpen(false);
         }}
       />
+
+      {/* Edit Checklist Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Checklist</DialogTitle>
+            <DialogDescription>
+              Update the title and description for this checklist.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Checklist title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description (optional)</Label>
+              <Textarea
+                id="edit-description"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Brief description of this checklist"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={!editTitle.trim() || updateMutation.isPending}>
+              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
