@@ -63,7 +63,7 @@ const Training = () => {
         
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            SOP/Training
+            SOP
           </h1>
           <p className="text-muted-foreground mt-1">
             Access training materials, documentation, and standard operating procedures.
@@ -71,10 +71,10 @@ const Training = () => {
         </div>
 
         <div className="space-y-4">
-          {/* SOP/Training first */}
+          {/* SOP first */}
           <CategorySection
             icon={<FileText className="w-5 h-5" />}
-            title="SOP/Training"
+            title="SOP"
             description="Standard operating procedures, training materials, and certification documents."
           />
           
