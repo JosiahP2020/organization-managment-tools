@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Calendar, Key, Image, Save, Type, Palette } from "lucide-react";
+import { Building2, Calendar, Key, Image, Save, Type, Palette, Moon } from "lucide-react";
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
 import { AccentColorPicker } from "@/components/AccentColorPicker";
@@ -21,6 +21,8 @@ const OrganizationSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [mainLogoUrl, setMainLogoUrl] = useState<string | null>(null);
   const [subLogoUrl, setSubLogoUrl] = useState<string | null>(null);
+  const [mainLogoDarkUrl, setMainLogoDarkUrl] = useState<string | null>(null);
+  const [subLogoDarkUrl, setSubLogoDarkUrl] = useState<string | null>(null);
   const [accentColor, setAccentColor] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -31,6 +33,8 @@ const OrganizationSettings = () => {
       setOrgCode(organization.slug || "");
       setMainLogoUrl(organization.main_logo_url || organization.logo_url || null);
       setSubLogoUrl(organization.sub_logo_url || null);
+      setMainLogoDarkUrl(organization.main_logo_dark_url || null);
+      setSubLogoDarkUrl(organization.sub_logo_dark_url || null);
       setAccentColor(organization.accent_color || null);
     }
   }, [organization]);
@@ -43,6 +47,8 @@ const OrganizationSettings = () => {
     const originalCode = organization.slug || "";
     const originalMainLogo = organization.main_logo_url || organization.logo_url || null;
     const originalSubLogo = organization.sub_logo_url || null;
+    const originalMainLogoDark = organization.main_logo_dark_url || null;
+    const originalSubLogoDark = organization.sub_logo_dark_url || null;
     const originalAccentColor = organization.accent_color || null;
     
     const changed = 
@@ -50,10 +56,12 @@ const OrganizationSettings = () => {
       orgCode !== originalCode ||
       mainLogoUrl !== originalMainLogo ||
       subLogoUrl !== originalSubLogo ||
+      mainLogoDarkUrl !== originalMainLogoDark ||
+      subLogoDarkUrl !== originalSubLogoDark ||
       accentColor !== originalAccentColor;
     
     setHasChanges(changed);
-  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, accentColor, organization]);
+  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, mainLogoDarkUrl, subLogoDarkUrl, accentColor, organization]);
 
   const handleSaveAll = async () => {
     if (!organization) return;
@@ -92,6 +100,8 @@ const OrganizationSettings = () => {
         slug: cleanCode,
         main_logo_url: mainLogoUrl,
         sub_logo_url: subLogoUrl,
+        main_logo_dark_url: mainLogoDarkUrl,
+        sub_logo_dark_url: subLogoDarkUrl,
         logo_url: mainLogoUrl, // Keep legacy field in sync
         accent_color: accentColor,
       })
@@ -150,6 +160,33 @@ const OrganizationSettings = () => {
                 organizationId={organization.id}
                 onMainLogoChange={setMainLogoUrl}
                 onSubLogoChange={setSubLogoUrl}
+              />
+            )}
+          </div>
+
+          {/* Dark Mode Logos */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                <Moon className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Dark Mode Logos (Optional)</h2>
+                <p className="text-sm text-muted-foreground">
+                  Upload alternate logos for dark mode. If not set, light mode logos will be used.
+                </p>
+              </div>
+            </div>
+
+            {organization && (
+              <DualLogoUpload
+                mainLogoUrl={mainLogoDarkUrl}
+                subLogoUrl={subLogoDarkUrl}
+                organizationId={organization.id}
+                onMainLogoChange={setMainLogoDarkUrl}
+                onSubLogoChange={setSubLogoDarkUrl}
+                mainLabel="Main Logo (Dark)"
+                subLabel="Sidebar Logo (Dark)"
               />
             )}
           </div>

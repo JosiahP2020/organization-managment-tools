@@ -13,6 +13,8 @@ interface Organization {
   logo_url: string | null;
   main_logo_url: string | null;
   sub_logo_url: string | null;
+  main_logo_dark_url: string | null;
+  sub_logo_dark_url: string | null;
   display_name: string | null;
   accent_color: string | null;
 }

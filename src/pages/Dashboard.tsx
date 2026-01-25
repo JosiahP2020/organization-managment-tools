@@ -1,5 +1,6 @@
 import { GraduationCap, ShoppingBag, Wrench } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,9 +50,13 @@ function CategoryCard({ icon, title, description, comingSoon = false, onClick }:
 const Dashboard = () => {
   const { organization } = useAuth();
   const navigate = useNavigate();
+  const { resolvedTheme } = useTheme();
 
-  // Use main_logo_url if available, otherwise fall back to logo_url
-  const mainLogoUrl = organization?.main_logo_url || organization?.logo_url || null;
+  // Use dark mode logo if available and in dark mode, otherwise fall back to light logo
+  const mainLogoUrl = 
+    resolvedTheme === "dark" && organization?.main_logo_dark_url
+      ? organization.main_logo_dark_url
+      : organization?.main_logo_url || organization?.logo_url || null;
 
   const handleTrainingClick = () => {
     if (organization?.slug) {

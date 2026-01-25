@@ -1,4 +1,5 @@
 import { Home, Settings, User, Users, Building2, LogOut } from "lucide-react";
+import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
@@ -36,6 +37,13 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { profile, organization, isAdmin, signOut } = useAuth();
+  const { resolvedTheme } = useTheme();
+
+  // Use dark mode sub-logo if available and in dark mode, otherwise fall back to light logo
+  const subLogoUrl = 
+    resolvedTheme === "dark" && organization?.sub_logo_dark_url
+      ? organization.sub_logo_dark_url
+      : organization?.sub_logo_url || null;
 
   const getInitials = (name: string) => {
     return name
@@ -52,7 +60,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <Logo variant={collapsed ? "icon" : "icon"} size="sm" />
+          <Logo variant={collapsed ? "icon" : "icon"} size="sm" customSrc={subLogoUrl} />
           {!collapsed && (
             <div className="flex flex-col">
               <span className="font-semibold text-sm text-foreground">ShellStar</span>

@@ -10,6 +10,8 @@ interface DualLogoUploadProps {
   organizationId: string;
   onMainLogoChange: (url: string | null) => void;
   onSubLogoChange: (url: string | null) => void;
+  mainLabel?: string;
+  subLabel?: string;
 }
 
 interface SingleLogoUploadProps {
@@ -171,12 +173,14 @@ export function DualLogoUpload({
   subLogoUrl, 
   organizationId, 
   onMainLogoChange, 
-  onSubLogoChange 
+  onSubLogoChange,
+  mainLabel = "Main Logo",
+  subLabel = "Sidebar Logo (Sub-Logo)"
 }: DualLogoUploadProps) {
   return (
     <div className="space-y-6">
       <SingleLogoUpload
-        label="Main Logo"
+        label={mainLabel}
         description="Displayed on the dashboard page. Recommended: Wide/horizontal format, min 400x200px"
         currentUrl={mainLogoUrl}
         organizationId={organizationId}
@@ -186,7 +190,7 @@ export function DualLogoUpload({
       
       <div className="border-t border-border pt-6">
         <SingleLogoUpload
-          label="Sidebar Logo (Sub-Logo)"
+          label={subLabel}
           description="Displayed in the side menu panel. Recommended: Square or compact, min 200x200px"
           currentUrl={subLogoUrl}
           organizationId={organizationId}
