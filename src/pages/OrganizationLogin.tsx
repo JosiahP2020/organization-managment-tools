@@ -40,7 +40,6 @@ const OrganizationLogin = () => {
 
     if (!org) {
       setError("Invalid organization name. Please check and try again.");
-      setIsLoading(false);
       return;
     }
 

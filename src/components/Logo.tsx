@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import shellstarLogo from "@/assets/shellstar-logo.png";
 import sccIcon from "@/assets/scc-icon.gif";
 import sccLogo from "@/assets/scc-logo.gif";
@@ -42,20 +43,23 @@ const altTexts = {
   scc: "SCC Logo",
 };
 
-export const Logo = ({ 
+export const Logo = forwardRef<HTMLImageElement, LogoProps>(({ 
   className = "", 
   size = "md", 
   variant = "full",
   customSrc = null 
-}: LogoProps) => {
+}, ref) => {
   const logoSrc = customSrc || defaultLogos[variant];
   const altText = customSrc ? "Organization Logo" : altTexts[variant];
   
   return (
     <img
+      ref={ref}
       src={logoSrc}
       alt={altText}
       className={`${sizeClasses[variant][size]} w-auto object-contain ${className}`}
     />
   );
-};
+});
+
+Logo.displayName = "Logo";
