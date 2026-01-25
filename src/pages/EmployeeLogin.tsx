@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { ArrowLeft, Eye, EyeOff, Building2 } from "lucide-react";
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const EmployeeLogin = () => {
   const navigate = useNavigate();
   const { organizationName } = useParams<{ organizationName: string }>();
-  const { user, organization } = useAuth();
+  const { user, organization, isLoading: authLoading } = useAuth();
   
   const [orgData, setOrgData] = useState<{ id: string; name: string; slug: string } | null>(null);
   const [email, setEmail] = useState("");
@@ -18,13 +18,21 @@ const EmployeeLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingOrg, setIsCheckingOrg] = useState(true);
   const [orgNotFound, setOrgNotFound] = useState(false);
+  const [loginSuccessful, setLoginSuccessful] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in OR after successful login when organization data is ready
   useEffect(() => {
-    if (user && organization) {
-      navigate(`/dashboard/${organization.slug}`);
+    if (user && organization && !authLoading) {
+      navigate(`/dashboard/${organization.slug}`, { replace: true });
     }
-  }, [user, organization, navigate]);
+  }, [user, organization, authLoading, navigate]);
+
+  // Also handle redirect after login success
+  useEffect(() => {
+    if (loginSuccessful && user && organization) {
+      navigate(`/dashboard/${organization.slug}`, { replace: true });
+    }
+  }, [loginSuccessful, user, organization, navigate]);
 
   // Fetch organization data
   useEffect(() => {
@@ -77,15 +85,17 @@ const EmployeeLogin = () => {
     if (authError) {
       setIsLoading(false);
       setError(authError.message === "Invalid login credentials" 
-        ? "Invalid email or password" 
+        ? "Invalid email or password. Please try again." 
         : authError.message);
       return;
     }
 
-    // Auth state change will handle redirect
+    // Mark login as successful - redirect will happen via useEffect when organization is loaded
+    setLoginSuccessful(true);
   };
 
-  if (isCheckingOrg) {
+  // Show loading while checking org or after successful login waiting for redirect
+  if (isCheckingOrg || (loginSuccessful && (!organization || authLoading))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-subtle">
         <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
