@@ -1,13 +1,30 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DocumentSection } from "@/components/training/DocumentSection";
+import { Logo } from "@/components/Logo";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type DocumentCategory = "machine_operation" | "machine_maintenance" | "sop_training";
 
 const SOPTraining = () => {
+  const { organization } = useAuth();
+  
+  // Use sub_logo_url for this page
+  const subLogoUrl = organization?.sub_logo_url || organization?.logo_url || null;
+
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground text-center">
+      <div className="max-w-2xl mx-auto space-y-8">
+        {/* Sub Logo */}
+        <div className="flex justify-center">
+          <Logo 
+            size="lg" 
+            customSrc={subLogoUrl} 
+            variant="full"
+            className="max-h-20"
+          />
+        </div>
+
+        <h1 className="text-3xl md:text-4xl font-bold text-primary text-center">
           Training
         </h1>
 
