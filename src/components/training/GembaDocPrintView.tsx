@@ -227,19 +227,19 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             >
               {Array.from({ length: gridRows * gridCols }, (_, i) => {
                 const cell = page.cells.find((c) => c.position === i);
+                // Calculate step number from position (1-indexed), just like the main grid
+                const stepNumber = i + 1;
                 return (
                   <div key={i} className="gemba-print-cell">
                     {/* Image container with step badge inside */}
                     <div className="gemba-print-image-container">
-                      {cell?.step_number && (
-                        <div className="gemba-print-step-badge">
-                          {cell.step_number}
-                        </div>
-                      )}
+                      <div className="gemba-print-step-badge">
+                        {stepNumber}
+                      </div>
                       {cell?.image_url ? (
                         <img
                           src={cell.image_url}
-                          alt={`Step ${cell.step_number || i + 1}`}
+                          alt={`Step ${stepNumber}`}
                           className="gemba-print-cell-image"
                         />
                       ) : (
@@ -260,7 +260,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             {/* Footer with page number */}
             <div className="gemba-print-footer">
               <span className="gemba-print-page-number">
-                Page {page.page_number} of {pages.length}
+                Page {page.page_number}
               </span>
             </div>
           </div>
