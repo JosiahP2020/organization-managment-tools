@@ -11,6 +11,8 @@ interface Organization {
   slug: string;
   created_at: string;
   logo_url: string | null;
+  main_logo_url: string | null;
+  sub_logo_url: string | null;
 }
 
 interface Profile {
