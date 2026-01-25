@@ -1,14 +1,13 @@
 import { useState, useRef } from "react";
 import { Upload, Trash2, Pencil, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 interface GembaDocCellProps {
   imageUrl: string | null;
   imageAnnotations: object[] | null;
-  stepNumber: string | null;
+  stepNumber: number; // Now a simple number for display
   stepText: string | null;
   position: number;
   isLocked: boolean;
@@ -16,7 +15,6 @@ interface GembaDocCellProps {
   onImageUpload: (file: File) => void;
   onImageDelete: () => void;
   onAnnotate: () => void;
-  onStepNumberChange: (value: string) => void;
   onStepTextChange: (value: string) => void;
   isUploading?: boolean;
 }
@@ -32,12 +30,10 @@ export function GembaDocCell({
   onImageUpload,
   onImageDelete,
   onAnnotate,
-  onStepNumberChange,
   onStepTextChange,
   isUploading = false,
 }: GembaDocCellProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isTapped, setIsTapped] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,39 +47,20 @@ export function GembaDocCell({
     }
   };
 
-  const handleTap = () => {
-    if (!isLocked && isAdmin) {
-      setIsTapped((prev) => !prev);
-    }
-  };
-
-  const showActions = (isHovered || isTapped) && !isLocked && isAdmin;
   const canEdit = !isLocked && isAdmin;
+  const showHoverActions = isHovered && canEdit && imageUrl;
 
   return (
     <div
       className="relative flex flex-col border rounded-lg bg-card overflow-hidden"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={handleTap}
     >
-      {/* Step Number Badge */}
+      {/* Step Number Badge - Always visible, not editable */}
       <div className="absolute top-2 left-2 z-10">
-        {canEdit ? (
-          <Input
-            value={stepNumber || ""}
-            onChange={(e) => onStepNumberChange(e.target.value)}
-            placeholder="#"
-            className="w-12 h-8 text-center font-bold text-sm bg-background/90 backdrop-blur-sm"
-            onClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          stepNumber && (
-            <div className="w-auto min-w-[2rem] h-8 px-2 flex items-center justify-center font-bold text-sm bg-primary text-primary-foreground rounded-md">
-              {stepNumber}
-            </div>
-          )
-        )}
+        <div className="w-auto min-w-[2rem] h-8 px-2 flex items-center justify-center font-bold text-sm bg-primary text-primary-foreground rounded-md">
+          {stepNumber}
+        </div>
       </div>
 
       {/* Image Area */}
@@ -92,7 +69,7 @@ export function GembaDocCell({
           <>
             <img
               src={imageUrl}
-              alt={`Step ${stepNumber || position + 1}`}
+              alt={`Step ${stepNumber}`}
               className="w-full h-full object-contain"
             />
             {/* Render annotations if any */}
@@ -101,18 +78,41 @@ export function GembaDocCell({
                 {/* Annotation overlay would be rendered here */}
               </div>
             )}
+            
+            {/* Hover action buttons - top right, no blur/overlay */}
+            {showHoverActions && (
+              <div className="absolute top-2 right-2 flex gap-1 z-10">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-background"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAnnotate();
+                  }}
+                  title="Edit/Annotate"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-8 w-8 bg-background/90 backdrop-blur-sm hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onImageDelete();
+                  }}
+                  title="Delete Image"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </>
         ) : (
+          // Empty state - show upload button if can edit
           <div className="flex flex-col items-center justify-center text-muted-foreground p-4">
-            <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
-            <span className="text-xs">No image</span>
-          </div>
-        )}
-
-        {/* Upload/Delete/Annotate Actions */}
-        {showActions && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center gap-2">
-            {!imageUrl ? (
+            {canEdit ? (
               <Button
                 variant="outline"
                 size="sm"
@@ -127,47 +127,11 @@ export function GembaDocCell({
               </Button>
             ) : (
               <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAnnotate();
-                  }}
-                  title="Edit/Annotate"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="text-destructive hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onImageDelete();
-                  }}
-                  title="Delete Image"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
+                <span className="text-xs">No image</span>
               </>
             )}
           </div>
-        )}
-
-        {/* Delete button always visible on hover for images */}
-        {imageUrl && isHovered && !isLocked && isAdmin && !showActions && (
-          <Button
-            variant="destructive"
-            size="icon"
-            className="absolute top-2 right-2 h-7 w-7"
-            onClick={(e) => {
-              e.stopPropagation();
-              onImageDelete();
-            }}
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
         )}
       </div>
 

@@ -5,7 +5,6 @@ interface CellData {
   position: number;
   image_url: string | null;
   image_annotations: object[] | null;
-  step_number: string | null;
   step_text: string | null;
 }
 
@@ -18,7 +17,6 @@ interface GembaDocGridProps {
   onCellImageUpload: (position: number, file: File) => void;
   onCellImageDelete: (position: number) => void;
   onCellAnnotate: (position: number) => void;
-  onCellStepNumberChange: (position: number, value: string) => void;
   onCellStepTextChange: (position: number, value: string) => void;
   uploadingPositions: number[];
 }
@@ -32,7 +30,6 @@ export function GembaDocGrid({
   onCellImageUpload,
   onCellImageDelete,
   onCellAnnotate,
-  onCellStepNumberChange,
   onCellStepTextChange,
   uploadingPositions,
 }: GembaDocGridProps) {
@@ -52,14 +49,16 @@ export function GembaDocGrid({
         gridTemplateRows: `repeat(${gridRows}, minmax(150px, 1fr))`,
       }}
     >
-      {positions.map((position) => {
+    {positions.map((position) => {
         const cell = cellMap.get(position);
+        // Step number is position + 1 (1-indexed)
+        const stepNumber = position + 1;
         return (
           <GembaDocCell
             key={position}
             imageUrl={cell?.image_url || null}
             imageAnnotations={cell?.image_annotations || null}
-            stepNumber={cell?.step_number || null}
+            stepNumber={stepNumber}
             stepText={cell?.step_text || null}
             position={position}
             isLocked={isLocked}
@@ -67,7 +66,6 @@ export function GembaDocGrid({
             onImageUpload={(file) => onCellImageUpload(position, file)}
             onImageDelete={() => onCellImageDelete(position)}
             onAnnotate={() => onCellAnnotate(position)}
-            onStepNumberChange={(value) => onCellStepNumberChange(position, value)}
             onStepTextChange={(value) => onCellStepTextChange(position, value)}
             isUploading={uploadingPositions.includes(position)}
           />

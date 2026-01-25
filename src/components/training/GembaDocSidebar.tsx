@@ -1,5 +1,6 @@
-import { Lock, Unlock, Printer, RectangleVertical, RectangleHorizontal } from "lucide-react";
+import { Lock, LockOpen, Printer, RectangleVertical, RectangleHorizontal, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -9,8 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
 
 const GRID_PRESETS = [
   { label: "1×1", rows: 1, cols: 1, value: "1x1" },
@@ -61,119 +60,107 @@ export function GembaDocSidebar({
   };
 
   return (
-    <div className="w-full h-full flex flex-col gap-4 p-4 bg-card border-r border-border">
-      <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
-        Settings
-      </h3>
-
-      {/* Grid Layout */}
-      {isAdmin && !isLocked && (
-        <div className="space-y-2">
-          <Label className="text-sm">Grid Layout</Label>
-          <Select value={currentGridValue} onValueChange={handleGridChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select grid" />
-            </SelectTrigger>
-            <SelectContent>
-              {GRID_PRESETS.map((preset) => (
-                <SelectItem key={preset.value} value={preset.value}>
-                  {preset.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Orientation */}
-      {isAdmin && !isLocked && (
-        <div className="space-y-2">
-          <Label className="text-sm">Orientation</Label>
-          <div className="flex gap-2">
-            <Button
-              variant={orientation === "portrait" ? "default" : "outline"}
-              size="sm"
-              className="flex-1 gap-2"
-              onClick={() => onOrientationChange("portrait")}
-            >
-              <RectangleVertical className="h-4 w-4" />
-              Portrait
-            </Button>
-            <Button
-              variant={orientation === "landscape" ? "default" : "outline"}
-              size="sm"
-              className="flex-1 gap-2"
-              onClick={() => onOrientationChange("landscape")}
-            >
-              <RectangleHorizontal className="h-4 w-4" />
-              Landscape
-            </Button>
+    <Card className="w-64 shrink-0 h-fit sticky top-24">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Actions</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Grid Layout - Admin only when unlocked */}
+        {isAdmin && !isLocked && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Grid3X3 className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm">Grid</Label>
+            </div>
+            <Select value={currentGridValue} onValueChange={handleGridChange}>
+              <SelectTrigger className="w-20 h-8">
+                <SelectValue placeholder="Grid" />
+              </SelectTrigger>
+              <SelectContent>
+                {GRID_PRESETS.map((preset) => (
+                  <SelectItem key={preset.value} value={preset.value}>
+                    {preset.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-      )}
-
-      <Separator />
-
-      {/* Double-Sided Toggle */}
-      <div className="flex items-center justify-between">
-        <Label htmlFor="double-sided" className="text-sm cursor-pointer">
-          Double-Sided
-        </Label>
-        <Switch
-          id="double-sided"
-          checked={doubleSided}
-          onCheckedChange={onDoubleSidedChange}
-        />
-      </div>
-      {doubleSided && (
-        <p className="text-xs text-muted-foreground -mt-2">
-          Configure double-sided in your print dialog
-        </p>
-      )}
-
-      {/* Lock Toggle */}
-      {isAdmin && (
-        <div className="flex items-center justify-between">
-          <Label htmlFor="lock-doc" className="text-sm cursor-pointer">
-            Lock Document
-          </Label>
-          <Switch
-            id="lock-doc"
-            checked={isLocked}
-            onCheckedChange={onLockChange}
-          />
-        </div>
-      )}
-
-      <div className="flex-1" />
-
-      {/* Print Button */}
-      <Button onClick={onPrint} variant="outline" className="w-full gap-2">
-        <Printer className="h-4 w-4" />
-        Print
-      </Button>
-
-      {/* Lock Status */}
-      <div
-        className={cn(
-          "flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm",
-          isLocked
-            ? "bg-destructive/10 text-destructive"
-            : "bg-accent text-accent-foreground"
         )}
-      >
-        {isLocked ? (
-          <>
-            <Lock className="h-4 w-4" />
-            Locked
-          </>
-        ) : (
-          <>
-            <Unlock className="h-4 w-4" />
-            Editing
-          </>
+
+        {/* Orientation - Admin only when unlocked */}
+        {isAdmin && !isLocked && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {orientation === "portrait" ? (
+                <RectangleVertical className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <RectangleHorizontal className="h-4 w-4 text-muted-foreground" />
+              )}
+              <Label className="text-sm">Orientation</Label>
+            </div>
+            <div className="flex gap-1">
+              <Button
+                variant={orientation === "portrait" ? "default" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onOrientationChange("portrait")}
+                title="Portrait"
+              >
+                <RectangleVertical className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={orientation === "landscape" ? "default" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onOrientationChange("landscape")}
+                title="Landscape"
+              >
+                <RectangleHorizontal className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
-      </div>
-    </div>
+
+        {/* Lock Toggle - Admin only */}
+        {isAdmin && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isLocked ? (
+                <Lock className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <LockOpen className="h-4 w-4 text-muted-foreground" />
+              )}
+              <Label htmlFor="lock-doc" className="text-sm cursor-pointer">
+                {isLocked ? "Unlock Document" : "Lock Document"}
+              </Label>
+            </div>
+            <Switch
+              id="lock-doc"
+              checked={isLocked}
+              onCheckedChange={onLockChange}
+            />
+          </div>
+        )}
+
+        <div className="border-t pt-4 space-y-2">
+          {/* Print Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start gap-2"
+            onClick={onPrint}
+          >
+            <Printer className="h-4 w-4" />
+            Print
+          </Button>
+        </div>
+
+        {doubleSided && (
+          <p className="text-xs text-muted-foreground">
+            Configure double-sided in your print dialog
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
