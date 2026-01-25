@@ -15,6 +15,7 @@ interface ChecklistSectionProps {
   section: ChecklistSectionType;
   hideCompleted: boolean;
   canEdit: boolean;
+  isLocked: boolean;
   checklistId: string;
   isFirst: boolean;
   isLast: boolean;
@@ -27,6 +28,7 @@ export function ChecklistSection({
   section,
   hideCompleted,
   canEdit,
+  isLocked,
   checklistId,
   isFirst,
   isLast,
@@ -230,6 +232,7 @@ export function ChecklistSection({
   };
 
   const handleTitleClick = () => {
+    // Only allow title editing if canEdit (admin and not locked)
     if (canEdit) {
       setEditedTitle(section.title);
       setIsEditingTitle(true);
@@ -290,7 +293,7 @@ export function ChecklistSection({
               {completedCount}/{totalCount} completed
             </span>
 
-            {/* Reorder arrows */}
+            {/* Reorder arrows - only when canEdit */}
             {canEdit && totalSections > 1 && (
               <>
                 <Button
@@ -316,7 +319,7 @@ export function ChecklistSection({
               </>
             )}
             
-            {/* Delete button */}
+            {/* Delete button - only when canEdit */}
             {canEdit && (
               <Button
                 variant="ghost"
@@ -342,6 +345,7 @@ export function ChecklistSection({
                 getChildItems={getChildItems}
                 hideCompleted={hideCompleted}
                 canEdit={canEdit}
+                isLocked={isLocked}
                 checklistId={checklistId}
                 sectionId={section.id}
                 depth={0}
@@ -356,7 +360,7 @@ export function ChecklistSection({
           </p>
         )}
 
-        {/* Add Item Button */}
+        {/* Add Item Button - only when canEdit */}
         {canEdit && (
           <Button
             variant="ghost"
@@ -369,7 +373,7 @@ export function ChecklistSection({
           </Button>
         )}
 
-        {/* Section Image - at bottom */}
+        {/* Section Image - at bottom (always visible, even when locked) */}
         {!hideAllImages && section.image_url && (
           <div className="relative mt-4 inline-block">
             <img 
@@ -377,6 +381,7 @@ export function ChecklistSection({
               alt={`${section.title} image`}
               className="max-h-48 rounded-lg border border-border"
             />
+            {/* Only show remove button when canEdit */}
             {canEdit && (
               <Button
                 variant="destructive"
@@ -399,8 +404,9 @@ export function ChecklistSection({
           className="hidden"
         />
 
-        {/* Bottom action bar - Notes and Add Image buttons side by side */}
+        {/* Bottom action bar - Notes always visible, Add Image only when canEdit */}
         <div className="mt-4 border-t border-border pt-4 flex items-center gap-2">
+          {/* Show Notes button - always available */}
           <Button
             variant="ghost"
             size="sm"
@@ -411,6 +417,7 @@ export function ChecklistSection({
             {showNotes ? "Hide Notes" : "Show Notes"}
           </Button>
 
+          {/* Add Image button - only when canEdit and no image exists */}
           {canEdit && !section.image_url && (
             <Button
               variant="ghost"
@@ -425,6 +432,7 @@ export function ChecklistSection({
           )}
         </div>
           
+        {/* Notes textarea - always visible when toggled, but readonly when locked */}
         {showNotes && (
           <div className="mt-2">
             <Textarea
@@ -433,6 +441,7 @@ export function ChecklistSection({
               placeholder="Add section notes..."
               className="text-sm min-h-[80px]"
               disabled={!canEdit}
+              readOnly={isLocked && !canEdit}
             />
           </div>
         )}
