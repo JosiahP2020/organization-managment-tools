@@ -56,9 +56,9 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
   const handleClose = () => onOpenChange(false);
 
   const handleSignOut = async () => {
-    await signOut();
     handleClose();
-    navigate("/");
+    await signOut();
+    navigate("/login");
   };
 
   const getInitials = (name: string | undefined) => {
@@ -74,9 +74,9 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-80 p-0 flex flex-col">
-        {/* Header with SCC Star Logo */}
+        {/* Header with SCC Star Logo - aligned left */}
         <SheetHeader className="p-6 pb-4">
-          <div className="flex justify-center">
+          <div className="flex justify-start">
             <img
               src={sccLogo}
               alt="SCC"
