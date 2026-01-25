@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Calendar, Key, Image, Save, Type } from "lucide-react";
+import { Building2, Calendar, Key, Image, Save, Type, Palette } from "lucide-react";
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
+import { AccentColorPicker } from "@/components/AccentColorPicker";
 
 const OrganizationSettings = () => {
   const { organization, refreshOrganization } = useAuth();
@@ -20,6 +21,7 @@ const OrganizationSettings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [mainLogoUrl, setMainLogoUrl] = useState<string | null>(null);
   const [subLogoUrl, setSubLogoUrl] = useState<string | null>(null);
+  const [accentColor, setAccentColor] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
   // Initialize state from organization data
@@ -29,6 +31,7 @@ const OrganizationSettings = () => {
       setOrgCode(organization.slug || "");
       setMainLogoUrl(organization.main_logo_url || organization.logo_url || null);
       setSubLogoUrl(organization.sub_logo_url || null);
+      setAccentColor(organization.accent_color || null);
     }
   }, [organization]);
 
@@ -40,15 +43,17 @@ const OrganizationSettings = () => {
     const originalCode = organization.slug || "";
     const originalMainLogo = organization.main_logo_url || organization.logo_url || null;
     const originalSubLogo = organization.sub_logo_url || null;
+    const originalAccentColor = organization.accent_color || null;
     
     const changed = 
       displayName !== originalDisplayName ||
       orgCode !== originalCode ||
       mainLogoUrl !== originalMainLogo ||
-      subLogoUrl !== originalSubLogo;
+      subLogoUrl !== originalSubLogo ||
+      accentColor !== originalAccentColor;
     
     setHasChanges(changed);
-  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, organization]);
+  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, accentColor, organization]);
 
   const handleSaveAll = async () => {
     if (!organization) return;
@@ -88,6 +93,7 @@ const OrganizationSettings = () => {
         main_logo_url: mainLogoUrl,
         sub_logo_url: subLogoUrl,
         logo_url: mainLogoUrl, // Keep legacy field in sync
+        accent_color: accentColor,
       })
       .eq("id", organization.id);
 
@@ -146,6 +152,26 @@ const OrganizationSettings = () => {
                 onSubLogoChange={setSubLogoUrl}
               />
             )}
+          </div>
+
+          {/* Accent Color */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                <Palette className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Brand Colors</h2>
+                <p className="text-sm text-muted-foreground">
+                  Customize the accent color used for buttons and highlights
+                </p>
+              </div>
+            </div>
+
+            <AccentColorPicker
+              value={accentColor}
+              onChange={setAccentColor}
+            />
           </div>
 
           {/* Display Name */}
