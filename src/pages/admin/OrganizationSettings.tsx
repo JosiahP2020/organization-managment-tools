@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminRoute } from "@/components/AdminRoute";
+import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,27 @@ import { Building2, Calendar, Key, Image, Save, Type, Palette } from "lucide-rea
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
 import { AccentColorPicker } from "@/components/AccentColorPicker";
+import type { ThemeColorMappings } from "@/components/SvgColorEditor";
+
+// Helper to ensure we have a valid ThemeColorMappings structure
+function parseThemeColors(data: unknown): ThemeColorMappings {
+  const defaultColors: ThemeColorMappings = { light: {}, dark: {} };
+  
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return defaultColors;
+  }
+  
+  const obj = data as Record<string, unknown>;
+  
+  return {
+    light: obj.light && typeof obj.light === 'object' && !Array.isArray(obj.light)
+      ? obj.light as Record<string, string>
+      : {},
+    dark: obj.dark && typeof obj.dark === 'object' && !Array.isArray(obj.dark)
+      ? obj.dark as Record<string, string>
+      : {},
+  };
+}
 
 const OrganizationSettings = () => {
   const { organization, refreshOrganization } = useAuth();
@@ -22,8 +44,8 @@ const OrganizationSettings = () => {
   const [mainLogoUrl, setMainLogoUrl] = useState<string | null>(null);
   const [subLogoUrl, setSubLogoUrl] = useState<string | null>(null);
   const [accentColor, setAccentColor] = useState<string | null>(null);
-  const [mainLogoColors, setMainLogoColors] = useState<Record<string, string>>({});
-  const [subLogoColors, setSubLogoColors] = useState<Record<string, string>>({});
+  const [mainLogoColors, setMainLogoColors] = useState<ThemeColorMappings>({ light: {}, dark: {} });
+  const [subLogoColors, setSubLogoColors] = useState<ThemeColorMappings>({ light: {}, dark: {} });
   const [hasChanges, setHasChanges] = useState(false);
 
   // Initialize state from organization data
@@ -34,19 +56,9 @@ const OrganizationSettings = () => {
       setMainLogoUrl(organization.main_logo_url || organization.logo_url || null);
       setSubLogoUrl(organization.sub_logo_url || null);
       setAccentColor(organization.accent_color || null);
-      // Parse color mappings from JSONB - handle both object and null cases
-      const mainColors = organization.main_logo_colors;
-      const subColors = organization.sub_logo_colors;
-      setMainLogoColors(
-        mainColors && typeof mainColors === 'object' && !Array.isArray(mainColors) 
-          ? mainColors as Record<string, string> 
-          : {}
-      );
-      setSubLogoColors(
-        subColors && typeof subColors === 'object' && !Array.isArray(subColors) 
-          ? subColors as Record<string, string> 
-          : {}
-      );
+      // Parse color mappings with theme structure
+      setMainLogoColors(parseThemeColors(organization.main_logo_colors));
+      setSubLogoColors(parseThemeColors(organization.sub_logo_colors));
     }
   }, [organization]);
 
@@ -59,20 +71,12 @@ const OrganizationSettings = () => {
     const originalMainLogo = organization.main_logo_url || organization.logo_url || null;
     const originalSubLogo = organization.sub_logo_url || null;
     const originalAccentColor = organization.accent_color || null;
-    const originalMainColors = organization.main_logo_colors;
-    const originalSubColors = organization.sub_logo_colors;
+    const originalMainColors = parseThemeColors(organization.main_logo_colors);
+    const originalSubColors = parseThemeColors(organization.sub_logo_colors);
     
     // Compare color mappings
-    const mainColorsChanged = JSON.stringify(mainLogoColors) !== JSON.stringify(
-      originalMainColors && typeof originalMainColors === 'object' && !Array.isArray(originalMainColors) 
-        ? originalMainColors 
-        : {}
-    );
-    const subColorsChanged = JSON.stringify(subLogoColors) !== JSON.stringify(
-      originalSubColors && typeof originalSubColors === 'object' && !Array.isArray(originalSubColors) 
-        ? originalSubColors 
-        : {}
-    );
+    const mainColorsChanged = JSON.stringify(mainLogoColors) !== JSON.stringify(originalMainColors);
+    const subColorsChanged = JSON.stringify(subLogoColors) !== JSON.stringify(originalSubColors);
     
     const changed = 
       displayName !== originalDisplayName ||
@@ -125,8 +129,8 @@ const OrganizationSettings = () => {
         sub_logo_url: subLogoUrl,
         logo_url: mainLogoUrl, // Keep legacy field in sync
         accent_color: accentColor,
-        main_logo_colors: mainLogoColors,
-        sub_logo_colors: subLogoColors,
+        main_logo_colors: mainLogoColors as unknown as Json,
+        sub_logo_colors: subLogoColors as unknown as Json,
       })
       .eq("id", organization.id);
 
@@ -171,7 +175,7 @@ const OrganizationSettings = () => {
               <div>
                 <h2 className="font-semibold text-foreground">Organization Logos</h2>
                 <p className="text-sm text-muted-foreground">
-                  Upload logos to customize your branding. SVG logos support color customization.
+                  Upload logos to customize your branding. SVG logos support color customization for light and dark modes.
                 </p>
               </div>
             </div>

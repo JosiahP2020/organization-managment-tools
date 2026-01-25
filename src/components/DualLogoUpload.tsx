@@ -3,7 +3,7 @@ import { Upload, X, Image as ImageIcon, FileImage } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { SvgColorEditor } from "@/components/SvgColorEditor";
+import { SvgColorEditor, ThemeColorMappings } from "@/components/SvgColorEditor";
 import { isSvgUrl } from "@/lib/svgColorUtils";
 
 // Helper to extract file info from URL
@@ -21,6 +21,9 @@ function getFileInfoFromUrl(url: string | null): { name: string; type: string } 
   }
 }
 
+// Default empty theme color mappings
+const emptyThemeColors: ThemeColorMappings = { light: {}, dark: {} };
+
 interface DualLogoUploadProps {
   mainLogoUrl: string | null;
   subLogoUrl: string | null;
@@ -29,11 +32,11 @@ interface DualLogoUploadProps {
   onSubLogoChange: (url: string | null) => void;
   mainLabel?: string;
   subLabel?: string;
-  // SVG color customization props
-  mainLogoColors?: Record<string, string>;
-  subLogoColors?: Record<string, string>;
-  onMainLogoColorsChange?: (colors: Record<string, string>) => void;
-  onSubLogoColorsChange?: (colors: Record<string, string>) => void;
+  // SVG color customization props - now with light/dark support
+  mainLogoColors?: ThemeColorMappings;
+  subLogoColors?: ThemeColorMappings;
+  onMainLogoColorsChange?: (colors: ThemeColorMappings) => void;
+  onSubLogoColorsChange?: (colors: ThemeColorMappings) => void;
 }
 
 interface SingleLogoUploadProps {
@@ -43,9 +46,9 @@ interface SingleLogoUploadProps {
   organizationId: string;
   filePrefix: string;
   onUploadComplete: (url: string | null) => void;
-  // SVG color customization
-  colorMappings?: Record<string, string>;
-  onColorMappingsChange?: (colors: Record<string, string>) => void;
+  // SVG color customization with theme support
+  colorMappings?: ThemeColorMappings;
+  onColorMappingsChange?: (colors: ThemeColorMappings) => void;
 }
 
 function SingleLogoUpload({ 
@@ -55,7 +58,7 @@ function SingleLogoUpload({
   organizationId, 
   filePrefix,
   onUploadComplete,
-  colorMappings = {},
+  colorMappings = emptyThemeColors,
   onColorMappingsChange
 }: SingleLogoUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
@@ -115,7 +118,7 @@ function SingleLogoUpload({
       
       // Clear color mappings when a new logo is uploaded
       if (onColorMappingsChange) {
-        onColorMappingsChange({});
+        onColorMappingsChange(emptyThemeColors);
       }
 
       toast({
@@ -142,7 +145,7 @@ function SingleLogoUpload({
     onUploadComplete(null);
     // Clear color mappings when logo is removed
     if (onColorMappingsChange) {
-      onColorMappingsChange({});
+      onColorMappingsChange(emptyThemeColors);
     }
   };
 
@@ -244,8 +247,8 @@ export function DualLogoUpload({
   onSubLogoChange,
   mainLabel = "Main Logo",
   subLabel = "Sidebar Logo (Sub-Logo)",
-  mainLogoColors = {},
-  subLogoColors = {},
+  mainLogoColors = emptyThemeColors,
+  subLogoColors = emptyThemeColors,
   onMainLogoColorsChange,
   onSubLogoColorsChange
 }: DualLogoUploadProps) {
@@ -276,7 +279,7 @@ export function DualLogoUpload({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Max 5MB per image. Supported: PNG, JPG, GIF, WebP, SVG. SVG logos support color customization.
+        Max 5MB per image. Supported: PNG, JPG, GIF, WebP, SVG. SVG logos support separate color customization for light and dark modes.
       </p>
     </div>
   );
