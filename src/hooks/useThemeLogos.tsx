@@ -1,5 +1,6 @@
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 
 /**
  * Hook that returns the appropriate logo URLs based on the current theme.
@@ -8,8 +9,14 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useThemeLogos() {
   const { organization } = useAuth();
   const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  const isDarkMode = resolvedTheme === "dark";
+  // Ensure we only read theme after mounting to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDarkMode = mounted && resolvedTheme === "dark";
 
   // Main logo: use dark variant if in dark mode and available
   const mainLogoUrl = 
