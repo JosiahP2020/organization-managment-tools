@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClipboardList, Plus, Lock, Trash2, ChevronRight } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -232,21 +231,12 @@ const ProjectDetail = () => {
                         <Lock className="h-4 w-4 text-muted-foreground" />
                       )}
                     </CardTitle>
-                    {itemCounts && itemCounts.total > 0 ? (
-                      <div className="flex items-center gap-2 mt-1">
-                        <Progress 
-                          value={(itemCounts.completed / itemCounts.total) * 100} 
-                          className="h-2 w-24"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {itemCounts.completed} of {itemCounts.total} completed
-                        </span>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        No items yet
-                      </p>
-                    )}
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {itemCounts && itemCounts.total > 0 
+                        ? `${itemCounts.completed} of ${itemCounts.total} completed`
+                        : "No items yet"
+                      }
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
