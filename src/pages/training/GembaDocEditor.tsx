@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -47,6 +47,12 @@ function GembaDocEditorContent() {
     annotations: DrawingAction[];
   } | null>(null);
   const [deletePageDialogOpen, setDeletePageDialogOpen] = useState(false);
+  
+  // Local state for title and description with debounced saving
+  const [localTitle, setLocalTitle] = useState("");
+  const [localDescription, setLocalDescription] = useState("");
+  const titleDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const descriptionDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch gemba doc
   const { data: gembaDoc, isLoading: docLoading } = useQuery({
@@ -328,17 +334,43 @@ function GembaDocEditorContent() {
   // Handle title/description change
   const handleTitleChange = useCallback(
     (value: string) => {
-      updateDocMutation.mutate({ title: value });
+      if (titleDebounceRef.current) {
+        clearTimeout(titleDebounceRef.current);
+      }
+      titleDebounceRef.current = setTimeout(() => {
+        updateDocMutation.mutate({ title: value });
+      }, 500);
     },
     [updateDocMutation]
   );
 
   const handleDescriptionChange = useCallback(
     (value: string) => {
-      updateDocMutation.mutate({ description: value || null });
+      if (descriptionDebounceRef.current) {
+        clearTimeout(descriptionDebounceRef.current);
+      }
+      descriptionDebounceRef.current = setTimeout(() => {
+        updateDocMutation.mutate({ description: value || null });
+      }, 500);
     },
     [updateDocMutation]
   );
+  
+  // Sync local state when gembaDoc loads/changes
+  useEffect(() => {
+    if (gembaDoc) {
+      setLocalTitle(gembaDoc.title);
+      setLocalDescription(gembaDoc.description || "");
+    }
+  }, [gembaDoc?.id]); // Only sync on initial load, not every update
+  
+  // Cleanup debounce timeouts
+  useEffect(() => {
+    return () => {
+      if (titleDebounceRef.current) clearTimeout(titleDebounceRef.current);
+      if (descriptionDebounceRef.current) clearTimeout(descriptionDebounceRef.current);
+    };
+  }, []);
 
   if (docLoading) {
     return (
@@ -451,8 +483,11 @@ function GembaDocEditorContent() {
                 <div className="flex-1 text-center">
                   {canEdit ? (
                     <Input
-                      value={gembaDoc.title}
-                      onChange={(e) => handleTitleChange(e.target.value)}
+                      value={localTitle}
+                      onChange={(e) => {
+                        setLocalTitle(e.target.value);
+                        handleTitleChange(e.target.value);
+                      }}
                       className="text-2xl md:text-3xl font-bold text-center border-none bg-transparent h-auto py-1 text-foreground"
                       placeholder="Document Title"
                     />
@@ -463,8 +498,11 @@ function GembaDocEditorContent() {
                   )}
                   {canEdit ? (
                     <Textarea
-                      value={gembaDoc.description || ""}
-                      onChange={(e) => handleDescriptionChange(e.target.value)}
+                      value={localDescription}
+                      onChange={(e) => {
+                        setLocalDescription(e.target.value);
+                        handleDescriptionChange(e.target.value);
+                      }}
                       className="text-muted-foreground text-center border-none bg-transparent resize-none mt-1"
                       placeholder="Add a description..."
                       rows={1}

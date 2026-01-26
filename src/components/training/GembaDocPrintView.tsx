@@ -79,7 +79,6 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             gap: 1rem;
             margin-bottom: 0.75rem;
             padding-bottom: 0.5rem;
-            border-bottom: 3px solid hsl(22, 90%, 54%);
           }
           
           .gemba-print-logo {
@@ -90,6 +89,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           
           .gemba-print-header-text {
             flex: 1;
+            text-align: center;
           }
           
           .gemba-print-title {
@@ -119,6 +119,11 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             display: flex;
             flex-direction: column;
             background: #fff;
+          }
+          
+          .gemba-print-cell-empty {
+            border: none;
+            background: transparent;
           }
           
           .gemba-print-image-container {
@@ -229,6 +234,16 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
                 const cell = page.cells.find((c) => c.position === i);
                 // Calculate step number from position (1-indexed), just like the main grid
                 const stepNumber = i + 1;
+                const hasImage = !!cell?.image_url;
+                
+                // If no image, render empty/invisible cell
+                if (!hasImage) {
+                  return (
+                    <div key={i} className="gemba-print-cell gemba-print-cell-empty">
+                    </div>
+                  );
+                }
+                
                 return (
                   <div key={i} className="gemba-print-cell">
                     {/* Image container with step badge inside */}
@@ -236,17 +251,11 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
                       <div className="gemba-print-step-badge">
                         {stepNumber}
                       </div>
-                      {cell?.image_url ? (
-                        <img
-                          src={cell.image_url}
-                          alt={`Step ${stepNumber}`}
-                          className="gemba-print-cell-image"
-                        />
-                      ) : (
-                        <div className="gemba-print-empty-image">
-                          No image
-                        </div>
-                      )}
+                      <img
+                        src={cell.image_url}
+                        alt={`Step ${stepNumber}`}
+                        className="gemba-print-cell-image"
+                      />
                     </div>
                     {/* Step description below */}
                     <p className="gemba-print-step-text">
