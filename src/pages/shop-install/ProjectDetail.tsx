@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -6,17 +7,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ClipboardList, Ruler, Trash2, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClipboardList, Plus, Lock, Trash2, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 const ProjectDetail = () => {
   const { projectId, orgSlug } = useParams<{ projectId: string; orgSlug: string }>();
-  const { organization, isAdmin } = useAuth();
+  const { organization, isAdmin, user } = useAuth();
   const { mainLogoUrl } = useThemeLogos();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isCreating, setIsCreating] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery({
@@ -57,6 +59,38 @@ const ProjectDetail = () => {
     enabled: !!organization?.id && !!projectId,
   });
 
+  // Create a new follow-up list for this project
+  const handleCreateFollowUpList = async () => {
+    if (!organization?.id || !projectId || !user?.id) return;
+
+    setIsCreating(true);
+    try {
+      const { data, error } = await supabase
+        .from("checklists")
+        .insert({
+          title: `${project?.title || "Project"} - Follow-up List`,
+          organization_id: organization.id,
+          created_by: user.id,
+          category: "follow_up_list" as any,
+          project_id: projectId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Follow-up list created");
+      queryClient.invalidateQueries({ queryKey: ["follow-up-list", projectId] });
+      
+      // Navigate to the new checklist
+      navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/follow-up-list/${data.id}`);
+    } catch (error: any) {
+      toast.error("Failed to create follow-up list");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   // Delete follow-up list mutation
   const deleteFollowUpMutation = useMutation({
     mutationFn: async () => {
@@ -78,11 +112,9 @@ const ProjectDetail = () => {
     },
   });
 
-  const handleFollowUpClick = () => {
+  const handleOpenChecklist = () => {
     if (followUpList) {
       navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/follow-up-list/${followUpList.id}`);
-    } else {
-      navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/follow-up-list`);
     }
   };
 
@@ -93,11 +125,7 @@ const ProjectDetail = () => {
     }
   };
 
-  const handlePipeDrawerClick = () => {
-    navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/pipe-drawer`);
-  };
-
-  if (projectLoading) {
+  if (projectLoading || followUpLoading) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto">
@@ -106,10 +134,7 @@ const ProjectDetail = () => {
           </div>
           <Skeleton className="h-10 w-64 mb-2" />
           <Skeleton className="h-6 w-96 mb-8" />
-          <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
+          <Skeleton className="h-24 w-full" />
         </div>
       </DashboardLayout>
     );
@@ -142,7 +167,7 @@ const ProjectDetail = () => {
           />
         </div>
 
-        {/* Project title on left */}
+        {/* Project title */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             {project.title}
@@ -154,31 +179,32 @@ const ProjectDetail = () => {
           )}
         </div>
 
-        <div className="space-y-4">
-          {/* Follow-up List Section */}
+        {/* Follow-up List Section */}
+        {followUpList ? (
           <Card 
             className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md"
-            onClick={handleFollowUpClick}
+            onClick={handleOpenChecklist}
           >
-            <CardContent className="py-4">
+            <CardHeader>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
                     <ClipboardList className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-foreground">Follow-up List</h3>
-                    {followUpLoading ? (
-                      <Skeleton className="h-4 w-32 mt-1" />
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        {followUpList ? "View or edit your follow-up list" : "Create a follow-up list"}
-                      </p>
-                    )}
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      Follow-up List
+                      {followUpList.is_locked && (
+                        <Lock className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      View or edit your follow-up list
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {followUpList && isAdmin && (
+                  {isAdmin && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -188,37 +214,36 @@ const ProjectDetail = () => {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </div>
-            </CardContent>
+            </CardHeader>
           </Card>
-
-          {/* Pipe Drawer Measurement Section */}
-          <Card 
-            className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md"
-            onClick={handlePipeDrawerClick}
-          >
-            <CardContent className="py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
-                    <Ruler className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-semibold text-foreground">Pipe Drawer Measurements</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Record measurements for pipe drawers
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                </div>
+        ) : (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-4">
+                <ClipboardList className="w-8 h-8 text-primary" />
               </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Follow-up List
+              </h3>
+              <p className="text-muted-foreground max-w-md mx-auto mb-4">
+                Create a follow-up list to track tasks for this project.
+              </p>
+              {isAdmin && (
+                <Button 
+                  onClick={handleCreateFollowUpList}
+                  disabled={isCreating}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {isCreating ? "Creating..." : "Create Follow-up List"}
+                </Button>
+              )}
             </CardContent>
           </Card>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );
