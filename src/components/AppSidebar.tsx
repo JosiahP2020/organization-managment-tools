@@ -1,4 +1,4 @@
-import { Home, Settings, User, Users, Building2, LogOut } from "lucide-react";
+import { Home, Settings, User, Users, Building2, LogOut, Wrench, FileText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
@@ -21,6 +21,11 @@ import { Button } from "@/components/ui/button";
 
 const mainItems = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
+];
+
+const moduleItems = [
+  { title: "Shop & Install", url: "/shop-install", icon: Wrench },
+  { title: "SOP", url: "/training", icon: FileText },
 ];
 
 const settingsItems = [
@@ -79,6 +84,31 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url === "/dashboard" ? basePath : item.url}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                      activeClassName="bg-accent text-primary font-medium border-l-2 border-primary"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Modules Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Modules
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {moduleItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={`${basePath}${item.url}`}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                       activeClassName="bg-accent text-primary font-medium border-l-2 border-primary"
                     >
