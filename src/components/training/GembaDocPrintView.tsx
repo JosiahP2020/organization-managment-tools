@@ -53,6 +53,8 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             .gemba-print-page {
               page-break-after: always;
               page-break-inside: avoid;
+              height: 100vh;
+              box-sizing: border-box;
             }
             
             .gemba-print-page:last-child {
@@ -78,8 +80,8 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.25rem;
             min-height: 64px;
           }
           
@@ -113,6 +115,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             display: grid;
             gap: 0.375rem;
             flex: 1;
+            min-height: 0;
           }
           
           .gemba-print-cell {
