@@ -63,7 +63,7 @@ const Training = () => {
         
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            Training
+            Standard Operating Procedures
           </h1>
           <p className="text-muted-foreground mt-1">
             SOP, Machine Operation, and Machine Maintenance.
@@ -74,7 +74,7 @@ const Training = () => {
           {/* SOP first */}
           <CategorySection
             icon={<FileText className="w-5 h-5" />}
-            title="Standard Operating Procedures"
+            title="SOP"
             description="Standard operating procedures, training materials, and certification documents."
             onClick={() => handleCategoryClick('sop_training')}
           />
