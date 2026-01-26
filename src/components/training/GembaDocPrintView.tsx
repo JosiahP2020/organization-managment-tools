@@ -149,7 +149,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           
           .gemba-print-image-container {
             position: relative;
-            flex: 0.85;
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
