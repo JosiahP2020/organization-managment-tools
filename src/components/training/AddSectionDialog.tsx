@@ -76,7 +76,7 @@ export function AddSectionDialog({
               id="section-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Safety Checks, Oil, Startup..."
+              placeholder="Enter section title..."
               autoFocus
             />
           </div>
