@@ -74,7 +74,7 @@ const Training = () => {
           {/* SOP first */}
           <CategorySection
             icon={<FileText className="w-5 h-5" />}
-            title="SOP"
+            title="Standard Operating Procedures"
             description="Standard operating procedures, training materials, and certification documents."
             onClick={() => handleCategoryClick('sop_training')}
           />
