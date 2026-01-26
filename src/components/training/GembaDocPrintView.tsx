@@ -85,6 +85,17 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             min-height: 64px;
           }
           
+          .gemba-print-page-number {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-family: Inter, system-ui, sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #666;
+          }
+          
           .gemba-print-logo {
             position: absolute;
             left: 0;
@@ -191,24 +202,27 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
 
         {pages.map((page, pageIndex) => (
           <div key={page.page_number} className="gemba-print-page">
-            {/* Header - logo on far left, title next to it */}
-            {pageIndex === 0 && (
-              <div className="gemba-print-header">
-                {logoUrl && (
-                  <img
-                    src={logoUrl}
-                    alt="Logo"
-                    className="gemba-print-logo"
-                  />
-                )}
+            {/* Header - logo on far left, page number on far right, title centered */}
+            <div className="gemba-print-header">
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt="Logo"
+                  className="gemba-print-logo"
+                />
+              )}
+              {pageIndex === 0 && (
                 <div className="gemba-print-header-text">
                   <h1 className="gemba-print-title">{title}</h1>
                   {description && (
                     <p className="gemba-print-description">{description}</p>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+              <span className="gemba-print-page-number">
+                Page {page.page_number}
+              </span>
+            </div>
 
             {/* Grid */}
             <div
