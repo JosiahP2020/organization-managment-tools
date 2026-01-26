@@ -273,7 +273,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             {/* Footer with page number */}
             <div className="gemba-print-footer">
               <span className="gemba-print-page-number">
-                Page {page.page_number}
+                {page.page_number}
               </span>
             </div>
           </div>
