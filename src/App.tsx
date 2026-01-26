@@ -15,6 +15,10 @@ import Training from "./pages/Training";
 import CategoryDocuments from "./pages/training/CategoryDocuments";
 import ChecklistEditor from "./pages/training/ChecklistEditor";
 import GembaDocEditor from "./pages/training/GembaDocEditor";
+import ShopInstall from "./pages/ShopInstall";
+import Projects from "./pages/shop-install/Projects";
+import FollowUpLists from "./pages/shop-install/FollowUpLists";
+import PipeDrawer from "./pages/shop-install/PipeDrawer";
 import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
@@ -47,6 +51,11 @@ const App = () => (
                 <Route path="/dashboard/:orgSlug/training/:category" element={<CategoryDocuments />} />
                 <Route path="/dashboard/:orgSlug/training/:category/:checklistId" element={<ChecklistEditor />} />
                 <Route path="/dashboard/:orgSlug/training/:category/gemba/:gembaDocId" element={<GembaDocEditor />} />
+                <Route path="/dashboard/:orgSlug/shop-install" element={<ShopInstall />} />
+                <Route path="/dashboard/:orgSlug/shop-install/projects" element={<Projects />} />
+                <Route path="/dashboard/:orgSlug/shop-install/projects/follow-up-lists" element={<FollowUpLists />} />
+                <Route path="/dashboard/:orgSlug/shop-install/projects/follow-up-lists/:checklistId" element={<ChecklistEditor />} />
+                <Route path="/dashboard/:orgSlug/shop-install/projects/pipe-drawer" element={<PipeDrawer />} />
                 <Route path="/settings" element={<Settings />} />
                 {/* Legacy routes redirect to new combined settings */}
                 <Route path="/settings/account" element={<Settings />} />

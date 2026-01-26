@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface CreateChecklistDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  category: "machine_operation" | "machine_maintenance" | "sop_training";
+  category: "machine_operation" | "machine_maintenance" | "sop_training" | "follow_up_list";
   onSuccess: () => void;
 }
 

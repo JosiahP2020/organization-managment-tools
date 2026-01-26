@@ -46,7 +46,7 @@ const FollowUpLists = () => {
         .from("checklists")
         .select("*")
         .eq("organization_id", organization.id)
-        .eq("category", "follow_up_list")
+        .eq("category", "follow_up_list" as any)
         .is("archived_at", null)
         .order("created_at", { ascending: false });
       
@@ -65,7 +65,7 @@ const FollowUpLists = () => {
         .from("checklists")
         .select("*")
         .eq("organization_id", organization.id)
-        .eq("category", "follow_up_list")
+        .eq("category", "follow_up_list" as any)
         .not("archived_at", "is", null)
         .order("archived_at", { ascending: false });
       
