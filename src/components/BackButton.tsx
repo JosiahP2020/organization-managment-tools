@@ -22,6 +22,10 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
     // Path: /dashboard/{org}/shop-install/projects/{projectId}/follow-up-list/{checklistId}
     const followUpIndex = pathParts.indexOf('follow-up-list');
     
+    // Check if we're in a pipe-drawer page
+    // Path: /dashboard/{org}/shop-install/projects/{projectId}/pipe-drawer/{pipeDrawerId}
+    const pipeDrawerIndex = pathParts.indexOf('pipe-drawer');
+    
     if (gembaIndex !== -1) {
       // For SOP Guides, go back to the category page (before 'gemba')
       const parentPath = '/' + pathParts.slice(0, gembaIndex).join('/');
@@ -29,6 +33,10 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
     } else if (followUpIndex !== -1) {
       // For follow-up list checklists, go back to the project page (before 'follow-up-list')
       const parentPath = '/' + pathParts.slice(0, followUpIndex).join('/');
+      navigate(parentPath);
+    } else if (pipeDrawerIndex !== -1) {
+      // For pipe drawer, go back to the project page (before 'pipe-drawer')
+      const parentPath = '/' + pathParts.slice(0, pipeDrawerIndex).join('/');
       navigate(parentPath);
     } else if (pathParts.length > 2) {
       // Regular behavior: remove the last segment
