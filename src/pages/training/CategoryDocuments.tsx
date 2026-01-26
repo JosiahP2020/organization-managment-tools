@@ -493,7 +493,7 @@ const CategoryDocuments = () => {
                             )}
                           </CardTitle>
                           <span className="text-xs text-muted-foreground">
-                            {doc.type === "checklist" ? "Checklist" : "Gemba Doc"}
+                            {doc.type === "checklist" ? "Checklist" : "SOP Guide"}
                           </span>
                         </div>
                       </div>
@@ -609,7 +609,7 @@ const CategoryDocuments = () => {
                               {doc.title}
                             </CardTitle>
                             <span className="text-xs text-muted-foreground">
-                              {doc.type === "checklist" ? "Checklist" : "Gemba Doc"}
+                              {doc.type === "checklist" ? "Checklist" : "SOP Guide"}
                             </span>
                           </div>
                         </div>

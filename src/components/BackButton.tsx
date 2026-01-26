@@ -15,11 +15,11 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
   const handleBack = useCallback(() => {
     const pathParts = location.pathname.split('/').filter(Boolean);
     
-    // Check if we're in a Gemba doc (path contains 'gemba' segment)
+    // Check if we're in an SOP Guide (path contains 'gemba' segment)
     const gembaIndex = pathParts.indexOf('gemba');
     
     if (gembaIndex !== -1) {
-      // For Gemba docs, go back to the category page (before 'gemba')
+      // For SOP Guides, go back to the category page (before 'gemba')
       const parentPath = '/' + pathParts.slice(0, gembaIndex).join('/');
       navigate(parentPath);
     } else if (pathParts.length > 2) {
