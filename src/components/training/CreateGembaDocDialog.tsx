@@ -65,7 +65,7 @@ export function CreateGembaDocDialog({
       return gembaDoc;
     },
     onSuccess: (data) => {
-      toast({ title: "Gemba Doc created successfully" });
+      toast({ title: "SOP Guide created successfully" });
       setTitle("");
       setDescription("");
       onOpenChange(false);
@@ -73,7 +73,7 @@ export function CreateGembaDocDialog({
     },
     onError: (error) => {
       toast({
-        title: "Failed to create Gemba Doc",
+        title: "Failed to create SOP Guide",
         description: error.message,
         variant: "destructive",
       });
@@ -90,7 +90,7 @@ export function CreateGembaDocDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Gemba Doc</DialogTitle>
+          <DialogTitle>Create SOP Guide</DialogTitle>
           <DialogDescription>
             Create a new visual training manual with customizable image grids.
           </DialogDescription>

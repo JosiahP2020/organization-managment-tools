@@ -75,7 +75,7 @@ export function CreateDocumentTypeDialog({
               <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center mb-4">
                 <Grid3X3 className="w-7 h-7 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Gemba Doc</h3>
+              <h3 className="font-semibold text-lg mb-2">SOP Guide</h3>
               <p className="text-sm text-muted-foreground">
                 Visual training manuals with image grids for printing and lamination.
               </p>
