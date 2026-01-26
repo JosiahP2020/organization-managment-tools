@@ -93,8 +93,8 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             font-family: system-ui, -apple-system, sans-serif;
             font-size: 1.25rem;
             font-weight: 700;
-            color: #fff;
-            background: #111;
+            color: hsl(22, 90%, 54%);
+            background: hsl(22, 90%, 54%, 0.15);
             border-radius: 0.5rem;
             padding: 0.25rem 0.5rem;
             min-width: 2rem;
@@ -151,8 +151,8 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             position: relative;
             flex: 1;
             display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
             border-radius: 0.5rem;
           }
@@ -179,7 +179,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           .gemba-print-cell-image {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover;
             border-radius: 0.5rem;
           }
           
