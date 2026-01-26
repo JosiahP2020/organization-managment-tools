@@ -18,7 +18,7 @@ const FollowUpLists = () => {
   const { organization, isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { subLogoUrl } = useThemeLogos();
+  const { mainLogoUrl } = useThemeLogos();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -135,22 +135,23 @@ const FollowUpLists = () => {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
-        {/* Header with logo */}
+        {/* Main logo centered */}
         <div className="flex justify-center mb-6 md:mb-8">
           <Logo 
-            size="lg" 
-            customSrc={subLogoUrl} 
+            size="xl" 
+            customSrc={mainLogoUrl} 
             variant="full"
-            className="max-h-20 md:max-h-24"
+            className="max-h-32 md:max-h-40"
           />
         </div>
 
+        {/* Project name as main title, Follow-up List as subtitle */}
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            Follow-up List
+            {project.title}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {project.title}
+            Follow-up List
           </p>
         </div>
 
