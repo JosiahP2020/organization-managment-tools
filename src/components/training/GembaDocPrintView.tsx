@@ -90,10 +90,10 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             right: 0;
             top: 50%;
             transform: translateY(-50%);
-            font-family: Inter, system-ui, sans-serif;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #666;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #111;
           }
           
           .gemba-print-logo {
