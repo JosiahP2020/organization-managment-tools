@@ -58,6 +58,12 @@ const Dashboard = () => {
     }
   };
 
+  const handleShopInstallClick = () => {
+    if (organization?.slug) {
+      navigate(`/dashboard/${organization.slug}/shop-install`);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto">
@@ -83,9 +89,9 @@ const Dashboard = () => {
         <div className="grid grid-cols-2 gap-4 md:gap-6">
           <CategoryCard
             icon={<Wrench className="w-8 h-8 md:w-10 md:h-10" />}
-            title="Shop/Install"
-            description="Browse supplies, installation guides, and project management tools."
-            comingSoon
+            title="Shop & Install"
+            description="Project management, follow-up lists, and measurement tools."
+            onClick={handleShopInstallClick}
           />
           <CategoryCard
             icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
