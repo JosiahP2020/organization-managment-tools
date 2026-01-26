@@ -18,7 +18,6 @@ import GembaDocEditor from "./pages/training/GembaDocEditor";
 import ShopInstall from "./pages/ShopInstall";
 import ProjectList from "./pages/shop-install/ProjectList";
 import ProjectDetail from "./pages/shop-install/ProjectDetail";
-import PipeDrawerEditor from "./pages/shop-install/PipeDrawerEditor";
 import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
@@ -55,7 +54,6 @@ const App = () => (
                 <Route path="/dashboard/:orgSlug/shop-install/projects" element={<ProjectList />} />
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId" element={<ProjectDetail />} />
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId/follow-up-list/:checklistId" element={<ChecklistEditor />} />
-                <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId/pipe-drawer/:pipeDrawerId" element={<PipeDrawerEditor />} />
                 <Route path="/settings" element={<Settings />} />
                 {/* Legacy routes redirect to new combined settings */}
                 <Route path="/settings/account" element={<Settings />} />

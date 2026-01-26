@@ -343,54 +343,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pipe_drawer_measurements: {
-        Row: {
-          archived_at: string | null
-          created_at: string
-          created_by: string
-          id: string
-          notes: string | null
-          organization_id: string
-          project_id: string
-          updated_at: string
-        }
-        Insert: {
-          archived_at?: string | null
-          created_at?: string
-          created_by: string
-          id?: string
-          notes?: string | null
-          organization_id: string
-          project_id: string
-          updated_at?: string
-        }
-        Update: {
-          archived_at?: string | null
-          created_at?: string
-          created_by?: string
-          id?: string
-          notes?: string | null
-          organization_id?: string
-          project_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pipe_drawer_measurements_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pipe_drawer_measurements_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null

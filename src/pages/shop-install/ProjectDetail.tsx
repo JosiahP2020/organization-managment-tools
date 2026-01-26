@@ -8,7 +8,7 @@ import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, Plus, Lock, Trash2, ChevronRight, Ruler } from "lucide-react";
+import { ClipboardList, Plus, Lock, Trash2, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -18,8 +18,7 @@ const ProjectDetail = () => {
   const { mainLogoUrl } = useThemeLogos();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [isCreatingFollowUp, setIsCreatingFollowUp] = useState(false);
-  const [isCreatingPipeDrawer, setIsCreatingPipeDrawer] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery({
@@ -93,31 +92,11 @@ const ProjectDetail = () => {
     enabled: !!followUpList?.id,
   });
 
-  // Fetch pipe drawer measurements for this project
-  const { data: pipeDrawer, isLoading: pipeDrawerLoading } = useQuery({
-    queryKey: ["pipe-drawer", projectId, organization?.id],
-    queryFn: async () => {
-      if (!organization?.id || !projectId) return null;
-      
-      const { data, error } = await supabase
-        .from("pipe_drawer_measurements" as any)
-        .select("*")
-        .eq("organization_id", organization.id)
-        .eq("project_id", projectId)
-        .is("archived_at", null)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return data as unknown as { id: string; notes: string | null } | null;
-    },
-    enabled: !!organization?.id && !!projectId,
-  });
-
   // Create a new follow-up list for this project
   const handleCreateFollowUpList = async () => {
     if (!organization?.id || !projectId || !user?.id) return;
 
-    setIsCreatingFollowUp(true);
+    setIsCreating(true);
     try {
       const { data, error } = await supabase
         .from("checklists")
@@ -141,37 +120,7 @@ const ProjectDetail = () => {
     } catch (error: any) {
       toast.error("Failed to create follow-up list");
     } finally {
-      setIsCreatingFollowUp(false);
-    }
-  };
-
-  // Create a new pipe drawer measurement for this project
-  const handleCreatePipeDrawer = async () => {
-    if (!organization?.id || !projectId || !user?.id) return;
-
-    setIsCreatingPipeDrawer(true);
-    try {
-      const { data, error } = await supabase
-        .from("pipe_drawer_measurements" as any)
-        .insert({
-          organization_id: organization.id,
-          created_by: user.id,
-          project_id: projectId,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast.success("Pipe drawer measurements created");
-      queryClient.invalidateQueries({ queryKey: ["pipe-drawer", projectId] });
-      
-      // Navigate to the new pipe drawer
-      navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/pipe-drawer/${(data as any).id}`);
-    } catch (error: any) {
-      toast.error("Failed to create pipe drawer measurements");
-    } finally {
-      setIsCreatingPipeDrawer(false);
+      setIsCreating(false);
     }
   };
 
@@ -196,36 +145,9 @@ const ProjectDetail = () => {
     },
   });
 
-  // Delete pipe drawer mutation
-  const deletePipeDrawerMutation = useMutation({
-    mutationFn: async () => {
-      if (!pipeDrawer) return;
-      
-      const { error } = await supabase
-        .from("pipe_drawer_measurements" as any)
-        .update({ archived_at: new Date().toISOString() })
-        .eq("id", pipeDrawer.id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pipe-drawer", projectId] });
-      toast.success("Pipe drawer measurements deleted");
-    },
-    onError: () => {
-      toast.error("Failed to delete pipe drawer measurements");
-    },
-  });
-
   const handleOpenChecklist = () => {
     if (followUpList) {
       navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/follow-up-list/${followUpList.id}`);
-    }
-  };
-
-  const handleOpenPipeDrawer = () => {
-    if (pipeDrawer) {
-      navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/pipe-drawer/${pipeDrawer.id}`);
     }
   };
 
@@ -236,14 +158,7 @@ const ProjectDetail = () => {
     }
   };
 
-  const handleDeletePipeDrawer = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm("Are you sure you want to delete this pipe drawer measurement?")) {
-      deletePipeDrawerMutation.mutate();
-    }
-  };
-
-  if (projectLoading || followUpLoading || pipeDrawerLoading) {
+  if (projectLoading || followUpLoading) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto">
@@ -252,7 +167,6 @@ const ProjectDetail = () => {
           </div>
           <Skeleton className="h-10 w-64 mb-2" />
           <Skeleton className="h-6 w-96 mb-8" />
-          <Skeleton className="h-24 w-full mb-4" />
           <Skeleton className="h-24 w-full" />
         </div>
       </DashboardLayout>
@@ -299,138 +213,73 @@ const ProjectDetail = () => {
         </div>
 
         {/* Follow-up List Section */}
-        <div className="space-y-4">
-          {followUpList ? (
-            <Card 
-              className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md"
-              onClick={handleOpenChecklist}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                      <ClipboardList className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        Follow-up List
-                        {followUpList.is_locked && (
-                          <Lock className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {itemCounts && itemCounts.total > 0 
-                          ? `${itemCounts.completed} of ${itemCounts.total} completed`
-                          : "No items yet"
-                        }
-                      </p>
-                    </div>
+        {followUpList ? (
+          <Card 
+            className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md"
+            onClick={handleOpenChecklist}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                    <ClipboardList className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="flex items-center gap-2">
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={handleDeleteFollowUp}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      Follow-up List
+                      {followUpList.is_locked && (
+                        <Lock className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {itemCounts && itemCounts.total > 0 
+                        ? `${itemCounts.completed} of ${itemCounts.total} completed`
+                        : "No items yet"
+                      }
+                    </p>
                   </div>
                 </div>
-              </CardHeader>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-4">
-                  <ClipboardList className="w-8 h-8 text-primary" />
+                <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={handleDeleteFollowUp}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Follow-up List
-                </h3>
-                <p className="text-muted-foreground max-w-md mx-auto mb-4">
-                  Create a follow-up list to track tasks for this project.
-                </p>
-                {isAdmin && (
-                  <Button 
-                    onClick={handleCreateFollowUpList}
-                    disabled={isCreatingFollowUp}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {isCreatingFollowUp ? "Creating..." : "Create Follow-up List"}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Pipe Drawer Measurements Section */}
-          {pipeDrawer ? (
-            <Card 
-              className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md"
-              onClick={handleOpenPipeDrawer}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                      <Ruler className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">
-                        Pipe Drawer Measurements
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        View or edit measurements
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {isAdmin && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={handleDeletePipeDrawer}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-16 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-4">
-                  <Ruler className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Pipe Drawer Measurements
-                </h3>
-                <p className="text-muted-foreground max-w-md mx-auto mb-4">
-                  Create pipe drawer measurements for this project.
-                </p>
-                {isAdmin && (
-                  <Button 
-                    onClick={handleCreatePipeDrawer}
-                    disabled={isCreatingPipeDrawer}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {isCreatingPipeDrawer ? "Creating..." : "Create Pipe Drawer Measurements"}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </div>
+            </CardHeader>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="py-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-4">
+                <ClipboardList className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Follow-up List
+              </h3>
+              <p className="text-muted-foreground max-w-md mx-auto mb-4">
+                Create a follow-up list to track tasks for this project.
+              </p>
+              {isAdmin && (
+                <Button 
+                  onClick={handleCreateFollowUpList}
+                  disabled={isCreating}
+                  className="gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {isCreating ? "Creating..." : "Create Follow-up List"}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
