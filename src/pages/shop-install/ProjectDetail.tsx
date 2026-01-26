@@ -8,7 +8,7 @@ import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, Plus, Lock, Trash2, ChevronRight } from "lucide-react";
+import { ClipboardList, Plus, Lock, Trash2, ChevronRight, Ruler } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -280,6 +280,30 @@ const ProjectDetail = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Pipe Drawer Measurements Section */}
+        <Card className="mt-4">
+          <CardContent className="py-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-accent flex items-center justify-center mx-auto mb-4">
+              <Ruler className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">
+              Pipe Drawer Measurements
+            </h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-4">
+              Record and manage pipe drawer measurements for this project.
+            </p>
+            {isAdmin && (
+              <Button 
+                disabled
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Coming Soon
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
