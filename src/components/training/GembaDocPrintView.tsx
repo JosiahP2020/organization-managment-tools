@@ -195,7 +195,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           
           .gemba-print-step-text {
             font-family: Inter, system-ui, sans-serif;
-            font-size: 0.625rem;
+            font-size: 0.8rem;
             font-weight: 600;
             line-height: 1.3;
             color: #333;
