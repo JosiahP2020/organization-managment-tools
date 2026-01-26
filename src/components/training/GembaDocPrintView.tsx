@@ -87,13 +87,19 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           
           .gemba-print-page-number {
             position: absolute;
-            right: 0;
+            right: 0.5rem;
             top: 50%;
             transform: translateY(-50%);
             font-family: system-ui, -apple-system, sans-serif;
             font-size: 1.25rem;
             font-weight: 700;
             color: hsl(22, 90%, 54%);
+            background: hsl(22, 90%, 54%, 0.1);
+            border: 2px solid hsl(22, 90%, 54%);
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            min-width: 2rem;
+            text-align: center;
           }
           
           .gemba-print-logo {
