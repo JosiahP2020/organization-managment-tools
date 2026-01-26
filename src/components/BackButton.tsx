@@ -18,9 +18,19 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
     // Check if we're in an SOP Guide (path contains 'gemba' segment)
     const gembaIndex = pathParts.indexOf('gemba');
     
+    // Check if we're in a project sub-page (follow-up-list or pipe-drawer)
+    // Path: /dashboard/{org}/shop-install/projects/{projectId}/follow-up-list or /pipe-drawer
+    const projectsIndex = pathParts.indexOf('projects');
+    const isInProjectSubPage = projectsIndex !== -1 && 
+      (pathParts.includes('follow-up-list') || pathParts.includes('pipe-drawer'));
+    
     if (gembaIndex !== -1) {
       // For SOP Guides, go back to the category page (before 'gemba')
       const parentPath = '/' + pathParts.slice(0, gembaIndex).join('/');
+      navigate(parentPath);
+    } else if (isInProjectSubPage) {
+      // For project sub-pages, go directly to projects list (skip project detail)
+      const parentPath = '/' + pathParts.slice(0, projectsIndex + 1).join('/');
       navigate(parentPath);
     } else if (pathParts.length > 2) {
       // Regular behavior: remove the last segment

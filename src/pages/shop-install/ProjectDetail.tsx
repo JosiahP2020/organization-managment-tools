@@ -1,20 +1,22 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Logo } from "@/components/Logo";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardList, Ruler, Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ClipboardList, Ruler, Trash2, ChevronRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const ProjectDetail = () => {
   const { projectId, orgSlug } = useParams<{ projectId: string; orgSlug: string }>();
   const { organization, isAdmin } = useAuth();
   const { mainLogoUrl } = useThemeLogos();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery({
@@ -55,11 +57,39 @@ const ProjectDetail = () => {
     enabled: !!organization?.id && !!projectId,
   });
 
+  // Delete follow-up list mutation
+  const deleteFollowUpMutation = useMutation({
+    mutationFn: async () => {
+      if (!followUpList) return;
+      
+      const { error } = await supabase
+        .from("checklists")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("id", followUpList.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["follow-up-list", projectId] });
+      toast.success("Follow-up list deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete follow-up list");
+    },
+  });
+
   const handleFollowUpClick = () => {
     if (followUpList) {
       navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/follow-up-list/${followUpList.id}`);
     } else {
       navigate(`/dashboard/${orgSlug}/shop-install/projects/${projectId}/follow-up-list`);
+    }
+  };
+
+  const handleDeleteFollowUp = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm("Are you sure you want to delete this follow-up list?")) {
+      deleteFollowUpMutation.mutate();
     }
   };
 
@@ -130,25 +160,36 @@ const ProjectDetail = () => {
             className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md"
             onClick={handleFollowUpClick}
           >
-            <CardContent className="py-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center mb-3">
-                  <ClipboardList className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-lg mb-1">Follow-up List</CardTitle>
-                {followUpLoading ? (
-                  <Skeleton className="h-4 w-32" />
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {followUpList ? "View or edit your follow-up list" : "Create a follow-up list for this project"}
-                  </p>
-                )}
-                {!followUpList && isAdmin && (
-                  <div className="flex items-center gap-1 text-primary mt-2">
-                    <Plus className="h-4 w-4" />
-                    <span className="text-sm font-medium">Create</span>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
+                    <ClipboardList className="h-5 w-5 text-primary" />
                   </div>
-                )}
+                  <div className="text-left">
+                    <h3 className="font-semibold text-foreground">Follow-up List</h3>
+                    {followUpLoading ? (
+                      <Skeleton className="h-4 w-32 mt-1" />
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {followUpList ? "View or edit your follow-up list" : "Create a follow-up list"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {followUpList && isAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={handleDeleteFollowUp}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -158,21 +199,22 @@ const ProjectDetail = () => {
             className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-md"
             onClick={handlePipeDrawerClick}
           >
-            <CardContent className="py-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 rounded-lg bg-accent flex items-center justify-center mb-3">
-                  <Ruler className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-lg mb-1">Pipe Drawer Measurements</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Record measurements for pipe drawers
-                </p>
-                {isAdmin && (
-                  <div className="flex items-center gap-1 text-primary mt-2">
-                    <Plus className="h-4 w-4" />
-                    <span className="text-sm font-medium">Create</span>
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center flex-shrink-0">
+                    <Ruler className="h-5 w-5 text-primary" />
                   </div>
-                )}
+                  <div className="text-left">
+                    <h3 className="font-semibold text-foreground">Pipe Drawer Measurements</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Record measurements for pipe drawers
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                </div>
               </div>
             </CardContent>
           </Card>
