@@ -49,7 +49,7 @@ import { toast } from "@/hooks/use-toast";
 const categoryLabels: Record<string, string> = {
   machine_operation: "Machine Operation",
   machine_maintenance: "Machine Maintenance",
-  sop_training: "SOP/Training",
+  sop_training: "SOP",
 };
 
 type SortOption = "recent" | "oldest" | "alphabetical";
