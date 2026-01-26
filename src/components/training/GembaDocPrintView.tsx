@@ -78,9 +78,9 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
-            min-height: 48px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            min-height: 64px;
           }
           
           .gemba-print-logo {
@@ -88,7 +88,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             left: 0;
             top: 50%;
             transform: translateY(-50%);
-            height: 48px;
+            height: 64px;
             width: auto;
           }
           
@@ -97,16 +97,16 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           }
           
           .gemba-print-title {
-            font-size: 1.75rem;
+            font-size: 2rem;
             font-weight: 700;
             margin: 0;
             color: #111;
           }
           
           .gemba-print-description {
-            font-size: 0.875rem;
+            font-size: 1rem;
             color: #666;
-            margin: 0.25rem 0 0;
+            margin: 0.375rem 0 0;
           }
           
           .gemba-print-grid {
@@ -188,21 +188,6 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             background: #fafafa;
             min-height: 1.75rem;
           }
-          
-          .gemba-print-footer {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            padding-top: 0.25rem;
-            margin-top: 0.125rem;
-          }
-          
-          .gemba-print-page-number {
-            font-family: Inter, system-ui, sans-serif;
-            font-size: 0.625rem;
-            font-weight: 600;
-            color: #666;
-          }
         `}</style>
 
         {pages.map((page, pageIndex) => (
@@ -270,12 +255,6 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
               })}
             </div>
 
-            {/* Footer with page number */}
-            <div className="gemba-print-footer">
-              <span className="gemba-print-page-number">
-                Page {page.page_number}
-              </span>
-            </div>
           </div>
         ))}
       </div>
