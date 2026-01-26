@@ -119,17 +119,15 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           }
           
           .gemba-print-cell {
-            border: 1px solid #e5e5e5;
-            border-radius: 0.375rem;
+            position: relative;
             overflow: hidden;
             break-inside: avoid;
             display: flex;
             flex-direction: column;
-            background: #fff;
+            border-radius: 0.5rem;
           }
           
           .gemba-print-cell-empty {
-            border: none;
             background: transparent;
           }
           
@@ -139,8 +137,8 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f9f9f9;
-            padding: 0.125rem;
+            overflow: hidden;
+            border-radius: 0.5rem;
           }
           
           .gemba-print-step-badge {
@@ -165,8 +163,8 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           .gemba-print-cell-image {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            border-radius: 0.25rem;
+            object-fit: cover;
+            border-radius: 0.5rem;
           }
           
           .gemba-print-empty-image {
@@ -186,10 +184,8 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             line-height: 1.3;
             color: #333;
             margin: 0;
-            padding: 0.375rem;
-            border-top: 1px solid #eee;
-            background: #fafafa;
-            min-height: 1.75rem;
+            padding: 0.25rem 0.375rem;
+            min-height: 1.5rem;
           }
         `}</style>
 
