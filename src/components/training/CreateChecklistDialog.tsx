@@ -20,6 +20,7 @@ interface CreateChecklistDialogProps {
   onOpenChange: (open: boolean) => void;
   category: "machine_operation" | "machine_maintenance" | "sop_training" | "follow_up_list";
   onSuccess: () => void;
+  projectId?: string;
 }
 
 export function CreateChecklistDialog({
@@ -27,6 +28,7 @@ export function CreateChecklistDialog({
   onOpenChange,
   category,
   onSuccess,
+  projectId,
 }: CreateChecklistDialogProps) {
   const { organization, user } = useAuth();
   const queryClient = useQueryClient();
@@ -39,15 +41,22 @@ export function CreateChecklistDialog({
         throw new Error("Missing organization or user");
       }
 
+      const insertData: any = {
+        organization_id: organization.id,
+        category,
+        title,
+        description: description || null,
+        created_by: user.id,
+      };
+
+      // Add project_id if provided (for follow-up lists within projects)
+      if (projectId) {
+        insertData.project_id = projectId;
+      }
+
       const { data, error } = await supabase
         .from("checklists")
-        .insert({
-          organization_id: organization.id,
-          category,
-          title,
-          description: description || null,
-          created_by: user.id,
-        })
+        .insert(insertData)
         .select()
         .single();
 

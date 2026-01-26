@@ -117,6 +117,7 @@ export type Database = {
           id: string
           is_locked: boolean | null
           organization_id: string
+          project_id: string | null
           title: string
           updated_at: string | null
         }
@@ -130,6 +131,7 @@ export type Database = {
           id?: string
           is_locked?: boolean | null
           organization_id: string
+          project_id?: string | null
           title: string
           updated_at?: string | null
         }
@@ -143,6 +145,7 @@ export type Database = {
           id?: string
           is_locked?: boolean | null
           organization_id?: string
+          project_id?: string | null
           title?: string
           updated_at?: string | null
         }
@@ -152,6 +155,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklists_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -361,6 +371,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          archived_at: string | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          organization_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          organization_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          organization_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
