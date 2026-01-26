@@ -78,9 +78,9 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
-            min-height: 48px;
+            margin-bottom: 0.25rem;
+            padding-bottom: 0.25rem;
+            min-height: 36px;
           }
           
           .gemba-print-logo {
@@ -88,7 +88,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             left: 0;
             top: 50%;
             transform: translateY(-50%);
-            height: 48px;
+            height: 36px;
             width: auto;
           }
           
@@ -97,16 +97,16 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
           }
           
           .gemba-print-title {
-            font-size: 1.75rem;
+            font-size: 1.25rem;
             font-weight: 700;
             margin: 0;
             color: #111;
           }
           
           .gemba-print-description {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             color: #666;
-            margin: 0.25rem 0 0;
+            margin: 0.125rem 0 0;
           }
           
           .gemba-print-grid {
@@ -193,13 +193,13 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            padding-top: 0.5rem;
-            margin-top: 0.25rem;
+            padding-top: 0.125rem;
+            margin-top: 0.125rem;
           }
           
           .gemba-print-page-number {
             font-family: Inter, system-ui, sans-serif;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 700;
             color: hsl(22, 90%, 54%);
           }
