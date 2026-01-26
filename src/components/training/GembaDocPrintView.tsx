@@ -91,9 +91,9 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             top: 50%;
             transform: translateY(-50%);
             font-family: system-ui, -apple-system, sans-serif;
-            font-size: 1rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            color: #111;
+            color: hsl(22, 90%, 54%);
           }
           
           .gemba-print-logo {
@@ -220,7 +220,7 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
                 </div>
               )}
               <span className="gemba-print-page-number">
-                Page {page.page_number}
+                {page.page_number}
               </span>
             </div>
 
