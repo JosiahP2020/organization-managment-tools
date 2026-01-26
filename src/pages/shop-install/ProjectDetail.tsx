@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClipboardList, Plus, Lock, Trash2, ChevronRight } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -57,6 +58,39 @@ const ProjectDetail = () => {
       return data;
     },
     enabled: !!organization?.id && !!projectId,
+  });
+
+  // Fetch item counts for the follow-up list
+  const { data: itemCounts } = useQuery({
+    queryKey: ["follow-up-list-counts", followUpList?.id],
+    queryFn: async () => {
+      if (!followUpList?.id) return { total: 0, completed: 0 };
+      
+      // First get all section IDs for this checklist
+      const { data: sections, error: sectionsError } = await supabase
+        .from("checklist_sections")
+        .select("id")
+        .eq("checklist_id", followUpList.id);
+      
+      if (sectionsError) throw sectionsError;
+      if (!sections || sections.length === 0) return { total: 0, completed: 0 };
+      
+      const sectionIds = sections.map(s => s.id);
+      
+      // Get all items for these sections
+      const { data: items, error: itemsError } = await supabase
+        .from("checklist_items")
+        .select("is_completed")
+        .in("section_id", sectionIds);
+      
+      if (itemsError) throw itemsError;
+      
+      const total = items?.length || 0;
+      const completed = items?.filter(item => item.is_completed).length || 0;
+      
+      return { total, completed };
+    },
+    enabled: !!followUpList?.id,
   });
 
   // Create a new follow-up list for this project
@@ -198,9 +232,21 @@ const ProjectDetail = () => {
                         <Lock className="h-4 w-4 text-muted-foreground" />
                       )}
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      View or edit your follow-up list
-                    </p>
+                    {itemCounts && itemCounts.total > 0 ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <Progress 
+                          value={(itemCounts.completed / itemCounts.total) * 100} 
+                          className="h-2 w-24"
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {itemCounts.completed} of {itemCounts.total} completed
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        No items yet
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
