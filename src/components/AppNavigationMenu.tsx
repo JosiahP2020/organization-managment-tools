@@ -10,8 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
 import {
   LayoutDashboard,
-  GraduationCap,
-  ShoppingBag,
+  FileText,
   Wrench,
   LogOut,
   User,
@@ -143,30 +142,21 @@ export function AppNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
         {/* Navigation Links */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           <NavItem
-            to="/dashboard"
+            to={organization?.slug ? `/dashboard/${organization.slug}` : "/login"}
             icon={<LayoutDashboard className="h-5 w-5" />}
             label="Dashboard"
             onClick={handleClose}
           />
           <NavItem
-            to="/dashboard"
-            icon={<GraduationCap className="h-5 w-5" />}
-            label="Training"
-            badge="Coming Soon"
-            onClick={handleClose}
-          />
-          <NavItem
-            to="/dashboard"
-            icon={<ShoppingBag className="h-5 w-5" />}
-            label="Shop"
-            badge="Coming Soon"
-            onClick={handleClose}
-          />
-          <NavItem
-            to="/dashboard"
+            to={organization?.slug ? `/dashboard/${organization.slug}/shop-install` : "/login"}
             icon={<Wrench className="h-5 w-5" />}
-            label="Install"
-            badge="Coming Soon"
+            label="Shop & Install"
+            onClick={handleClose}
+          />
+          <NavItem
+            to={organization?.slug ? `/dashboard/${organization.slug}/training` : "/login"}
+            icon={<FileText className="h-5 w-5" />}
+            label="SOP"
             onClick={handleClose}
           />
         </nav>
