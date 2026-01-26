@@ -193,15 +193,15 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            padding-top: 0.5rem;
-            margin-top: 0.25rem;
+            padding-top: 0.25rem;
+            margin-top: 0.125rem;
           }
           
           .gemba-print-page-number {
             font-family: Inter, system-ui, sans-serif;
-            font-size: 0.875rem;
-            font-weight: 700;
-            color: hsl(22, 90%, 54%);
+            font-size: 0.625rem;
+            font-weight: 600;
+            color: #666;
           }
         `}</style>
 
