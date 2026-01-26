@@ -1,4 +1,4 @@
-import { Home, Settings, User, Users, Building2, LogOut, Wrench, FileText } from "lucide-react";
+import { Home, Users, Building2, LogOut, Wrench, FileText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
@@ -19,25 +19,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-const mainItems = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
-];
-
-const moduleItems = [
-  { title: "Shop & Install", url: "/shop-install", icon: Wrench },
-  { title: "SOP", url: "/training", icon: FileText },
-];
-
-const settingsItems = [
-  { title: "Account", url: "/settings/account", icon: User },
-  { title: "Preferences", url: "/settings/preferences", icon: Settings },
-];
-
-const adminItems = [
-  { title: "Users", url: "/admin/users", icon: Users },
-  { title: "Organization", url: "/admin/organization", icon: Building2 },
-];
-
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -53,7 +34,21 @@ export function AppSidebar() {
       .slice(0, 2);
   };
 
-  const basePath = organization?.slug ? `/dashboard/${organization.slug}` : "/dashboard";
+  const basePath = organization?.slug ? `/dashboard/${organization.slug}` : "/login";
+
+  const mainItems = [
+    { title: "Dashboard", url: basePath, icon: Home },
+  ];
+
+  const moduleItems = [
+    { title: "Shop & Install", url: `${basePath}/shop-install`, icon: Wrench },
+    { title: "SOP", url: `${basePath}/training`, icon: FileText },
+  ];
+
+  const adminItems = [
+    { title: "Users", url: "/admin/users", icon: Users },
+    { title: "Organization", url: "/admin/organization", icon: Building2 },
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -83,7 +78,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
-                      to={item.url === "/dashboard" ? basePath : item.url}
+                      to={item.url}
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                       activeClassName="bg-accent text-primary font-medium border-l-2 border-primary"
                     >
@@ -105,31 +100,6 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {moduleItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={`${basePath}${item.url}`}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                      activeClassName="bg-accent text-primary font-medium border-l-2 border-primary"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Settings Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Settings
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
