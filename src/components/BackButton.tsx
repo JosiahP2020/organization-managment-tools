@@ -18,9 +18,17 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
     // Check if we're in an SOP Guide (path contains 'gemba' segment)
     const gembaIndex = pathParts.indexOf('gemba');
     
+    // Check if we're in a follow-up-list checklist
+    // Path: /dashboard/{org}/shop-install/projects/{projectId}/follow-up-list/{checklistId}
+    const followUpIndex = pathParts.indexOf('follow-up-list');
+    
     if (gembaIndex !== -1) {
       // For SOP Guides, go back to the category page (before 'gemba')
       const parentPath = '/' + pathParts.slice(0, gembaIndex).join('/');
+      navigate(parentPath);
+    } else if (followUpIndex !== -1) {
+      // For follow-up list checklists, go back to the project page (before 'follow-up-list')
+      const parentPath = '/' + pathParts.slice(0, followUpIndex).join('/');
       navigate(parentPath);
     } else if (pathParts.length > 2) {
       // Regular behavior: remove the last segment
