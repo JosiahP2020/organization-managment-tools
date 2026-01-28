@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          entity_id: string
+          entity_name: string
+          entity_type: string
+          id: string
+          metadata: Json
+          organization_id: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          entity_id: string
+          entity_name: string
+          entity_type: string
+          id?: string
+          metadata?: Json
+          organization_id: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          entity_id?: string
+          entity_name?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json
+          organization_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_items: {
         Row: {
           created_at: string | null
@@ -166,6 +210,53 @@ export type Database = {
           },
         ]
       }
+      dashboard_widgets: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          is_visible: boolean
+          name: string
+          organization_id: string
+          position: number
+          size: string
+          updated_at: string
+          widget_type: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          name: string
+          organization_id: string
+          position?: number
+          size?: string
+          updated_at?: string
+          widget_type: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          name?: string
+          organization_id?: string
+          position?: number
+          size?: string
+          updated_at?: string
+          widget_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_widgets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gemba_doc_cells: {
         Row: {
           created_at: string | null
@@ -292,6 +383,208 @@ export type Database = {
           },
         ]
       }
+      menu_categories: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          icon: string
+          id: string
+          name: string
+          organization_id: string
+          parent_category_id: string | null
+          show_in_sidebar: boolean
+          show_on_dashboard: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name: string
+          organization_id: string
+          parent_category_id?: string | null
+          show_in_sidebar?: boolean
+          show_on_dashboard?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          parent_category_id?: string | null
+          show_in_sidebar?: boolean
+          show_on_dashboard?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_categories_parent_category_id_fkey"
+            columns: ["parent_category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_item_documents: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string
+          document_id: string | null
+          document_type: string
+          file_name: string | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          menu_item_id: string
+          organization_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by: string
+          document_id?: string | null
+          document_type: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          menu_item_id: string
+          organization_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string
+          document_id?: string | null
+          document_type?: string
+          file_name?: string | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          menu_item_id?: string
+          organization_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_documents_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_items: {
+        Row: {
+          category_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          icon: string
+          id: string
+          is_searchable: boolean
+          item_type: string
+          name: string
+          organization_id: string
+          sort_order: number
+          target_category_id: string | null
+          tool_is_searchable: boolean
+          tool_mode: string
+          tool_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          icon?: string
+          id?: string
+          is_searchable?: boolean
+          item_type: string
+          name: string
+          organization_id: string
+          sort_order?: number
+          target_category_id?: string | null
+          tool_is_searchable?: boolean
+          tool_mode?: string
+          tool_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          is_searchable?: boolean
+          item_type?: string
+          name?: string
+          organization_id?: string
+          sort_order?: number
+          target_category_id?: string | null
+          tool_is_searchable?: boolean
+          tool_mode?: string
+          tool_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_target_category_id_fkey"
+            columns: ["target_category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           accent_color: string | null
@@ -342,6 +635,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pinned_items: {
+        Row: {
+          document_id: string
+          document_type: string
+          id: string
+          organization_id: string
+          pinned_at: string
+          sort_order: number
+          user_id: string
+        }
+        Insert: {
+          document_id: string
+          document_type: string
+          id?: string
+          organization_id: string
+          pinned_at?: string
+          sort_order?: number
+          user_id: string
+        }
+        Update: {
+          document_id?: string
+          document_type?: string
+          id?: string
+          organization_id?: string
+          pinned_at?: string
+          sort_order?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pinned_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipe_drawer_measurements: {
         Row: {
