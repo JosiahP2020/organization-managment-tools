@@ -1,5 +1,5 @@
 import { GraduationCap, Wrench } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardCategories } from "@/hooks/useDashboardCategories";
@@ -37,7 +37,7 @@ function StaticCategoryCard({ icon, title, description, onClick }: StaticCategor
 
 export function DashboardCategoryGrid() {
   const { categories, isLoading } = useDashboardCategories();
-  const { organization } = useAuth();
+  const { organization, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Loading state
@@ -81,19 +81,31 @@ export function DashboardCategoryGrid() {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4 md:gap-6">
-      <StaticCategoryCard
-        icon={<Wrench className="w-8 h-8 md:w-10 md:h-10" />}
-        title="Shop & Install"
-        description="Project management, follow-up lists, and measurement tools."
-        onClick={handleShopInstallClick}
-      />
-      <StaticCategoryCard
-        icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
-        title="SOP"
-        description="SOP, Machine Operation, and Machine Maintenance."
-        onClick={handleTrainingClick}
-      />
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4 md:gap-6">
+        <StaticCategoryCard
+          icon={<Wrench className="w-8 h-8 md:w-10 md:h-10" />}
+          title="Shop & Install"
+          description="Project management, follow-up lists, and measurement tools."
+          onClick={handleShopInstallClick}
+        />
+        <StaticCategoryCard
+          icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
+          title="SOP"
+          description="SOP, Machine Operation, and Machine Maintenance."
+          onClick={handleTrainingClick}
+        />
+      </div>
+      
+      {/* Admin hint for customization */}
+      {isAdmin && (
+        <p className="text-center text-sm text-muted-foreground">
+          Want to customize these categories?{" "}
+          <Link to="/admin/menu-config" className="text-primary hover:underline">
+            Open Menu Configuration
+          </Link>
+        </p>
+      )}
     </div>
   );
 }
