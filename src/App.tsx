@@ -22,6 +22,7 @@ import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
 import CategoryDetailPage from "./pages/CategoryDetailPage";
+import DesignPreview from "./pages/dev/DesignPreview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,8 @@ const App = () => (
                 <Route path="/settings/preferences" element={<Settings />} />
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/admin/organization" element={<OrganizationSettings />} />
+                {/* Dev routes - temporary for design preview */}
+                <Route path="/dev/design-preview" element={<DesignPreview />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
