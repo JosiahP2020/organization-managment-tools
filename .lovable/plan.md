@@ -1,296 +1,209 @@
 
-# Fully Inline Navigation Editing System
+
+# Phase A: Design Preview Page Implementation
 
 ## Overview
 
-Transform the current navigation system so that all categories, menu items, and content can be created, edited, renamed, rearranged, and deleted directly from wherever they appear in the app. Remove the separate Menu Configuration page entirely. New organizations will start with default categories ("Shop & Install" and "SOP") that are real database entries, fully customizable from day one.
+Create an isolated design preview environment at `/dev/design-preview` to showcase multiple UI variations without affecting the main application. This will allow you to browse and select preferred styles before we implement them across the app.
 
 ---
 
-## Core Principles
+## Confirmation: Customizable Widgets
 
-1. **Edit where you see it** - No separate configuration pages; click to edit right there
-2. **Visual consistency** - Plus buttons and edit icons use the same patterns everywhere
-3. **Non-intrusive for employees** - Edit controls only visible to admins
-4. **Seeded defaults** - New organizations get starter categories they can modify or delete
+Yes, widgets will be fully customizable with your own data sources. The `dashboard_widgets` table has a `config` column (JSONB type) that can store:
 
----
+- Custom API endpoints
+- Database queries or filters
+- Display settings (colors, layouts)
+- Data refresh intervals
+- Any custom configuration you need
 
-## Architecture Changes
-
-### Remove Separate Menu Configuration Page
-- Delete `src/pages/admin/MenuConfiguration.tsx`
-- Delete `src/components/menu-config/MenuCategoryEditor.tsx`
-- Remove route from `src/App.tsx`
-- Remove links from `DashboardHeader.tsx` and `DynamicNavigationMenu.tsx`
-
-### Keep Reusable Components
-- `IconPicker.tsx` - Used in inline dialogs
-- `DynamicIcon.tsx` - Used everywhere
-- `AddMenuItemDialog.tsx` - Reuse for adding items within categories
-- `EditMenuItemDialog.tsx` - Reuse for editing items
+When we implement widgets in Phase B, each widget type will have its own configuration schema, and you'll be able to create completely custom widgets.
 
 ---
 
-## Implementation Tasks
+## New Files to Create
 
-### Phase 1: Seed Default Categories on Organization Creation
+### 1. Main Preview Page
+**File:** `src/pages/dev/DesignPreview.tsx`
 
-**File: `src/pages/CreateOrganization.tsx`**
+Main container page with:
+- Navigation between design sections
+- Section tabs: Cards, Navigation, Add Buttons, Edit Triggers, Layouts
+- Mock dashboard header (menu button left, settings right, centered logo)
+- Easy section navigation with scroll or tabs
 
-After creating the organization, profile, and admin role (around line 177), insert default categories:
+### 2. Dashboard Card Showcase
+**File:** `src/components/dev/CardStyleShowcase.tsx`
+
+15+ card variations including:
+1. **Current Style** - Reference of what exists now (bubbly rectangle)
+2. **Clean Minimal** - No icon background box, just icon and text
+3. **Left Accent Bar** - Thin colored line on left edge
+4. **Icon Badge** - Small circle icon, title beside it
+5. **Tile Grid** - Square tiles like iOS app icons
+6. **List Row** - Horizontal rows with icon, title, description
+7. **Stat Card** - Shows item count badge
+8. **Sharp Corners** - No border radius, subtle shadow
+9. **Borderless Hover** - No visible border until hover
+10. **Underline Accent** - Bottom border highlight on hover
+11. **Thin Border** - 1px border, very minimal
+12. **Gradient Accent** - Subtle gradient on edge
+13. **Compact Horizontal** - Icon left, text right, small height
+14. **Two-Tone** - Split background color
+15. **Glass Morphism** - Blur backdrop effect
+
+Each card shows "Shop & Install" as sample content with an icon.
+
+### 3. Navigation Item Showcase
+**File:** `src/components/dev/NavItemShowcase.tsx`
+
+10+ navigation/menu item variations:
+1. **Current Style** - Reference (rounded with hover)
+2. **Sharp Corner** - No border radius
+3. **Rounded Pill** - Full pill shape
+4. **Underline Hover** - Line appears below on hover
+5. **Left Border Accent** - Colored left edge when active
+6. **Background Only** - No borders, just bg highlight
+7. **Icon Forward** - Icon larger, text smaller
+8. **Full Width List** - Takes entire width
+9. **Compact Grid** - Smaller, grid-ready items
+10. **Tab Style** - Like browser tabs
+
+### 4. Add Button Showcase
+**File:** `src/components/dev/AddButtonShowcase.tsx`
+
+8+ alternatives to the dashed circle button:
+1. **Current Dashed Circle** - Reference
+2. **Text Link** - "+ Add item" text link
+3. **Ghost Button** - Outlined button with label
+4. **Rectangular Outlined** - Box with plus icon
+5. **Floating Action** - FAB-style circle
+6. **Inline Text** - Minimal "+ Add" inline
+7. **Subtle Card** - Faded card that hints at adding
+8. **Icon with Tooltip** - Plus icon, tooltip on hover
+9. **Expandable** - Icon that expands to full button on hover
+
+### 5. Edit Mode Trigger Showcase
+**File:** `src/components/dev/EditTriggerShowcase.tsx`
+
+5+ placement and style options:
+1. **Header Bar Right** - Button next to settings gear
+2. **Header Bar Left** - Button next to menu button
+3. **Floating Bottom Right** - Fixed position corner
+4. **Floating Bottom Left** - Fixed position corner
+5. **Top Right Badge** - Small badge-style toggle
+
+Each shows both "off" and "on" states.
+
+### 6. Layout Showcase
+**File:** `src/components/dev/LayoutShowcase.tsx`
+
+5+ dashboard layout arrangements:
+1. **Full Width Grid** - Current (no widgets)
+2. **Grid + Right Column** - Menus left, widgets right
+3. **Top Widgets + Grid** - Widget row above menus
+4. **Corner Widgets** - Small widget area in top-right
+5. **Bottom Widgets** - Footer-style widget row
+
+Each shows a mini preview of the layout arrangement.
+
+---
+
+## Route Addition
+
+**File:** `src/App.tsx`
+
+Add temporary route:
+```tsx
+<Route path="/dev/design-preview" element={<DesignPreview />} />
+```
+
+---
+
+## How to Access
+
+Navigate directly to: `/dev/design-preview`
+
+The page will include:
+- A "Back to Dashboard" button to return
+- Clear section headers
+- Each variation labeled with a number and name
+- Visual groupings by category
+
+---
+
+## Preview Page Structure
 
 ```text
-1. Insert "Shop & Install" category
-   - icon: "wrench"
-   - description: "Project management, follow-up lists, and measurement tools."
-   - show_on_dashboard: true
-   - show_in_sidebar: true
-   - sort_order: 0
-
-2. Insert "SOP" category
-   - icon: "graduation-cap"
-   - description: "SOP, Machine Operation, and Machine Maintenance."
-   - show_on_dashboard: true
-   - show_in_sidebar: true
-   - sort_order: 1
++----------------------------------------------------------+
+|  [Back to Dashboard]           Design Preview            |
++----------------------------------------------------------+
+|  [ Cards ] [ Navigation ] [ Add Buttons ] [ Edit ] [ Layouts ]
++----------------------------------------------------------+
+|                                                          |
+|  DASHBOARD CARD STYLES                                   |
+|  ---------------------------                             |
+|                                                          |
+|  1. Current Style    2. Clean Minimal    3. Left Accent  |
+|  +-------------+     +-------------+     +-------------+ |
+|  |   [icon]   |     |   icon      |     | |  icon     | |
+|  | Shop & Inst|     | Shop & Inst |     | | Shop & In | |
+|  +-------------+     +-------------+     +-------------+ |
+|                                                          |
+|  4. Icon Badge      5. Tile Grid        6. List Row      |
+|  ... (continues)                                         |
+|                                                          |
++----------------------------------------------------------+
 ```
-
-This ensures every new organization starts with editable, deletable default categories.
-
----
-
-### Phase 2: Redesign Dashboard Cards with Inline Editing
-
-**New Component: `src/components/dashboard/EditableCategoryCard.tsx`**
-
-A category card that includes admin editing capabilities:
-- Normal appearance for all users
-- Admin hover reveals: Edit button (pencil icon, top-right)
-- Click edit opens a quick dialog for:
-  - Rename (inline input)
-  - Change icon (icon picker)
-  - Edit description
-  - Toggle dashboard/sidebar visibility
-  - Delete button (with confirmation)
-
-**New Component: `src/components/dashboard/AddCategoryCard.tsx`**
-
-A ghost/placeholder card at the end of the grid:
-- Dashed border with subtle background
-- Plus icon in center
-- "Add Category" text below
-- Only visible to admins
-- Click opens simple "Add Category" dialog
-
-**New Component: `src/components/dashboard/QuickCategoryDialog.tsx`**
-
-Streamlined dialog for creating/editing categories:
-- Name field (required)
-- Icon picker
-- Description field (optional)
-- Advanced section (collapsible):
-  - Show on Dashboard toggle
-  - Show in Sidebar toggle
-- Delete button (only in edit mode, with confirmation)
-
----
-
-### Phase 3: Update Dashboard Grid
-
-**File: `src/components/dashboard/DashboardCategoryGrid.tsx`**
-
-Complete rewrite:
-- Remove all static fallback cards
-- Remove `StaticCategoryCard` component
-- Remove admin hint text
-- Render `EditableCategoryCard` for each database category
-- Append `AddCategoryCard` at the end for admins
-- Empty state: Just show `AddCategoryCard` with helpful text
-
----
-
-### Phase 4: Inline Editing on Category Detail Page
-
-**File: `src/pages/CategoryDetailPage.tsx`**
-
-Add inline editing capabilities:
-
-1. **Category Header Editing (Admin)**
-   - Click category name to edit inline
-   - Edit icon next to category name opens quick edit dialog
-   - Can change name, icon, description, delete category
-
-2. **Editable Item Cards**
-   - Admin hover reveals edit button on each subcategory/item card
-   - Click edit opens appropriate dialog (EditCategoryDialog for subcategories, EditMenuItemDialog for items)
-
-3. **Add Item/Subcategory Button**
-   - Ghost card at end of grid for admins
-   - Click opens type selector:
-     - "Add Subcategory" - Creates child category
-     - "Add File Directory" - Creates file_directory item
-     - "Add Checklist" - Creates tool item
-     - "Add SOP Guide" - Creates tool item
-
-4. **Empty State Enhancement**
-   - Current: "This category is empty. Add items in Menu Configuration."
-   - New: Shows AddItemCard for admins, friendly message for employees
-
----
-
-### Phase 5: Improve Card Visual Design
-
-Update card styling across all components:
-
-**Current Design:**
-```css
-border-border
-hover:border-primary/30
-transition-all duration-300
-hover:shadow-lg
-```
-
-**New Design:**
-```css
-shadow-sm
-border border-border/50
-rounded-xl
-hover:shadow-md
-hover:scale-[1.02]
-transition-all duration-200
-bg-card
-```
-
-**Ghost/Add Card Design:**
-```css
-border-2 border-dashed border-muted-foreground/30
-bg-muted/20
-rounded-xl
-hover:border-primary/50
-hover:bg-accent/30
-```
-
----
-
-### Phase 6: Update Sidebar Navigation
-
-**File: `src/components/DynamicSidebar.tsx`** (or equivalent)
-
-Ensure sidebar dynamically reflects database categories:
-- Fetch categories where `show_in_sidebar: true`
-- No hardcoded fallbacks
-- Categories are clickable and route correctly
-
----
-
-### Phase 7: Remove Old Components
-
-**Delete:**
-- `src/pages/admin/MenuConfiguration.tsx`
-- `src/components/menu-config/MenuCategoryEditor.tsx`
-- `src/components/menu-config/MenuItemEditor.tsx`
-- `src/components/dashboard/AdminGetStartedCard.tsx`
-
-**Update `src/App.tsx`:**
-- Remove MenuConfiguration import and route
-
-**Update `src/components/DashboardHeader.tsx`:**
-- Remove "Menu Configuration" link from settings dropdown
-
-**Update `src/components/DynamicNavigationMenu.tsx`:**
-- Remove "Menu Configuration" from Admin section
-- Keep Users and Organization Settings
-
----
-
-## File Summary
-
-### New Files to Create
-| File | Purpose |
-|------|---------|
-| `src/components/dashboard/EditableCategoryCard.tsx` | Category card with admin edit overlay |
-| `src/components/dashboard/AddCategoryCard.tsx` | Ghost card with plus icon for adding categories |
-| `src/components/dashboard/QuickCategoryDialog.tsx` | Streamlined create/edit category dialog |
-| `src/components/category/EditableCategoryHeader.tsx` | Inline editable header for category detail page |
-| `src/components/category/AddItemCard.tsx` | Ghost card for adding items in category detail |
-| `src/components/category/EditableItemCard.tsx` | Item card with admin edit overlay |
-
-### Files to Modify
-| File | Changes |
-|------|---------|
-| `src/pages/CreateOrganization.tsx` | Add default category seeding after signup |
-| `src/pages/Dashboard.tsx` | Remove AdminGetStartedCard |
-| `src/components/dashboard/DashboardCategoryGrid.tsx` | Complete rewrite for inline editing |
-| `src/pages/CategoryDetailPage.tsx` | Add inline editing for items and subcategories |
-| `src/components/DashboardHeader.tsx` | Remove Menu Configuration link |
-| `src/components/DynamicNavigationMenu.tsx` | Remove Menu Configuration link |
-| `src/App.tsx` | Remove MenuConfiguration route |
-
-### Files to Delete
-| File | Reason |
-|------|--------|
-| `src/pages/admin/MenuConfiguration.tsx` | Replaced by inline editing |
-| `src/components/menu-config/MenuCategoryEditor.tsx` | Replaced by inline editing |
-| `src/components/menu-config/MenuItemEditor.tsx` | Functionality moved to CategoryDetailPage |
-| `src/components/dashboard/AdminGetStartedCard.tsx` | No longer needed with seeded defaults |
-
----
-
-## User Experience After Implementation
-
-### New Organization Signup
-1. Admin creates organization
-2. Dashboard immediately shows "Shop & Install" and "SOP" cards
-3. Admin sees subtle "+" card at the end to add more
-4. Admin can click edit on any card to rename, change icon, or delete
-
-### Admin on Dashboard
-```text
-+-------------------+  +-------------------+  +-------------------+
-|             [pen] |  |             [pen] |  |                   |
-|    [wrench]       |  |  [graduation]     |  |       [+]         |
-|                   |  |                   |  |                   |
-|  Shop & Install   |  |       SOP         |  |   Add Category    |
-|  Project mgmt...  |  |  Standard op...   |  |                   |
-+-------------------+  +-------------------+  +-------------------+
-```
-
-### Admin in Category Detail Page
-```text
-[wrench] Shop & Install                               [pen]
-         Project management, follow-up lists...
-
-+------------------+  +------------------+  +------------------+
-|            [pen] |  |            [pen] |  |                  |
-|   [projects]     |  |   [clipboard]    |  |       [+]        |
-|   Projects       |  |   Follow-up List |  |    Add Item      |
-+------------------+  +------------------+  +------------------+
-```
-
-### Employee Experience
-- No edit buttons visible
-- No plus cards visible
-- Clean, distraction-free navigation
-- Same cards, just without admin overlays
 
 ---
 
 ## Technical Notes
 
-### Existing Hooks to Reuse
-- `useMenuCategories()` - Has all CRUD operations ready
-- `useMenuItems()` - Has all CRUD operations ready
-- `useDashboardCategories()` - Fetches dashboard categories
+- All components are self-contained in `/dev/` folder for easy deletion later
+- No dependencies on main app state (uses static mock data)
+- Responsive design so you can preview on mobile too
+- Dark mode compatible (uses theme tokens)
+- Each variation is clearly numbered for easy reference
 
-### Existing Components to Reuse
-- `IconPicker` - For selecting icons
-- `DynamicIcon` - For rendering icons
-- `AddMenuItemDialog` - Can be adapted for inline use
-- `EditMenuItemDialog` - Can be adapted for inline use
+---
 
-### Admin Detection
-Use existing `useAuth().isAdmin` to conditionally render edit controls.
+## Implementation Order
 
-### Drag-and-Drop (Future)
-The `sort_order` column and `reorderCategories`/`reorderItems` mutations are already implemented. Drag-and-drop can be added later using a library like `@dnd-kit`.
+1. Create folder structure: `src/pages/dev/` and `src/components/dev/`
+2. Create the main `DesignPreview.tsx` page with tab navigation
+3. Create `CardStyleShowcase.tsx` with all 15+ variations
+4. Create `NavItemShowcase.tsx` with all 10+ variations
+5. Create `AddButtonShowcase.tsx` with all 8+ variations
+6. Create `EditTriggerShowcase.tsx` with all 5+ placement options
+7. Create `LayoutShowcase.tsx` with all 5+ layout arrangements
+8. Add route to `App.tsx`
+9. Test navigation and visual display
+
+---
+
+## After Selection
+
+Once you browse and identify your preferred styles:
+- Note the numbers/names of your choices
+- We proceed to Phase B implementation
+- Apply selected styles across the real components
+- Delete all `/dev/` files when complete
+
+---
+
+## Files Summary
+
+| File | Purpose |
+|------|---------|
+| `src/pages/dev/DesignPreview.tsx` | Main preview page with tabs |
+| `src/components/dev/CardStyleShowcase.tsx` | 15+ dashboard card variations |
+| `src/components/dev/NavItemShowcase.tsx` | 10+ navigation item variations |
+| `src/components/dev/AddButtonShowcase.tsx` | 8+ add button variations |
+| `src/components/dev/EditTriggerShowcase.tsx` | 5+ edit mode trigger options |
+| `src/components/dev/LayoutShowcase.tsx` | 5+ dashboard layout options |
+| `src/App.tsx` | Add dev route (1 line) |
+
+**Total: 6 new files + 1 minor edit**
+
