@@ -588,7 +588,9 @@ export type Database = {
       organizations: {
         Row: {
           accent_color: string | null
+          card_style: string
           created_at: string
+          dashboard_layout: string
           display_name: string | null
           id: string
           logo_url: string | null
@@ -604,7 +606,9 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          card_style?: string
           created_at?: string
+          dashboard_layout?: string
           display_name?: string | null
           id?: string
           logo_url?: string | null
@@ -620,7 +624,9 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          card_style?: string
           created_at?: string
+          dashboard_layout?: string
           display_name?: string | null
           id?: string
           logo_url?: string | null
