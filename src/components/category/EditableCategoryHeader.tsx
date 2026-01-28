@@ -5,6 +5,7 @@ import { Pencil } from "lucide-react";
 import { QuickCategoryDialog } from "@/components/dashboard/QuickCategoryDialog";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEditMode } from "@/contexts/EditModeContext";
 import sccLogo from "@/assets/scc-logo.gif";
 
 interface EditableCategoryHeaderProps {
@@ -32,9 +33,13 @@ export function EditableCategoryHeader({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const { mainLogoUrl, logoFilterClass } = useThemeLogos();
   const { organization } = useAuth();
+  const { isEditMode } = useEditMode();
 
   // Use main logo, fall back to default
   const displayLogo = mainLogoUrl || sccLogo;
+
+  // Show edit button only in edit mode for admins
+  const showEditButton = isAdmin && isEditMode;
 
   return (
     <>
@@ -58,11 +63,11 @@ export function EditableCategoryHeader({
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
             {category.name}
           </h1>
-          {isAdmin && (
+          {showEditButton && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-8 w-8"
               onClick={() => setShowEditDialog(true)}
             >
               <Pencil className="h-4 w-4" />

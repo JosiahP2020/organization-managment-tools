@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { QuickCategoryDialog } from "./QuickCategoryDialog";
+import { useEditMode } from "@/contexts/EditModeContext";
 
 interface AddCategoryCardProps {
   onCreate: (data: { name: string; description?: string; icon: string; show_on_dashboard: boolean; show_in_sidebar: boolean }) => void;
@@ -9,25 +10,22 @@ interface AddCategoryCardProps {
 
 export function AddCategoryCard({ onCreate }: AddCategoryCardProps) {
   const [showDialog, setShowDialog] = useState(false);
+  const { isEditMode } = useEditMode();
+
+  // Only show in edit mode
+  if (!isEditMode) return null;
 
   return (
     <>
-      <Card 
-        className="group relative overflow-hidden border-2 border-dashed border-muted-foreground/30 bg-muted/20 rounded-xl hover:border-primary/50 hover:bg-accent/30 transition-all duration-200 cursor-pointer"
+      {/* Ghost Button Style - matching the card height */}
+      <Button
+        variant="outline"
+        className="w-full h-full min-h-[72px] md:min-h-[82px] border-2 border-dashed border-muted-foreground/30 bg-transparent hover:border-primary/50 hover:bg-accent/20 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
         onClick={() => setShowDialog(true)}
       >
-        <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center min-h-[180px]">
-          {/* Plus Icon */}
-          <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-muted/50 flex items-center justify-center mb-4 group-hover:bg-accent transition-colors duration-200">
-            <Plus className="w-8 h-8 md:w-10 md:h-10 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-
-          {/* Label */}
-          <p className="text-muted-foreground font-medium group-hover:text-foreground transition-colors">
-            Add Category
-          </p>
-        </CardContent>
-      </Card>
+        <Plus className="w-5 h-5 text-muted-foreground" />
+        <span className="text-muted-foreground font-medium">Add Category</span>
+      </Button>
 
       {/* Create Dialog */}
       <QuickCategoryDialog

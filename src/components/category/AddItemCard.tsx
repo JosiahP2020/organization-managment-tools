@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useEditMode } from "@/contexts/EditModeContext";
 
 export type ItemType = "subcategory" | "file_directory" | "checklist" | "sop_guide";
 
@@ -16,6 +17,10 @@ interface AddItemCardProps {
 
 export function AddItemCard({ onAdd }: AddItemCardProps) {
   const [open, setOpen] = useState(false);
+  const { isEditMode } = useEditMode();
+
+  // Only show in edit mode
+  if (!isEditMode) return null;
 
   const handleSelect = (type: ItemType) => {
     setOpen(false);
@@ -26,11 +31,11 @@ export function AddItemCard({ onAdd }: AddItemCardProps) {
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          size="icon"
-          className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/30 transition-all"
+          variant="outline"
+          className="flex items-center gap-2 border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/20 transition-all"
         >
-          <Plus className="h-5 w-5 text-muted-foreground" />
+          <Plus className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground font-medium">Add Item</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-56">
