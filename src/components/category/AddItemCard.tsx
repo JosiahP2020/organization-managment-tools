@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Plus, FolderPlus, FileText, ClipboardList, BookOpen } from "lucide-react";
 import {
   DropdownMenu,
@@ -7,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 export type ItemType = "subcategory" | "file_directory" | "checklist" | "sop_guide";
 
@@ -25,21 +25,13 @@ export function AddItemCard({ onAdd }: AddItemCardProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Card 
-          className="group relative overflow-hidden border-2 border-dashed border-muted-foreground/30 bg-muted/20 rounded-xl hover:border-primary/50 hover:bg-accent/30 transition-all duration-200 cursor-pointer"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 rounded-full border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-accent/30 transition-all"
         >
-          <CardContent className="p-6 flex flex-col items-center justify-center text-center min-h-[160px]">
-            {/* Plus Icon */}
-            <div className="w-14 h-14 rounded-xl bg-muted/50 flex items-center justify-center mb-3 group-hover:bg-accent transition-colors duration-200">
-              <Plus className="w-7 h-7 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-
-            {/* Label */}
-            <p className="text-sm text-muted-foreground font-medium group-hover:text-foreground transition-colors">
-              Add Item
-            </p>
-          </CardContent>
-        </Card>
+          <Plus className="h-5 w-5 text-muted-foreground" />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-56">
         <DropdownMenuItem onClick={() => handleSelect("subcategory")} className="cursor-pointer">

@@ -22,6 +22,10 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
     // Path: /dashboard/{org}/shop-install/projects/{projectId}/follow-up-list/{checklistId}
     const followUpIndex = pathParts.indexOf('follow-up-list');
     
+    // Check if we're in a category detail page
+    // Path: /dashboard/{org}/category/{categoryId}
+    const categoryIndex = pathParts.indexOf('category');
+    
     if (gembaIndex !== -1) {
       // For SOP Guides, go back to the category page (before 'gemba')
       const parentPath = '/' + pathParts.slice(0, gembaIndex).join('/');
@@ -29,6 +33,10 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
     } else if (followUpIndex !== -1) {
       // For follow-up list checklists, go back to the project page (before 'follow-up-list')
       const parentPath = '/' + pathParts.slice(0, followUpIndex).join('/');
+      navigate(parentPath);
+    } else if (categoryIndex !== -1) {
+      // For category pages, go back to the dashboard (before 'category')
+      const parentPath = '/' + pathParts.slice(0, categoryIndex).join('/');
       navigate(parentPath);
     } else if (pathParts.length > 2) {
       // Regular behavior: remove the last segment
