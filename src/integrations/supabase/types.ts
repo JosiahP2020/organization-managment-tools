@@ -518,6 +518,7 @@ export type Database = {
           item_type: string
           name: string
           organization_id: string
+          section_id: string | null
           sort_order: number
           target_category_id: string | null
           tool_is_searchable: boolean
@@ -536,6 +537,7 @@ export type Database = {
           item_type: string
           name: string
           organization_id: string
+          section_id?: string | null
           sort_order?: number
           target_category_id?: string | null
           tool_is_searchable?: boolean
@@ -554,6 +556,7 @@ export type Database = {
           item_type?: string
           name?: string
           organization_id?: string
+          section_id?: string | null
           sort_order?: number
           target_category_id?: string | null
           tool_is_searchable?: boolean
@@ -574,6 +577,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
             referencedColumns: ["id"]
           },
           {

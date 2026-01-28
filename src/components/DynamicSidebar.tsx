@@ -127,8 +127,8 @@ export function DynamicSidebar() {
       </div>
 
       <SidebarContent>
-        {/* Dashboard - No group label, direct item */}
-        <SidebarGroup>
+        {/* Dashboard - No group label, direct item, no top padding */}
+        <SidebarGroup className="pt-0">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>

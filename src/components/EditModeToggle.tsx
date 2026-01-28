@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Lock, LockOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -14,14 +13,24 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEditMode } from "@/contexts/EditModeContext";
+import { useLocation } from "react-router-dom";
 
 export function EditModeToggle() {
   const { isAdmin } = useAuth();
   const { isEditMode, setIsEditMode } = useEditMode();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const location = useLocation();
 
   // Only show for admins
   if (!isAdmin) return null;
+
+  // Determine if we're on the main dashboard (Settings gear is visible there)
+  // Main dashboard pattern: /dashboard/{slug} with no additional path segments
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const isMainDashboard = pathParts.length === 2 && pathParts[0] === 'dashboard';
+  
+  // Position: right-24 when Settings gear visible (main dashboard), right-4 otherwise
+  const positionClass = isMainDashboard ? 'right-24' : 'right-4';
 
   const handleToggleClick = () => {
     if (isEditMode) {
@@ -40,8 +49,8 @@ export function EditModeToggle() {
 
   return (
     <>
-      {/* Badge Toggle - positioned fixed to align with settings gear */}
-      <div className="fixed top-4 right-24 z-50 flex items-center h-14">
+      {/* Badge Toggle - positioned fixed, moves right when Settings gear is hidden */}
+      <div className={`fixed top-4 ${positionClass} z-50 flex items-center h-14`}>
         <Badge 
           variant={isEditMode ? "default" : "outline"}
           className={`

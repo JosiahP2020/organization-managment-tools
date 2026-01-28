@@ -14,6 +14,9 @@ import { AddItemCard, ItemType } from "@/components/category/AddItemCard";
 import { useState } from "react";
 import { AddMenuItemDialog } from "@/components/menu-config/AddMenuItemDialog";
 import { QuickCategoryDialog } from "@/components/dashboard/QuickCategoryDialog";
+import { AddSectionDialog } from "@/components/category/AddSectionDialog";
+import { AddWidgetDialog } from "@/components/category/AddWidgetDialog";
+import { useSections } from "@/hooks/useSections";
 
 interface MenuCategory {
   id: string;
@@ -29,9 +32,12 @@ export default function CategoryDetailPage() {
   const { organization, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { updateCategory, deleteCategory, createCategory } = useMenuCategories();
+  const { createSection } = useSections(categoryId);
   
   const [showAddItemDialog, setShowAddItemDialog] = useState(false);
   const [showAddSubcategoryDialog, setShowAddSubcategoryDialog] = useState(false);
+  const [showAddSectionDialog, setShowAddSectionDialog] = useState(false);
+  const [showAddWidgetDialog, setShowAddWidgetDialog] = useState(false);
 
   // Fetch category details
   const { data: category, isLoading: categoryLoading } = useQuery({
@@ -141,10 +147,14 @@ export default function CategoryDetailPage() {
   };
 
   const handleAddItem = (type: ItemType) => {
-    if (type === "subcategory") {
+    if (type === "submenu") {
       setShowAddSubcategoryDialog(true);
+    } else if (type === "section_category") {
+      setShowAddSectionDialog(true);
+    } else if (type === "widget") {
+      setShowAddWidgetDialog(true);
     } else {
-      // For all other types (file_directory, checklist, sop_guide), open the item dialog
+      // For file_directory and tool, open the item dialog
       setShowAddItemDialog(true);
     }
   };
@@ -267,6 +277,22 @@ export default function CategoryDetailPage() {
         onOpenChange={setShowAddSubcategoryDialog}
         mode="create"
         onSave={handleCreateSubcategory}
+      />
+
+      {/* Add Section Dialog */}
+      <AddSectionDialog
+        open={showAddSectionDialog}
+        onOpenChange={setShowAddSectionDialog}
+        onSave={(data) => {
+          createSection.mutate(data);
+          setShowAddSectionDialog(false);
+        }}
+      />
+
+      {/* Add Widget Dialog */}
+      <AddWidgetDialog
+        open={showAddWidgetDialog}
+        onOpenChange={setShowAddWidgetDialog}
       />
     </DashboardLayout>
   );

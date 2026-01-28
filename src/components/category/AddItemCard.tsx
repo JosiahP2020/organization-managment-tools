@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, FolderPlus, FileText, ClipboardList, BookOpen } from "lucide-react";
+import { Plus, LayoutList, FolderPlus, FileBox, Wrench, LayoutDashboard } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useEditMode } from "@/contexts/EditModeContext";
 
-export type ItemType = "subcategory" | "file_directory" | "checklist" | "sop_guide";
+export type ItemType = "section_category" | "submenu" | "file_directory" | "tool" | "widget";
 
 interface AddItemCardProps {
   onAdd: (type: ItemType) => void;
@@ -27,6 +27,39 @@ export function AddItemCard({ onAdd }: AddItemCardProps) {
     onAdd(type);
   };
 
+  const menuItems: { type: ItemType; label: string; icon: React.ReactNode; description: string }[] = [
+    {
+      type: "section_category",
+      label: "Section Category",
+      icon: <LayoutList className="h-4 w-4 mr-2 text-primary" />,
+      description: "Group items together",
+    },
+    {
+      type: "submenu",
+      label: "Submenu",
+      icon: <FolderPlus className="h-4 w-4 mr-2 text-primary" />,
+      description: "Create a child menu",
+    },
+    {
+      type: "file_directory",
+      label: "File Directory",
+      icon: <FileBox className="h-4 w-4 mr-2 text-primary" />,
+      description: "Document storage",
+    },
+    {
+      type: "tool",
+      label: "Tool",
+      icon: <Wrench className="h-4 w-4 mr-2 text-primary" />,
+      description: "Checklist, SOP, or Project",
+    },
+    {
+      type: "widget",
+      label: "Widget",
+      icon: <LayoutDashboard className="h-4 w-4 mr-2 text-primary" />,
+      description: "Embed a dashboard widget",
+    },
+  ];
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -39,22 +72,19 @@ export function AddItemCard({ onAdd }: AddItemCardProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-56">
-        <DropdownMenuItem onClick={() => handleSelect("subcategory")} className="cursor-pointer">
-          <FolderPlus className="h-4 w-4 mr-2 text-primary" />
-          Subcategory
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleSelect("file_directory")} className="cursor-pointer">
-          <FileText className="h-4 w-4 mr-2 text-primary" />
-          File Directory
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleSelect("checklist")} className="cursor-pointer">
-          <ClipboardList className="h-4 w-4 mr-2 text-primary" />
-          Checklist
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleSelect("sop_guide")} className="cursor-pointer">
-          <BookOpen className="h-4 w-4 mr-2 text-primary" />
-          SOP Guide
-        </DropdownMenuItem>
+        {menuItems.map((item) => (
+          <DropdownMenuItem
+            key={item.type}
+            onClick={() => handleSelect(item.type)}
+            className="cursor-pointer flex flex-col items-start py-2"
+          >
+            <div className="flex items-center">
+              {item.icon}
+              <span>{item.label}</span>
+            </div>
+            <span className="text-xs text-muted-foreground ml-6">{item.description}</span>
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   );
