@@ -22,6 +22,7 @@ import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
 import MenuConfiguration from "./pages/admin/MenuConfiguration";
+import CategoryDetailPage from "./pages/CategoryDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/dashboard/:orgSlug/shop-install/projects" element={<ProjectList />} />
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId" element={<ProjectDetail />} />
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId/follow-up-list/:checklistId" element={<ChecklistEditor />} />
+                <Route path="/dashboard/:orgSlug/category/:categoryId" element={<CategoryDetailPage />} />
                 <Route path="/settings" element={<Settings />} />
                 {/* Legacy routes redirect to new combined settings */}
                 <Route path="/settings/account" element={<Settings />} />
