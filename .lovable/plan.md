@@ -1,358 +1,373 @@
 
-# Customizable Navigation and Dashboard System
 
-## Overview
+# Customizable Navigation, Dashboard & Widget System
 
-This plan transforms the current hardcoded navigation structure (Shop & Install, SOP) into a fully dynamic, organization-configurable system. Admins will be able to:
+## Executive Summary
 
-- Create custom menu categories with custom names and icons
-- Build hierarchical menu structures (menus within menus)
-- Add searchable file directories as menu destinations
-- Link existing tools (Checklists, SOP Guides, Projects) with custom display names
-- Customize the dashboard to show their chosen categories
+Transform the application from hardcoded navigation into a fully dynamic, organization-configurable system where admins can build custom menu structures, file directories, and dashboard widgets without any coding.
 
 ---
 
-## Phase 1: Database Schema Design
+## Core Concepts
 
-### New Tables Required
+### Menu System
 
-**1. `menu_categories` - Top-level menu/dashboard items**
-```sql
-CREATE TABLE menu_categories (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,                    -- Display name (e.g., "Shop Floor")
-  description TEXT,                       -- Optional description
-  icon TEXT NOT NULL DEFAULT 'folder',    -- Lucide icon name
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  parent_category_id UUID REFERENCES menu_categories(id), -- For nesting
-  show_on_dashboard BOOLEAN DEFAULT true,
-  show_in_sidebar BOOLEAN DEFAULT true,
-  created_by UUID NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+In any menu, an admin can add:
+
+1. **Submenu** - Another nested menu (unlimited depth)
+2. **File Directory** - Uploadable/searchable documents with custom title (like Google Drive)
+3. **Tool** - Checklist, SOP Guide, etc. with its own file directory
+
+A single menu page can contain **multiple categorized sections**. Example menu layout:
+
+```text
+┌─────────────────────────────────────────┐
+│  Production Floor Menu                  │
+├─────────────────────────────────────────┤
+│  📁 Gloves (File Directory)             │
+│     └─ Searchable uploaded documents    │
+├─────────────────────────────────────────┤
+│  ✅ CNC Checklist (Tool: Checklist)     │
+│     └─ Unlimited mode, searchable list  │
+├─────────────────────────────────────────┤
+│  📁 Grease Tutorials (File Directory)   │
+│     └─ Videos, PDFs on CNC maintenance  │
+├─────────────────────────────────────────┤
+│  📋 Machine Setup (Tool: SOP Guide)     │
+│     └─ Single mode, one document        │
+└─────────────────────────────────────────┘
 ```
 
-**2. `menu_items` - Items within categories**
-```sql
-CREATE TABLE menu_items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  category_id UUID NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,                     -- Display name
-  description TEXT,
-  icon TEXT NOT NULL DEFAULT 'file',      -- Lucide icon name
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  item_type TEXT NOT NULL,                -- 'subcategory', 'tool', 'file_directory'
-  
-  -- For 'tool' type - links to existing functionality
-  tool_type TEXT,                         -- 'checklist', 'sop_guide', 'project_hub', 'pipe_measurements'
-  tool_config JSONB DEFAULT '{}',         -- Additional tool settings
-  
-  -- For 'file_directory' type - searchable document list
-  directory_document_category TEXT,       -- Links to existing document_category enum
-  
-  -- For 'subcategory' type - creates a nested menu
-  target_category_id UUID REFERENCES menu_categories(id),
-  
-  created_by UUID NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-```
+### Tool Modes
 
-**3. `dashboard_widgets` - Customizable dashboard layout**
-```sql
-CREATE TABLE dashboard_widgets (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  category_id UUID REFERENCES menu_categories(id),  -- Which category to display
-  position INTEGER NOT NULL DEFAULT 0,              -- Order on dashboard
-  size TEXT DEFAULT 'normal',                       -- 'small', 'normal', 'large'
-  is_visible BOOLEAN DEFAULT true,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(organization_id, category_id)
-);
-```
+- **Unlimited Mode**: Searchable list of documents, can create many
+- **Single Mode**: One document only, opens directly (like Follow-up List)
 
-### RLS Policies
-- All tables will have organization-scoped RLS
-- Only admins can insert/update/delete
-- All org users can view (SELECT)
+### Widget System
+
+- **Pre-built Widgets**: Ready to add with one click (Recent Activity, Pinned Items, Stats)
+- **Widget Builder**: Create custom widgets from scratch with data sources and filters
 
 ---
 
-## Phase 2: Available Tool Types
+## Database Schema
 
-The system will support these linkable tool types:
+### Table: menu_categories
 
-| Tool Type | Description | Current Implementation |
-|-----------|-------------|------------------------|
-| `checklist` | Interactive checklist with sections/items | ChecklistEditor.tsx |
-| `sop_guide` | Grid-based SOP documentation | GembaDocEditor.tsx |
-| `project_hub` | Project detail with follow-up lists | ProjectDetail.tsx |
-| `pipe_measurements` | Pipe drawer measurement tool | Coming soon |
-| `file_directory` | Searchable list of documents | CategoryDocuments.tsx |
+Stores top-level menus and nested submenus.
 
-Each tool can be given a custom name by the organization.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| organization_id | UUID | References organizations |
+| name | TEXT | Display name |
+| description | TEXT | Optional description |
+| icon | TEXT | Lucide icon name (default: 'folder') |
+| sort_order | INTEGER | Display order |
+| parent_category_id | UUID | Self-reference for nesting |
+| show_on_dashboard | BOOLEAN | Show as dashboard card |
+| show_in_sidebar | BOOLEAN | Show in sidebar navigation |
+| created_by | UUID | Creator user ID |
+| created_at | TIMESTAMPTZ | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Last update timestamp |
 
----
+### Table: menu_items
 
-## Phase 3: Icon System
+Items within menus (file directories, tools, submenus).
 
-### Available Icons
-Store icon names as strings and render dynamically using a mapping system:
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| organization_id | UUID | References organizations |
+| category_id | UUID | References menu_categories |
+| name | TEXT | Display name (custom title) |
+| description | TEXT | Optional description |
+| icon | TEXT | Lucide icon name |
+| sort_order | INTEGER | Display order within category |
+| item_type | TEXT | 'submenu', 'file_directory', 'tool' |
+| target_category_id | UUID | For submenu type, links to category |
+| is_searchable | BOOLEAN | Show search bar (for file_directory) |
+| tool_type | TEXT | 'checklist', 'sop_guide', 'project_hub' |
+| tool_mode | TEXT | 'unlimited' or 'single' |
+| tool_is_searchable | BOOLEAN | Show search for tool's file list |
+| created_by | UUID | Creator user ID |
+| created_at | TIMESTAMPTZ | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Last update timestamp |
 
-```typescript
-const iconMap: Record<string, LucideIcon> = {
-  folder: Folder,
-  file: FileText,
-  wrench: Wrench,
-  cog: Cog,
-  clipboard: ClipboardList,
-  grid: Grid3X3,
-  ruler: Ruler,
-  users: Users,
-  home: Home,
-  // ... 30+ commonly used icons
-};
-```
+### Table: menu_item_documents
 
-The admin UI will show an icon picker with visual previews.
+Documents uploaded to file directories or created by tools.
 
----
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| organization_id | UUID | References organizations |
+| menu_item_id | UUID | References menu_items |
+| document_type | TEXT | 'file', 'checklist', 'sop_guide', etc. |
+| document_id | UUID | References tool documents if applicable |
+| title | TEXT | Document title |
+| file_url | TEXT | Storage URL for uploaded files |
+| file_name | TEXT | Original filename |
+| file_type | TEXT | MIME type |
+| created_by | UUID | Uploader user ID |
+| archived_at | TIMESTAMPTZ | Soft delete timestamp |
+| created_at | TIMESTAMPTZ | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Last update timestamp |
 
-## Phase 4: Menu Configuration UI
+### Table: dashboard_widgets
 
-### Admin Interface Location
-Add a new section in **Organization Settings** (`/admin/organization`):
+Widgets displayed on organization dashboards.
 
-**"Menu & Dashboard Configuration"** section with:
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| organization_id | UUID | References organizations |
+| widget_type | TEXT | 'category_card', 'recent_activity', 'pinned_items', 'document_stats', 'quick_links', 'progress', 'custom' |
+| name | TEXT | Display name (editable) |
+| position | INTEGER | Order on dashboard |
+| size | TEXT | 'small', 'normal', 'large' |
+| is_visible | BOOLEAN | Show/hide toggle |
+| config | JSONB | Widget-specific settings |
+| created_at | TIMESTAMPTZ | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Last update timestamp |
 
-1. **Category Manager**
-   - List of all custom categories
-   - Add/Edit/Delete/Reorder categories
-   - Set icon, name, description
-   - Toggle dashboard/sidebar visibility
+### Table: pinned_items
 
-2. **Item Manager** (per category)
-   - Add items to category
-   - Choose item type: Subcategory | Tool | File Directory
-   - Configure tool settings (which tool, custom name)
-   - Reorder items with drag-and-drop
+User-specific pinned documents for quick access.
 
-3. **Dashboard Layout**
-   - Visual grid showing current dashboard widgets
-   - Enable/disable categories on dashboard
-   - Reorder dashboard cards
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| user_id | UUID | References auth.users |
+| organization_id | UUID | References organizations |
+| document_type | TEXT | 'checklist', 'sop_guide', 'file' |
+| document_id | UUID | Reference to document |
+| pinned_at | TIMESTAMPTZ | When pinned |
+| sort_order | INTEGER | Order in pinned list |
 
-### UI Components to Create
-- `MenuCategoryEditor.tsx` - Manage categories
-- `MenuItemEditor.tsx` - Manage items within a category
-- `IconPicker.tsx` - Visual icon selection
-- `DashboardLayoutEditor.tsx` - Dashboard customization
+### Table: activity_log
 
----
+Tracks user actions for Recent Activity widget.
 
-## Phase 5: Dynamic Navigation Rendering
-
-### Updates to AppSidebar.tsx
-Replace hardcoded module items with dynamic query:
-
-```typescript
-// Fetch custom menu categories
-const { data: menuCategories } = useQuery({
-  queryKey: ["menu-categories", organization?.id],
-  queryFn: async () => {
-    const { data } = await supabase
-      .from("menu_categories")
-      .select("*")
-      .eq("organization_id", organization.id)
-      .eq("show_in_sidebar", true)
-      .order("sort_order");
-    return data;
-  }
-});
-
-// Render dynamically
-{menuCategories?.map((category) => (
-  <SidebarMenuItem key={category.id}>
-    <NavLink to={`${basePath}/category/${category.id}`}>
-      <DynamicIcon name={category.icon} />
-      {category.name}
-    </NavLink>
-  </SidebarMenuItem>
-))}
-```
-
-### Updates to AppNavigationMenu.tsx
-Same dynamic rendering for mobile menu.
-
----
-
-## Phase 6: Dynamic Dashboard Rendering
-
-### Updates to Dashboard.tsx
-Replace hardcoded CategoryCards with dynamic widgets:
-
-```typescript
-// Fetch dashboard widgets with their categories
-const { data: dashboardWidgets } = useQuery({
-  queryKey: ["dashboard-widgets", organization?.id],
-  queryFn: async () => {
-    const { data } = await supabase
-      .from("dashboard_widgets")
-      .select(`
-        *,
-        category:menu_categories(*)
-      `)
-      .eq("organization_id", organization.id)
-      .eq("is_visible", true)
-      .order("position");
-    return data;
-  }
-});
-
-// Render dynamic category cards
-{dashboardWidgets?.map((widget) => (
-  <CategoryCard
-    key={widget.id}
-    icon={<DynamicIcon name={widget.category.icon} />}
-    title={widget.category.name}
-    description={widget.category.description}
-    onClick={() => navigate(`/category/${widget.category.id}`)}
-  />
-))}
-```
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| organization_id | UUID | References organizations |
+| user_id | UUID | Acting user |
+| action_type | TEXT | 'created', 'updated', 'completed', 'viewed', 'deleted', 'archived' |
+| entity_type | TEXT | 'checklist', 'sop_guide', 'file', 'project', 'menu' |
+| entity_id | UUID | Reference to entity |
+| entity_name | TEXT | Display name for activity feed |
+| metadata | JSONB | Additional context |
+| created_at | TIMESTAMPTZ | When action occurred |
 
 ---
 
-## Phase 7: Dynamic Category Pages
+## RLS Policies
 
-### New Generic Route
-Add to App.tsx:
-```typescript
-<Route 
-  path="/dashboard/:orgSlug/category/:categoryId" 
-  element={<DynamicCategoryPage />} 
-/>
-<Route 
-  path="/dashboard/:orgSlug/category/:categoryId/:itemId" 
-  element={<DynamicItemPage />} 
-/>
-```
+All new tables will have organization-scoped Row-Level Security:
 
-### DynamicCategoryPage.tsx
-A new page that:
-1. Fetches the category and its items
-2. Renders items based on their type:
-   - **Subcategory**: Links to another category page
-   - **Tool**: Links to the appropriate tool page (checklist, SOP guide, etc.)
-   - **File Directory**: Shows searchable document list (reuses CategoryDocuments logic)
+**SELECT (View)**: All organization members can view their org's data
+**INSERT/UPDATE/DELETE (Modify)**: Only admins can modify menu structure and widgets
+**Pinned Items**: Users can manage their own pins only
+**Activity Log**: Insert-only, no user modification
 
-### DynamicItemPage.tsx
-Routes to the appropriate editor based on tool type:
-- Checklist → ChecklistEditor
-- SOP Guide → GembaDocEditor
-- Project Hub → ProjectDetail
-- etc.
+Uses existing `is_org_admin()` and `get_user_organization()` security definer functions.
 
 ---
 
-## Phase 8: Migration Path for Existing Data
+## New Components
 
-### Default Menu Structure
-On first load (or for new organizations), seed default categories:
+### Menu Configuration Components
 
-```sql
--- Create default "Shop & Install" category
-INSERT INTO menu_categories (organization_id, name, icon, sort_order)
-VALUES (org_id, 'Shop & Install', 'wrench', 1);
+| Component | Purpose |
+|-----------|---------|
+| DynamicIcon.tsx | Renders Lucide icons by string name |
+| IconPicker.tsx | Visual icon selection grid for admins |
+| MenuCategoryEditor.tsx | Manage menu categories |
+| MenuItemEditor.tsx | Manage items within categories |
+| AddMenuItemDialog.tsx | Dialog to add new menu items |
+| MenuItemTypeSelector.tsx | Choose between submenu/file_directory/tool |
 
--- Create default "SOP" category  
-INSERT INTO menu_categories (organization_id, name, icon, sort_order)
-VALUES (org_id, 'SOP', 'file-text', 2);
+### Dashboard Configuration Components
 
--- Add items to SOP category
-INSERT INTO menu_items (category_id, name, icon, item_type, directory_document_category)
-VALUES 
-  (sop_category_id, 'SOP', 'file-text', 'file_directory', 'sop_training'),
-  (sop_category_id, 'Machine Operation', 'cog', 'file_directory', 'machine_operation'),
-  (sop_category_id, 'Machine Maintenance', 'wrench', 'file_directory', 'machine_maintenance');
+| Component | Purpose |
+|-----------|---------|
+| DashboardLayoutEditor.tsx | Arrange widgets on dashboard |
+| WidgetGallery.tsx | Browse available widgets |
+| WidgetBuilder.tsx | Create custom widgets |
+| WidgetConfigDialog.tsx | Configure widget settings |
+
+### Widget Components
+
+| Component | Purpose |
+|-----------|---------|
+| RecentActivityWidget.tsx | Shows recent actions feed |
+| PinnedItemsWidget.tsx | User's pinned quick access |
+| DocumentStatsWidget.tsx | Document counts |
+| QuickLinksWidget.tsx | Category shortcut buttons |
+| ProgressWidget.tsx | Completion progress bars |
+| CustomWidget.tsx | Renders custom widget configs |
+
+### Navigation Components
+
+| Component | Purpose |
+|-----------|---------|
+| DynamicSidebar.tsx | Data-driven sidebar |
+| DynamicNavMenu.tsx | Data-driven mobile menu |
+| DynamicBreadcrumb.tsx | Context-aware breadcrumbs |
+
+### File Directory Components
+
+| Component | Purpose |
+|-----------|---------|
+| FileDirectoryView.tsx | List/grid of uploaded files |
+| FileUploadDialog.tsx | Upload new files |
+| FileSearchBar.tsx | Search within directory |
+
+### Page Components
+
+| Component | Purpose |
+|-----------|---------|
+| DynamicCategoryPage.tsx | Renders menu categories |
+| DynamicItemPage.tsx | Renders specific menu items |
+| MenuConfiguration.tsx | Admin configuration page |
+
+### Hooks
+
+| Hook | Purpose |
+|------|---------|
+| useMenuCategories.tsx | Fetch/manage categories |
+| useMenuItems.tsx | Fetch/manage menu items |
+| useDashboardWidgets.tsx | Fetch/manage widgets |
+| useActivityLog.tsx | Log and fetch activity |
+| usePinnedItems.tsx | Manage user pins |
+
+---
+
+## Modified Files
+
+| File | Changes |
+|------|---------|
+| src/App.tsx | Add dynamic routes for categories and items |
+| src/components/AppSidebar.tsx | Replace hardcoded items with DynamicSidebar |
+| src/components/AppNavigationMenu.tsx | Replace hardcoded items with DynamicNavMenu |
+| src/pages/Dashboard.tsx | Replace hardcoded cards with dynamic widgets |
+| src/pages/admin/OrganizationSettings.tsx | Add Menu Configuration section |
+
+---
+
+## Route Structure
+
+```text
+/dashboard/:orgSlug                              → Dashboard (dynamic widgets)
+/dashboard/:orgSlug/category/:categoryId         → DynamicCategoryPage
+/dashboard/:orgSlug/item/:itemId                 → DynamicItemPage
+/dashboard/:orgSlug/item/:itemId/:documentId     → Document Editor/Viewer
+/dashboard/:orgSlug/admin/menu-config            → Menu Configuration (admin)
 ```
 
 ---
 
-## Phase 9: File Structure Summary
+## Design Requirements
 
-### New Files to Create
+### Theme Compatibility
+- Full light mode and dark mode support for all new components
+- Use CSS variables and Tailwind theme tokens
+- No hardcoded colors
 
-```
-src/
-├── components/
-│   ├── menu-config/
-│   │   ├── MenuCategoryEditor.tsx      # Admin UI for categories
-│   │   ├── MenuItemEditor.tsx          # Admin UI for items
-│   │   ├── IconPicker.tsx              # Icon selection component
-│   │   ├── DashboardLayoutEditor.tsx   # Dashboard customization
-│   │   └── DynamicIcon.tsx             # Renders icons by name
-│   └── navigation/
-│       ├── DynamicSidebar.tsx          # Replaces hardcoded sidebar
-│       └── DynamicNavMenu.tsx          # Replaces hardcoded mobile menu
-├── pages/
-│   ├── category/
-│   │   ├── DynamicCategoryPage.tsx     # Generic category view
-│   │   └── DynamicItemPage.tsx         # Routes to appropriate tool
-│   └── admin/
-│       └── MenuConfiguration.tsx       # Admin menu setup page
-└── hooks/
-    └── useMenuConfiguration.tsx        # Shared menu data hooks
-```
+### Color Accent System
+- Integrate with organization accent_color setting
+- Apply to active states, buttons, and highlights
 
-### Files to Modify
-- `src/App.tsx` - Add new dynamic routes
-- `src/components/AppSidebar.tsx` - Use dynamic menu data
-- `src/components/AppNavigationMenu.tsx` - Use dynamic menu data
-- `src/pages/Dashboard.tsx` - Use dynamic dashboard widgets
-- `src/pages/admin/OrganizationSettings.tsx` - Add menu configuration section
+### Logo Integration
+- Support organization logos in navigation and dashboard
+- Use existing useThemeLogos hook
+
+### Consistent Styling
+- Rounded corners: rounded-lg, rounded-xl
+- Card styling: border-border, hover effects
+- Match existing simplistic but professional aesthetic
+- Uniform spacing and padding patterns
 
 ---
 
-## Implementation Order
+## Implementation Phases
 
-1. **Database First**: Create tables with migrations and RLS policies
-2. **Icon System**: Build DynamicIcon component and icon picker
-3. **Admin UI**: Build menu configuration interface
-4. **Dynamic Navigation**: Update sidebar and mobile menu
-5. **Dynamic Dashboard**: Update dashboard to use widgets
-6. **Dynamic Pages**: Create generic category/item pages
-7. **Migration**: Seed default data for existing organizations
-8. **Testing**: Verify all existing functionality still works
+### Phase 1: Database Foundation
+- Create all 6 new tables with migrations
+- Set up RLS policies using existing security functions
+- Create any needed helper functions
+
+### Phase 2: Icon System
+- Build DynamicIcon component (40+ Lucide icons)
+- Build IconPicker component for admin selection
+
+### Phase 3: Menu Configuration Admin UI
+- MenuCategoryEditor with CRUD operations
+- MenuItemEditor for managing items
+- AddMenuItemDialog with type selection
+- Integration into Organization Settings page
+
+### Phase 4: Dynamic Navigation
+- DynamicSidebar replacing hardcoded module items
+- DynamicNavMenu for mobile navigation
+- Dynamic breadcrumbs for context
+
+### Phase 5: Dynamic Pages
+- DynamicCategoryPage showing menu items
+- DynamicItemPage handling different item types
+- File directory upload/view/search functionality
+- Connect to existing ChecklistEditor, GembaDocEditor
+
+### Phase 6: Pre-built Widgets
+- RecentActivityWidget
+- PinnedItemsWidget
+- DocumentStatsWidget
+- QuickLinksWidget
+- ProgressWidget
+
+### Phase 7: Dashboard Configuration
+- WidgetGallery to browse widgets
+- DashboardLayoutEditor for arrangement
+- Widget add/remove/reorder functionality
+
+### Phase 8: Widget Builder
+- Custom widget creation interface
+- Data source selection (category, documents, activity)
+- Filter configuration
+- Display type selection
+
+### Phase 9: Activity Logging
+- Implement activity_log inserts on CRUD operations
+- Connect to RecentActivityWidget
+- Filter and display logic
+
+### Phase 10: Default Setup and Polish
+- Seed default menu structure for new organizations
+- Default widget configuration
+- End-to-end testing
+- Verify existing functionality preserved
 
 ---
 
-## Technical Notes
+## Default Organization Setup
 
-- **Icon Storage**: Store Lucide icon names as strings (e.g., "wrench", "file-text")
-- **Backwards Compatibility**: Keep existing routes working during transition
-- **Performance**: Use React Query caching for menu data
-- **Validation**: Ensure at least one dashboard item exists
-- **Mobile**: All admin UIs will be responsive
+New organizations receive this starting structure (fully modifiable):
 
----
+**Default Categories:**
+1. Shop & Install (icon: wrench)
+   - Projects (tool: project_hub, unlimited)
 
-## Example User Flow
+2. SOP (icon: file-text)
+   - Standard Operating Procedures (tool: sop_guide, unlimited)
+   - Machine Operation (file_directory, searchable)
+   - Machine Maintenance (file_directory, searchable)
 
-1. Admin goes to Organization Settings → Menu Configuration
-2. Creates new category "Production Floor" with wrench icon
-3. Adds items:
-   - "Daily Checklists" → Tool: Checklist
-   - "Machine Guides" → Tool: SOP Guide
-   - "Work Orders" → Subcategory (links to another category)
-4. Enables "Production Floor" on dashboard
-5. All users now see "Production Floor" in sidebar and dashboard
-6. Clicking opens category with configured items
+**Default Widgets:**
+1. Category Cards for Shop & Install and SOP
+2. Recent Activity Feed
+3. Pinned Items (empty, ready for user)
+
+Organizations can delete, modify, or completely rebuild this structure.
 
