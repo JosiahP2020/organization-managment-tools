@@ -1,7 +1,7 @@
 import { Menu, Settings, Users, Building2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { AppNavigationMenu } from "@/components/AppNavigationMenu";
+import { DynamicNavigationMenu } from "@/components/DynamicNavigationMenu";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { BackButton } from "@/components/BackButton";
@@ -89,7 +89,7 @@ export function DashboardHeader() {
       {/* Spacer to prevent content from going under fixed buttons */}
       <div className="h-20" />
 
-      <AppNavigationMenu open={menuOpen} onOpenChange={setMenuOpen} />
+      <DynamicNavigationMenu open={menuOpen} onOpenChange={setMenuOpen} />
     </>
   );
 }
