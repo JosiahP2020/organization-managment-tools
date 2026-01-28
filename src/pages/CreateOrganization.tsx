@@ -176,6 +176,39 @@ const CreateOrganization = () => {
       return;
     }
 
+    // 5. Seed default categories
+    const defaultCategories = [
+      {
+        organization_id: orgData.id,
+        created_by: authData.user.id,
+        name: "Shop & Install",
+        icon: "wrench",
+        description: "Project management, follow-up lists, and measurement tools.",
+        show_on_dashboard: true,
+        show_in_sidebar: true,
+        sort_order: 0,
+      },
+      {
+        organization_id: orgData.id,
+        created_by: authData.user.id,
+        name: "SOP",
+        icon: "graduation-cap",
+        description: "SOP, Machine Operation, and Machine Maintenance.",
+        show_on_dashboard: true,
+        show_in_sidebar: true,
+        sort_order: 1,
+      },
+    ];
+
+    const { error: categoriesError } = await supabase
+      .from("menu_categories")
+      .insert(defaultCategories);
+
+    if (categoriesError) {
+      console.error("Failed to seed default categories:", categoriesError);
+      // Non-blocking - continue even if category seeding fails
+    }
+
     // Success! Auth state change will handle redirect
     setIsLoading(false);
   };

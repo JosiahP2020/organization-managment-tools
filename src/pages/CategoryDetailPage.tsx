@@ -5,31 +5,34 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
-import { FileText, FolderOpen } from "lucide-react";
-
-interface MenuItem {
-  id: string;
-  name: string;
-  icon: string;
-  description: string | null;
-  item_type: string;
-  tool_type: string | null;
-  target_category_id: string | null;
-  sort_order: number;
-}
+import { FolderOpen } from "lucide-react";
+import { useMenuCategories } from "@/hooks/useMenuCategories";
+import type { MenuItem } from "@/hooks/useMenuItems";
+import { EditableCategoryHeader } from "@/components/category/EditableCategoryHeader";
+import { EditableSubcategoryCard } from "@/components/category/EditableSubcategoryCard";
+import { EditableItemCard } from "@/components/category/EditableItemCard";
+import { AddItemCard, ItemType } from "@/components/category/AddItemCard";
+import { useState } from "react";
+import { AddMenuItemDialog } from "@/components/menu-config/AddMenuItemDialog";
+import { QuickCategoryDialog } from "@/components/dashboard/QuickCategoryDialog";
 
 interface MenuCategory {
   id: string;
   name: string;
   icon: string;
   description: string | null;
+  show_on_dashboard?: boolean;
+  show_in_sidebar?: boolean;
 }
 
 export default function CategoryDetailPage() {
   const { orgSlug, categoryId } = useParams<{ orgSlug: string; categoryId: string }>();
-  const { organization } = useAuth();
+  const { organization, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { updateCategory, deleteCategory, createCategory } = useMenuCategories();
+  
+  const [showAddItemDialog, setShowAddItemDialog] = useState(false);
+  const [showAddSubcategoryDialog, setShowAddSubcategoryDialog] = useState(false);
 
   // Fetch category details
   const { data: category, isLoading: categoryLoading } = useQuery({
@@ -104,7 +107,7 @@ export default function CategoryDetailPage() {
         // Handle tool navigation based on tool_type
         if (item.tool_type === "checklist") {
           navigate(`${basePath}/category/${categoryId}/tool/${item.id}/checklists`);
-        } else if (item.tool_type === "gemba_doc") {
+        } else if (item.tool_type === "sop_guide") {
           navigate(`${basePath}/category/${categoryId}/tool/${item.id}/guides`);
         }
         break;
@@ -116,6 +119,47 @@ export default function CategoryDetailPage() {
   const handleSubcategoryClick = (subcategory: MenuCategory) => {
     if (!organization?.slug) return;
     navigate(`/dashboard/${organization.slug}/category/${subcategory.id}`);
+  };
+
+  const handleCategoryUpdate = (input: { id: string; name?: string; description?: string | null; icon?: string; show_on_dashboard?: boolean; show_in_sidebar?: boolean }) => {
+    updateCategory.mutate(input);
+  };
+
+  const handleCategoryDelete = (id: string) => {
+    deleteCategory.mutate(id);
+    // Navigate back after deleting
+    if (organization?.slug) {
+      navigate(`/dashboard/${organization.slug}`);
+    }
+  };
+
+  const handleSubcategoryUpdate = (input: { id: string; name?: string; description?: string | null; icon?: string }) => {
+    updateCategory.mutate(input);
+  };
+
+  const handleSubcategoryDelete = (id: string) => {
+    deleteCategory.mutate(id);
+  };
+
+  const handleAddItem = (type: ItemType) => {
+    if (type === "subcategory") {
+      setShowAddSubcategoryDialog(true);
+    } else {
+      // For all other types (file_directory, checklist, sop_guide), open the item dialog
+      setShowAddItemDialog(true);
+    }
+  };
+
+  const handleCreateSubcategory = (data: { name: string; description?: string; icon: string }) => {
+    createCategory.mutate({
+      name: data.name,
+      description: data.description,
+      icon: data.icon,
+      parent_category_id: categoryId,
+      show_on_dashboard: false,
+      show_in_sidebar: false,
+    });
+    setShowAddSubcategoryDialog(false);
   };
 
   if (isLoading) {
@@ -152,80 +196,69 @@ export default function CategoryDetailPage() {
   return (
     <DashboardLayout>
       <div className="max-w-5xl mx-auto">
-        {/* Category Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center">
-            <DynamicIcon name={category.icon} className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {category.name}
-            </h1>
-            {category.description && (
-              <p className="text-muted-foreground">{category.description}</p>
-            )}
-          </div>
-        </div>
+        {/* Editable Category Header */}
+        <EditableCategoryHeader
+          category={category}
+          isAdmin={isAdmin}
+          onUpdate={handleCategoryUpdate}
+          onDelete={handleCategoryDelete}
+        />
 
         {/* Content Grid */}
-        {hasContent ? (
+        {hasContent || isAdmin ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {/* Subcategories */}
             {subcategories.map((subcategory) => (
-              <Card
+              <EditableSubcategoryCard
                 key={subcategory.id}
-                className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-lg"
+                subcategory={subcategory}
+                isAdmin={isAdmin}
                 onClick={() => handleSubcategoryClick(subcategory)}
-              >
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                    <DynamicIcon name={subcategory.icon} className="h-7 w-7 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground">{subcategory.name}</h3>
-                  {subcategory.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {subcategory.description}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                onUpdate={handleSubcategoryUpdate}
+                onDelete={handleSubcategoryDelete}
+              />
             ))}
 
             {/* Menu Items */}
             {items.map((item) => (
-              <Card
+              <EditableItemCard
                 key={item.id}
-                className="group cursor-pointer hover:border-primary/30 transition-all duration-300 hover:shadow-lg"
+                item={item}
+                isAdmin={isAdmin}
                 onClick={() => handleItemClick(item)}
-              >
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                    <DynamicIcon name={item.icon} className="h-7 w-7 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground">{item.name}</h3>
-                  {item.description && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {item.description}
-                    </p>
-                  )}
-                  {/* Type badge */}
-                  <span className="mt-2 text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
-                    {item.item_type === "file_directory" ? "Documents" : item.item_type}
-                  </span>
-                </CardContent>
-              </Card>
+              />
             ))}
+
+            {/* Add Item Card for Admins */}
+            {isAdmin && <AddItemCard onAdd={handleAddItem} />}
           </div>
         ) : (
           <div className="text-center py-12 bg-muted/30 rounded-xl">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <h3 className="font-semibold text-foreground mb-1">No Items Yet</h3>
             <p className="text-sm text-muted-foreground">
-              This category is empty. Add items in Menu Configuration.
+              This category is empty.
             </p>
           </div>
         )}
       </div>
+
+      {/* Add Item Dialog */}
+      {categoryId && (
+        <AddMenuItemDialog
+          open={showAddItemDialog}
+          onOpenChange={setShowAddItemDialog}
+          categoryId={categoryId}
+        />
+      )}
+
+      {/* Add Subcategory Dialog */}
+      <QuickCategoryDialog
+        open={showAddSubcategoryDialog}
+        onOpenChange={setShowAddSubcategoryDialog}
+        mode="create"
+        onSave={handleCreateSubcategory}
+      />
     </DashboardLayout>
   );
 }

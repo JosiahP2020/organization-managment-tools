@@ -1,44 +1,15 @@
-import { GraduationCap, Wrench } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardCategories } from "@/hooks/useDashboardCategories";
-import { DynamicCategoryCard } from "./DynamicCategoryCard";
+import { useMenuCategories } from "@/hooks/useMenuCategories";
+import { EditableCategoryCard } from "./EditableCategoryCard";
+import { AddCategoryCard } from "./AddCategoryCard";
 import { useAuth } from "@/contexts/AuthContext";
-
-// Fallback static card for when no dynamic categories exist
-interface StaticCategoryCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  onClick?: () => void;
-}
-
-function StaticCategoryCard({ icon, title, description, onClick }: StaticCategoryCardProps) {
-  return (
-    <Card 
-      className="group relative overflow-hidden border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg cursor-pointer"
-      onClick={onClick}
-    >
-      <CardContent className="p-6 md:p-8 flex flex-col items-center text-center">
-        <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-accent flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-300">
-          <span className="text-primary">{icon}</span>
-        </div>
-        <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">
-          {title}
-        </h3>
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-          {description}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
+import { FolderOpen } from "lucide-react";
 
 export function DashboardCategoryGrid() {
   const { categories, isLoading } = useDashboardCategories();
-  const { organization, isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
+  const { createCategory, updateCategory, deleteCategory } = useMenuCategories();
 
   // Loading state
   if (isLoading) {
@@ -50,62 +21,68 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  // If we have dynamic categories from the database, render them
-  if (categories.length > 0) {
+  const handleCreate = (data: { name: string; description?: string; icon: string; show_on_dashboard: boolean; show_in_sidebar: boolean }) => {
+    createCategory.mutate({
+      name: data.name,
+      description: data.description,
+      icon: data.icon,
+      show_on_dashboard: data.show_on_dashboard,
+      show_in_sidebar: data.show_in_sidebar,
+    });
+  };
+
+  const handleUpdate = (input: { id: string; name?: string; description?: string | null; icon?: string; show_on_dashboard?: boolean; show_in_sidebar?: boolean }) => {
+    updateCategory.mutate(input);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteCategory.mutate(id);
+  };
+
+  // Empty state for admins - show just the add card
+  if (categories.length === 0 && isAdmin) {
     return (
-      <div className="grid grid-cols-2 gap-4 md:gap-6">
-        {categories.map((category) => (
-          <DynamicCategoryCard
-            key={category.id}
-            id={category.id}
-            name={category.name}
-            icon={category.icon}
-            description={category.description}
-          />
-        ))}
+      <div className="space-y-6">
+        <div className="text-center py-8 bg-muted/30 rounded-xl">
+          <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+          <h3 className="font-semibold text-foreground mb-1">No Categories Yet</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Get started by adding your first category
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-4 md:gap-6 max-w-md mx-auto">
+          <AddCategoryCard onCreate={handleCreate} />
+        </div>
       </div>
     );
   }
 
-  // Fallback: Show static cards if no categories are configured
-  const handleTrainingClick = () => {
-    if (organization?.slug) {
-      navigate(`/dashboard/${organization.slug}/training`);
-    }
-  };
-
-  const handleShopInstallClick = () => {
-    if (organization?.slug) {
-      navigate(`/dashboard/${organization.slug}/shop-install`);
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 md:gap-6">
-        <StaticCategoryCard
-          icon={<Wrench className="w-8 h-8 md:w-10 md:h-10" />}
-          title="Shop & Install"
-          description="Project management, follow-up lists, and measurement tools."
-          onClick={handleShopInstallClick}
-        />
-        <StaticCategoryCard
-          icon={<GraduationCap className="w-8 h-8 md:w-10 md:h-10" />}
-          title="SOP"
-          description="SOP, Machine Operation, and Machine Maintenance."
-          onClick={handleTrainingClick}
-        />
-      </div>
-      
-      {/* Admin hint for customization */}
-      {isAdmin && (
-        <p className="text-center text-sm text-muted-foreground">
-          Want to customize these categories?{" "}
-          <Link to="/admin/menu-config" className="text-primary hover:underline">
-            Open Menu Configuration
-          </Link>
+  // Empty state for employees
+  if (categories.length === 0) {
+    return (
+      <div className="text-center py-12 bg-muted/30 rounded-xl">
+        <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+        <h3 className="font-semibold text-foreground mb-1">No Categories Available</h3>
+        <p className="text-sm text-muted-foreground">
+          Your organization hasn't set up any categories yet.
         </p>
-      )}
+      </div>
+    );
+  }
+
+  // Render category grid with editable cards
+  return (
+    <div className="grid grid-cols-2 gap-4 md:gap-6">
+      {categories.map((category) => (
+        <EditableCategoryCard
+          key={category.id}
+          category={category}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
+        />
+      ))}
+      {/* Add card for admins */}
+      {isAdmin && <AddCategoryCard onCreate={handleCreate} />}
     </div>
   );
 }
