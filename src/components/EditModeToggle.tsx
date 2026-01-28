@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, X } from "lucide-react";
+import { Lock, LockOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -40,14 +40,14 @@ export function EditModeToggle() {
 
   return (
     <>
-      {/* Toggle Button - positioned absolutely to not affect layout */}
-      <div className="fixed top-4 right-20 z-50">
+      {/* Toggle Button - positioned to align horizontally with the settings gear (right-4, centered at ~28px from top) */}
+      <div className="fixed top-4 right-24 z-50">
         <Button
           variant={isEditMode ? "default" : "outline"}
-          size="sm"
+          size="icon"
           onClick={handleToggleClick}
           className={`
-            flex items-center gap-1.5 h-8 px-3 shadow-md
+            h-14 w-14 rounded-full shadow-md
             ${isEditMode 
               ? "bg-primary text-primary-foreground hover:bg-primary/90" 
               : "bg-background border-border hover:bg-accent"
@@ -55,24 +55,18 @@ export function EditModeToggle() {
           `}
         >
           {isEditMode ? (
-            <>
-              <X className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Exit Edit</span>
-            </>
+            <LockOpen className="h-6 w-6" />
           ) : (
-            <>
-              <Pencil className="h-3.5 w-3.5" />
-              <span className="text-xs font-medium">Edit</span>
-            </>
+            <Lock className="h-6 w-6" />
           )}
         </Button>
       </div>
 
       {/* Active Edit Mode Indicator */}
       {isEditMode && (
-        <div className="fixed top-14 right-20 z-50">
-          <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-            Edit Mode Active
+        <div className="fixed top-20 right-24 z-50">
+          <Badge variant="secondary" className="bg-primary/10 text-primary text-xs whitespace-nowrap">
+            Edit Mode
           </Badge>
         </div>
       )}
