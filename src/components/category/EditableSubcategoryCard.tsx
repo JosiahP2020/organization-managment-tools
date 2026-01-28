@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
 import { Pencil } from "lucide-react";
 import { QuickCategoryDialog } from "@/components/dashboard/QuickCategoryDialog";
+import { useEditMode } from "@/contexts/EditModeContext";
 import type { MenuCategory } from "@/hooks/useMenuCategories";
 
 interface Subcategory {
@@ -29,11 +30,15 @@ export function EditableSubcategoryCard({
   onDelete 
 }: EditableSubcategoryCardProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const { isEditMode } = useEditMode();
 
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowEditDialog(true);
   };
+
+  // Show edit button only in edit mode for admins
+  const showEditButton = isAdmin && isEditMode;
 
   // Convert to MenuCategory for dialog
   const categoryForDialog: MenuCategory = {
@@ -57,12 +62,12 @@ export function EditableSubcategoryCard({
         className="group relative cursor-pointer shadow-sm border border-border/50 rounded-xl hover:shadow-md hover:scale-[1.02] transition-all duration-200"
         onClick={onClick}
       >
-        {/* Edit button - visible on hover for admins */}
-        {isAdmin && (
+        {/* Edit button - visible only in edit mode for admins */}
+        {showEditButton && (
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-background/80 hover:bg-background shadow-sm"
+            className="absolute top-2 right-2 h-7 w-7 z-10 bg-background/80 hover:bg-background shadow-sm"
             onClick={handleEditClick}
           >
             <Pencil className="h-3.5 w-3.5" />

@@ -4,19 +4,21 @@ import { useMenuCategories } from "@/hooks/useMenuCategories";
 import { EditableCategoryCard } from "./EditableCategoryCard";
 import { AddCategoryCard } from "./AddCategoryCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEditMode } from "@/contexts/EditModeContext";
 import { FolderOpen } from "lucide-react";
 
 export function DashboardCategoryGrid() {
   const { categories, isLoading } = useDashboardCategories();
   const { isAdmin } = useAuth();
+  const { isEditMode } = useEditMode();
   const { createCategory, updateCategory, deleteCategory } = useMenuCategories();
 
   // Loading state
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 gap-4 md:gap-6">
-        <Skeleton className="h-48 md:h-56 rounded-xl" />
-        <Skeleton className="h-48 md:h-56 rounded-xl" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+        <Skeleton className="h-20 md:h-24 rounded-xl" />
+        <Skeleton className="h-20 md:h-24 rounded-xl" />
       </div>
     );
   }
@@ -39,7 +41,7 @@ export function DashboardCategoryGrid() {
     deleteCategory.mutate(id);
   };
 
-  // Empty state for admins - show just the add card
+  // Empty state for admins - show message and add card in edit mode
   if (categories.length === 0 && isAdmin) {
     return (
       <div className="space-y-6">
@@ -47,12 +49,14 @@ export function DashboardCategoryGrid() {
           <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <h3 className="font-semibold text-foreground mb-1">No Categories Yet</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Get started by adding your first category
+            {isEditMode ? "Add your first category below" : "Enter Edit Mode to add categories"}
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-4 md:gap-6 max-w-md mx-auto">
-          <AddCategoryCard onCreate={handleCreate} />
-        </div>
+        {isEditMode && (
+          <div className="max-w-md mx-auto">
+            <AddCategoryCard onCreate={handleCreate} />
+          </div>
+        )}
       </div>
     );
   }
@@ -70,9 +74,9 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  // Render category grid with editable cards
+  // Render category grid with new card style (stacked list on mobile, 2-col on desktop)
   return (
-    <div className="grid grid-cols-2 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
       {categories.map((category) => (
         <EditableCategoryCard
           key={category.id}
@@ -81,7 +85,7 @@ export function DashboardCategoryGrid() {
           onDelete={handleDelete}
         />
       ))}
-      {/* Add card for admins */}
+      {/* Add card for admins - only shows in edit mode */}
       {isAdmin && <AddCategoryCard onCreate={handleCreate} />}
     </div>
   );
