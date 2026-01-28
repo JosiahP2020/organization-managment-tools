@@ -16,6 +16,10 @@ import {
   LogOut,
   User,
   Settings,
+  Users,
+  Building2,
+  Settings2,
+  FolderPlus,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import sccLogo from "@/assets/scc-logo.gif";
@@ -175,7 +179,7 @@ export function DynamicNavigationMenu({ open, onOpenChange }: NavigationMenuProp
               <Skeleton className="h-12 w-full rounded-xl" />
               <Skeleton className="h-12 w-3/4 rounded-xl" />
             </div>
-          ) : (
+          ) : categories.length > 0 ? (
             categories.map((category) => (
               <NavItem
                 key={category.id}
@@ -185,6 +189,49 @@ export function DynamicNavigationMenu({ open, onOpenChange }: NavigationMenuProp
                 onClick={handleClose}
               />
             ))
+          ) : isAdmin ? (
+            // Empty state for admins - hint to configure navigation
+            <div className="py-4 px-4 text-center">
+              <FolderPlus className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground mb-3">
+                No categories configured yet
+              </p>
+              <Link
+                to="/admin/menu-config"
+                onClick={handleClose}
+                className="text-sm text-primary hover:underline"
+              >
+                Set up navigation →
+              </Link>
+            </div>
+          ) : null}
+
+          {/* Admin Section */}
+          {isAdmin && (
+            <>
+              <Separator className="my-3" />
+              <p className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Admin
+              </p>
+              <NavItem
+                to="/admin/users"
+                icon={<Users className="h-5 w-5" />}
+                label="User Management"
+                onClick={handleClose}
+              />
+              <NavItem
+                to="/admin/organization"
+                icon={<Building2 className="h-5 w-5" />}
+                label="Organization Settings"
+                onClick={handleClose}
+              />
+              <NavItem
+                to="/admin/menu-config"
+                icon={<Settings2 className="h-5 w-5" />}
+                label="Menu Configuration"
+                onClick={handleClose}
+              />
+            </>
           )}
         </nav>
 
