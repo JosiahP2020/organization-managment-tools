@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Settings, Menu, Lock, Unlock, LayoutGrid, GripVertical } from "lucide-react";
+import { Pencil, Settings, Menu, Lock, LockOpen, Unlock, LayoutGrid, GripVertical, PencilOff, Edit2, ShieldCheck, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -249,6 +249,257 @@ const EditTriggerShowcase = () => {
             </div>
             <div className="p-4 text-center text-sm text-muted-foreground">
               {activeStates[8] ? "Edit Mode: ON" : "Edit Mode: OFF"}
+            </div>
+          </div>
+        </div>
+
+        {/* 9. Circular Lock Button (Large) */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-muted-foreground">9. Circular Lock Button (Large)</span>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold">Dashboard</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggle(9)}
+                  className={`h-14 w-14 rounded-full shadow-md flex items-center justify-center transition-all ${
+                    activeStates[9] 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background border border-border hover:bg-accent"
+                  }`}
+                >
+                  {activeStates[9] ? <LockOpen className="h-6 w-6" /> : <Lock className="h-6 w-6" />}
+                </button>
+                <Button variant="ghost" size="icon" className="h-14 w-14">
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {activeStates[9] ? "Edit Mode: ON" : "Edit Mode: OFF"}
+            </div>
+          </div>
+        </div>
+
+        {/* 10. Circular Pencil Button (Large) */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-muted-foreground">10. Circular Pencil Button (Large)</span>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold">Dashboard</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggle(10)}
+                  className={`h-14 w-14 rounded-full shadow-md flex items-center justify-center transition-all ${
+                    activeStates[10] 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background border border-border hover:bg-accent"
+                  }`}
+                >
+                  {activeStates[10] ? <PencilOff className="h-6 w-6" /> : <Pencil className="h-6 w-6" />}
+                </button>
+                <Button variant="ghost" size="icon" className="h-14 w-14">
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {activeStates[10] ? "Edit Mode: ON" : "Edit Mode: OFF"}
+            </div>
+          </div>
+        </div>
+
+        {/* 11. Lock + Pencil Combo (Stacked) */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-muted-foreground">11. Lock + Pencil Combo Button</span>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold">Dashboard</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggle(11)}
+                  className={`h-14 w-14 rounded-full shadow-md flex flex-col items-center justify-center gap-0.5 transition-all ${
+                    activeStates[11] 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background border border-border hover:bg-accent"
+                  }`}
+                >
+                  {activeStates[11] ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <Button variant="ghost" size="icon" className="h-14 w-14">
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {activeStates[11] ? "Edit Mode: ON" : "Edit Mode: OFF"}
+            </div>
+          </div>
+        </div>
+
+        {/* 12. Pill Button with Lock + Text */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-muted-foreground">12. Pill Button with Lock + Text</span>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold">Dashboard</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggle(12)}
+                  className={`h-10 px-4 rounded-full shadow-md flex items-center gap-2 transition-all text-sm font-medium ${
+                    activeStates[12] 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background border border-border hover:bg-accent"
+                  }`}
+                >
+                  {activeStates[12] ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+                  {activeStates[12] ? "Editing" : "Locked"}
+                </button>
+                <Button variant="ghost" size="icon" className="h-14 w-14">
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {activeStates[12] ? "Edit Mode: ON" : "Edit Mode: OFF"}
+            </div>
+          </div>
+        </div>
+
+        {/* 13. Pill Button with Pencil + Text */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-muted-foreground">13. Pill Button with Pencil + Text</span>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold">Dashboard</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggle(13)}
+                  className={`h-10 px-4 rounded-full shadow-md flex items-center gap-2 transition-all text-sm font-medium ${
+                    activeStates[13] 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background border border-border hover:bg-accent"
+                  }`}
+                >
+                  {activeStates[13] ? <PencilOff className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                  {activeStates[13] ? "Exit Edit" : "Edit"}
+                </button>
+                <Button variant="ghost" size="icon" className="h-14 w-14">
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {activeStates[13] ? "Edit Mode: ON" : "Edit Mode: OFF"}
+            </div>
+          </div>
+        </div>
+
+        {/* 14. Shield Icon (Protection Theme) */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-muted-foreground">14. Shield Icon (Protection Theme)</span>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold">Dashboard</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggle(14)}
+                  className={`h-14 w-14 rounded-full shadow-md flex items-center justify-center transition-all ${
+                    activeStates[14] 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background border border-border hover:bg-accent"
+                  }`}
+                >
+                  {activeStates[14] ? <ShieldOff className="h-6 w-6" /> : <ShieldCheck className="h-6 w-6" />}
+                </button>
+                <Button variant="ghost" size="icon" className="h-14 w-14">
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {activeStates[14] ? "Edit Mode: ON" : "Edit Mode: OFF"}
+            </div>
+          </div>
+        </div>
+
+        {/* 15. Square Button Lock */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-muted-foreground">15. Square Button with Lock</span>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold">Dashboard</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggle(15)}
+                  className={`h-14 w-14 rounded-lg shadow-md flex items-center justify-center transition-all ${
+                    activeStates[15] 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background border border-border hover:bg-accent"
+                  }`}
+                >
+                  {activeStates[15] ? <LockOpen className="h-6 w-6" /> : <Lock className="h-6 w-6" />}
+                </button>
+                <Button variant="ghost" size="icon" className="h-14 w-14 rounded-lg">
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {activeStates[15] ? "Edit Mode: ON" : "Edit Mode: OFF"}
+            </div>
+          </div>
+        </div>
+
+        {/* 16. Square Button Pencil */}
+        <div className="space-y-3">
+          <span className="text-xs font-medium text-muted-foreground">16. Square Button with Pencil</span>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10">
+                <Menu className="h-5 w-5" />
+              </Button>
+              <span className="font-semibold">Dashboard</span>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggle(16)}
+                  className={`h-14 w-14 rounded-lg shadow-md flex items-center justify-center transition-all ${
+                    activeStates[16] 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-background border border-border hover:bg-accent"
+                  }`}
+                >
+                  {activeStates[16] ? <PencilOff className="h-6 w-6" /> : <Edit2 className="h-6 w-6" />}
+                </button>
+                <Button variant="ghost" size="icon" className="h-14 w-14 rounded-lg">
+                  <Settings className="h-8 w-8" />
+                </Button>
+              </div>
+            </div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {activeStates[16] ? "Edit Mode: ON" : "Edit Mode: OFF"}
             </div>
           </div>
         </div>
