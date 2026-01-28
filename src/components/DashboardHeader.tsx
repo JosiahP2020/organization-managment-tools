@@ -1,4 +1,4 @@
-import { Menu, Settings, Users, Building2, Settings2 } from "lucide-react";
+import { Menu, Settings, Users, Building2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DynamicNavigationMenu } from "@/components/DynamicNavigationMenu";
@@ -76,12 +76,6 @@ export function DashboardHeader() {
                       <Link to="/admin/organization" className="flex items-center gap-2 cursor-pointer">
                         <Building2 className="h-4 w-4" />
                         Organization Settings
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/admin/menu-config" className="flex items-center gap-2 cursor-pointer">
-                        <Settings2 className="h-4 w-4" />
-                        Menu Configuration
                       </Link>
                     </DropdownMenuItem>
                   </>

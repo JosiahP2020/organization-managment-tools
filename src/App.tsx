@@ -21,7 +21,6 @@ import ProjectDetail from "./pages/shop-install/ProjectDetail";
 import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
-import MenuConfiguration from "./pages/admin/MenuConfiguration";
 import CategoryDetailPage from "./pages/CategoryDetailPage";
 import NotFound from "./pages/NotFound";
 
@@ -63,7 +62,6 @@ const App = () => (
                 <Route path="/settings/preferences" element={<Settings />} />
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/admin/organization" element={<OrganizationSettings />} />
-                <Route path="/admin/menu-config" element={<MenuConfiguration />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
