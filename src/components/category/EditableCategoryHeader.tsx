@@ -48,7 +48,7 @@ export function EditableCategoryHeader({
         <img
           src={displayLogo}
           alt={organization?.name || "Organization"}
-          className={`h-20 w-auto max-w-[240px] object-contain ${logoFilterClass}`}
+          className={`h-36 w-auto max-h-32 md:max-h-40 object-contain ${logoFilterClass}`}
         />
       </div>
 
