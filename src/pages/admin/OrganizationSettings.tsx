@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Calendar, Key, Image, Save, Type, Palette } from "lucide-react";
+import { Building2, Calendar, Key, Image, Save, Type, Palette, Menu } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
 import { AccentColorPicker } from "@/components/AccentColorPicker";
@@ -37,6 +38,7 @@ function parseThemeColors(data: unknown): ThemeColorMappings {
 const OrganizationSettings = () => {
   const { organization, refreshOrganization } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [displayName, setDisplayName] = useState("");
   const [orgCode, setOrgCode] = useState("");
@@ -193,6 +195,26 @@ const OrganizationSettings = () => {
                 onSubLogoColorsChange={setSubLogoColors}
               />
             )}
+          </div>
+
+          {/* Menu Configuration */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                  <Menu className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-foreground">Menu Configuration</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Customize navigation menus, file directories, and tools
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" onClick={() => navigate("/admin/menu-config")}>
+                Configure
+              </Button>
+            </div>
           </div>
 
 
