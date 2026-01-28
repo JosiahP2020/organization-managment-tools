@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardCategories } from "@/hooks/useDashboardCategories";
 import { useMenuCategories } from "@/hooks/useMenuCategories";
+import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { EditableCategoryCard } from "./EditableCategoryCard";
 import { AddCategoryCard } from "./AddCategoryCard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +12,7 @@ export function DashboardCategoryGrid() {
   const { categories, isLoading } = useDashboardCategories();
   const { isAdmin } = useAuth();
   const { isEditMode } = useEditMode();
+  const { dashboardLayout, cardStyle } = useOrganizationSettings();
   const { createCategory, updateCategory, deleteCategory } = useMenuCategories();
 
   // Loading state
@@ -74,19 +76,44 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  // Render category grid with new card style (stacked list on mobile, 2-col on desktop)
+  // Get grid classes based on layout setting
+  const getLayoutClasses = () => {
+    switch (dashboardLayout) {
+      case 'full-width':
+        return 'grid grid-cols-1 gap-4 md:gap-5';
+      case 'masonry':
+        // CSS columns for masonry effect
+        return 'columns-1 md:columns-2 lg:columns-3 gap-4 md:gap-5 space-y-4 md:space-y-5';
+      case 'sidebar-left':
+        // This layout is handled at a higher level, grid here
+        return 'grid grid-cols-1 gap-4 md:gap-5';
+      case 'grid-right-column':
+      default:
+        return 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5';
+    }
+  };
+
+  // For masonry layout, cards need break-inside-avoid
+  const isMasonry = dashboardLayout === 'masonry';
+
+  // Render category grid with layout-based styling
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+    <div className={getLayoutClasses()}>
       {categories.map((category) => (
-        <EditableCategoryCard
-          key={category.id}
-          category={category}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-        />
+        <div key={category.id} className={isMasonry ? 'break-inside-avoid' : ''}>
+          <EditableCategoryCard
+            category={category}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+          />
+        </div>
       ))}
       {/* Add card for admins - only shows in edit mode */}
-      {isAdmin && <AddCategoryCard onCreate={handleCreate} />}
+      {isAdmin && (
+        <div className={isMasonry ? 'break-inside-avoid' : ''}>
+          <AddCategoryCard onCreate={handleCreate} />
+        </div>
+      )}
     </div>
   );
 }

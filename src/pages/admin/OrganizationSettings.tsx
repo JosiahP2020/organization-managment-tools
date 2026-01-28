@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Calendar, Key, Image, Save, Type, Palette, Menu } from "lucide-react";
+import { Building2, Calendar, Key, Image, Save, Type, Palette, Menu, LayoutGrid, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
 import { AccentColorPicker } from "@/components/AccentColorPicker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ThemeColorMappings } from "@/components/SvgColorEditor";
+import type { DashboardLayout as DashboardLayoutType, CardStyle } from "@/hooks/useOrganizationSettings";
 
 // Helper to ensure we have a valid ThemeColorMappings structure
 function parseThemeColors(data: unknown): ThemeColorMappings {
@@ -48,6 +50,8 @@ const OrganizationSettings = () => {
   const [accentColor, setAccentColor] = useState<string | null>(null);
   const [mainLogoColors, setMainLogoColors] = useState<ThemeColorMappings>({ light: {}, dark: {} });
   const [subLogoColors, setSubLogoColors] = useState<ThemeColorMappings>({ light: {}, dark: {} });
+  const [dashboardLayout, setDashboardLayout] = useState<DashboardLayoutType>('grid-right-column');
+  const [cardStyle, setCardStyle] = useState<CardStyle>('left-accent');
   const [hasChanges, setHasChanges] = useState(false);
 
   // Initialize state from organization data
@@ -61,6 +65,10 @@ const OrganizationSettings = () => {
       // Parse color mappings with theme structure
       setMainLogoColors(parseThemeColors(organization.main_logo_colors));
       setSubLogoColors(parseThemeColors(organization.sub_logo_colors));
+      // Layout settings - cast from unknown since types.ts doesn't have these yet
+      const org = organization as typeof organization & { dashboard_layout?: string; card_style?: string };
+      setDashboardLayout((org.dashboard_layout || 'grid-right-column') as DashboardLayoutType);
+      setCardStyle((org.card_style || 'left-accent') as CardStyle);
     }
   }, [organization]);
 
@@ -75,6 +83,9 @@ const OrganizationSettings = () => {
     const originalAccentColor = organization.accent_color || null;
     const originalMainColors = parseThemeColors(organization.main_logo_colors);
     const originalSubColors = parseThemeColors(organization.sub_logo_colors);
+    const org = organization as typeof organization & { dashboard_layout?: string; card_style?: string };
+    const originalLayout = org.dashboard_layout || 'grid-right-column';
+    const originalCardStyle = org.card_style || 'left-accent';
     
     // Compare color mappings
     const mainColorsChanged = JSON.stringify(mainLogoColors) !== JSON.stringify(originalMainColors);
@@ -87,10 +98,12 @@ const OrganizationSettings = () => {
       subLogoUrl !== originalSubLogo ||
       accentColor !== originalAccentColor ||
       mainColorsChanged ||
-      subColorsChanged;
+      subColorsChanged ||
+      dashboardLayout !== originalLayout ||
+      cardStyle !== originalCardStyle;
     
     setHasChanges(changed);
-  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, accentColor, mainLogoColors, subLogoColors, organization]);
+  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, accentColor, mainLogoColors, subLogoColors, dashboardLayout, cardStyle, organization]);
 
   const handleSaveAll = async () => {
     if (!organization) return;
@@ -133,6 +146,8 @@ const OrganizationSettings = () => {
         accent_color: accentColor,
         main_logo_colors: mainLogoColors as unknown as Json,
         sub_logo_colors: subLogoColors as unknown as Json,
+        dashboard_layout: dashboardLayout,
+        card_style: cardStyle,
       })
       .eq("id", organization.id);
 
@@ -238,7 +253,68 @@ const OrganizationSettings = () => {
             />
           </div>
 
-          {/* Display Name */}
+          {/* Dashboard Layout */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                <LayoutGrid className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Dashboard Layout</h2>
+                <p className="text-sm text-muted-foreground">
+                  Choose how categories are displayed on the dashboard
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="dashboardLayout">Layout Style</Label>
+                <Select value={dashboardLayout} onValueChange={(value) => setDashboardLayout(value as DashboardLayoutType)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select layout" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full-width">Full Width (single column)</SelectItem>
+                    <SelectItem value="grid-right-column">Grid + Right Column (default)</SelectItem>
+                    <SelectItem value="sidebar-left">Sidebar Left</SelectItem>
+                    <SelectItem value="masonry">Masonry Grid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Style */}
+          <div className="bg-card border border-border rounded-xl p-6 mb-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-foreground">Card Style</h2>
+                <p className="text-sm text-muted-foreground">
+                  Choose the visual style for category cards
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="cardStyle">Card Design</Label>
+                <Select value={cardStyle} onValueChange={(value) => setCardStyle(value as CardStyle)}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select card style" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left-accent">Left Accent Bar (default)</SelectItem>
+                    <SelectItem value="stat-card">Stat Card (centered)</SelectItem>
+                    <SelectItem value="clean-minimal">Clean Minimal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
           <div className="bg-card border border-border rounded-xl p-6 mb-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
