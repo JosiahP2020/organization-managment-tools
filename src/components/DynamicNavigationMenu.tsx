@@ -1,0 +1,207 @@
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/AuthContext";
+import { useThemeLogos } from "@/hooks/useThemeLogos";
+import { useSidebarCategories } from "@/hooks/useSidebarCategories";
+import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
+import {
+  LayoutDashboard,
+  LogOut,
+  User,
+  Settings,
+} from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import sccLogo from "@/assets/scc-logo.gif";
+import { useState } from "react";
+
+interface NavigationMenuProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+interface NavItemProps {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  badge?: string;
+  onClick: () => void;
+}
+
+function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-accent transition-colors min-h-[48px]"
+    >
+      <span className="text-primary">{icon}</span>
+      <span className="font-medium flex-1">{label}</span>
+      {badge && (
+        <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
+          {badge}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+export function DynamicNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
+  const { profile, isAdmin, signOut, organization } = useAuth();
+  const { subLogoUrl, logoFilterClass } = useThemeLogos();
+  const { categories, isLoading } = useSidebarCategories();
+  const navigate = useNavigate();
+  const [isProfileHovered, setIsProfileHovered] = useState(false);
+
+  const handleClose = () => onOpenChange(false);
+
+  const handleSignOut = async () => {
+    handleClose();
+    await signOut();
+    navigate("/");
+  };
+
+  const handleSettingsClick = () => {
+    handleClose();
+    navigate("/settings");
+  };
+
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Build URL for a category based on its type/name
+  const getCategoryUrl = (category: { id: string; name: string }) => {
+    const basePath = organization?.slug ? `/dashboard/${organization.slug}` : "/login";
+    const slug = category.name.toLowerCase().replace(/\s+/g, "-").replace(/&/g, "and");
+    
+    // Map common category names to existing routes
+    if (slug === "shop-and-install" || slug === "shop-install") {
+      return `${basePath}/shop-install`;
+    }
+    if (slug === "sop" || slug === "training" || slug === "standard-operating-procedures") {
+      return `${basePath}/training`;
+    }
+    
+    // For custom categories, use a generic category route
+    return `${basePath}/category/${category.id}`;
+  };
+
+  // Use theme-aware sub logo from hook, fall back to default SCC logo
+  const sidebarLogo = subLogoUrl || sccLogo;
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-80 p-0 flex flex-col">
+        {/* Header with Logo - aligned left */}
+        <SheetHeader className="p-6 pb-4">
+          <div className="flex justify-start">
+            <img
+              src={sidebarLogo}
+              alt={organization?.name || "SCC"}
+              className={`h-16 w-auto max-w-[200px] object-contain ${logoFilterClass}`}
+            />
+          </div>
+        </SheetHeader>
+
+        {/* User Profile Section - Right below the logo */}
+        <div className="px-6 pb-4">
+          <div 
+            className="flex items-center gap-3 px-4 py-3 bg-muted/50 rounded-xl relative group"
+            onMouseEnter={() => setIsProfileHovered(true)}
+            onMouseLeave={() => setIsProfileHovered(false)}
+          >
+            <Avatar className="h-10 w-10">
+              {profile?.avatar_url ? (
+                <AvatarImage src={profile.avatar_url} alt={profile.full_name} />
+              ) : null}
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {profile?.avatar_url ? null : getInitials(profile?.full_name)}
+                {!profile?.avatar_url && !profile?.full_name && (
+                  <User className="h-5 w-5" />
+                )}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-foreground truncate">
+                {profile?.full_name || "User"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {isAdmin ? "Admin" : "Employee"}
+              </p>
+            </div>
+            {/* Settings gear icon - only visible on hover */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSettingsClick}
+              className={`h-9 w-9 text-muted-foreground hover:text-foreground transition-opacity ${
+                isProfileHovered ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Navigation Links */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {/* Dashboard - always present */}
+          <NavItem
+            to={organization?.slug ? `/dashboard/${organization.slug}` : "/login"}
+            icon={<LayoutDashboard className="h-5 w-5" />}
+            label="Dashboard"
+            onClick={handleClose}
+          />
+
+          {/* Dynamic Categories from Database */}
+          {isLoading ? (
+            <div className="space-y-2 py-2">
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-3/4 rounded-xl" />
+            </div>
+          ) : (
+            categories.map((category) => (
+              <NavItem
+                key={category.id}
+                to={getCategoryUrl(category)}
+                icon={<DynamicIcon name={category.icon} className="h-5 w-5" />}
+                label={category.name}
+                onClick={handleClose}
+              />
+            ))
+          )}
+        </nav>
+
+        <Separator />
+
+        {/* Sign Out */}
+        <div className="p-4">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 h-12 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-5 w-5" />
+            Sign Out
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
