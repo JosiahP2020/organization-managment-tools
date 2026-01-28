@@ -40,36 +40,32 @@ export function EditModeToggle() {
 
   return (
     <>
-      {/* Toggle Button - positioned to align horizontally with the settings gear (right-4, centered at ~28px from top) */}
-      <div className="fixed top-4 right-24 z-50">
-        <Button
+      {/* Badge Toggle - positioned fixed to align with settings gear */}
+      <div className="fixed top-4 right-24 z-50 flex items-center h-14">
+        <Badge 
           variant={isEditMode ? "default" : "outline"}
-          size="icon"
-          onClick={handleToggleClick}
           className={`
-            h-14 w-14 rounded-full shadow-md
+            cursor-pointer h-8 px-3 flex items-center gap-1.5 text-sm font-medium
             ${isEditMode 
               ? "bg-primary text-primary-foreground hover:bg-primary/90" 
               : "bg-background border-border hover:bg-accent"
             }
           `}
+          onClick={handleToggleClick}
         >
           {isEditMode ? (
-            <LockOpen className="h-6 w-6" />
+            <>
+              <LockOpen className="h-3.5 w-3.5" />
+              <span>Editing</span>
+            </>
           ) : (
-            <Lock className="h-6 w-6" />
+            <>
+              <Lock className="h-3.5 w-3.5" />
+              <span>Locked</span>
+            </>
           )}
-        </Button>
+        </Badge>
       </div>
-
-      {/* Active Edit Mode Indicator */}
-      {isEditMode && (
-        <div className="fixed top-20 right-24 z-50">
-          <Badge variant="secondary" className="bg-primary/10 text-primary text-xs whitespace-nowrap">
-            Edit Mode
-          </Badge>
-        </div>
-      )}
 
       {/* Confirmation Dialog */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
