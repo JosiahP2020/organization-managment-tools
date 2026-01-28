@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FolderOpen } from "lucide-react";
 import { useMenuCategories } from "@/hooks/useMenuCategories";
@@ -127,7 +126,7 @@ export default function CategoryDetailPage() {
 
   const handleCategoryDelete = (id: string) => {
     deleteCategory.mutate(id);
-    // Navigate back after deleting
+    // Navigate back to dashboard after deleting
     if (organization?.slug) {
       navigate(`/dashboard/${organization.slug}`);
     }
@@ -165,12 +164,15 @@ export default function CategoryDetailPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="max-w-5xl mx-auto">
-          <Skeleton className="h-10 w-48 mb-6" />
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-center mb-6">
+            <Skeleton className="h-20 w-48" />
+          </div>
+          <Skeleton className="h-10 w-48 mx-auto mb-8" />
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Skeleton className="h-40 rounded-xl" />
-            <Skeleton className="h-40 rounded-xl" />
-            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
+            <Skeleton className="h-32 rounded-xl" />
           </div>
         </div>
       </DashboardLayout>
@@ -180,7 +182,7 @@ export default function CategoryDetailPage() {
   if (!category) {
     return (
       <DashboardLayout>
-        <div className="max-w-5xl mx-auto text-center py-12">
+        <div className="max-w-4xl mx-auto text-center py-12">
           <FolderOpen className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">Category Not Found</h2>
           <p className="text-muted-foreground">
@@ -195,45 +197,52 @@ export default function CategoryDetailPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto">
-        {/* Editable Category Header */}
+      <div className="max-w-4xl mx-auto">
+        {/* Editable Category Header with Logo */}
         <EditableCategoryHeader
           category={category}
           isAdmin={isAdmin}
+          showIcon={false}
           onUpdate={handleCategoryUpdate}
           onDelete={handleCategoryDelete}
         />
 
-        {/* Content Grid */}
+        {/* Content Grid - Centered */}
         {hasContent || isAdmin ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {/* Subcategories */}
-            {subcategories.map((subcategory) => (
-              <EditableSubcategoryCard
-                key={subcategory.id}
-                subcategory={subcategory}
-                isAdmin={isAdmin}
-                onClick={() => handleSubcategoryClick(subcategory)}
-                onUpdate={handleSubcategoryUpdate}
-                onDelete={handleSubcategoryDelete}
-              />
-            ))}
+          <div className="flex flex-col items-center">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-2xl">
+              {/* Subcategories */}
+              {subcategories.map((subcategory) => (
+                <EditableSubcategoryCard
+                  key={subcategory.id}
+                  subcategory={subcategory}
+                  isAdmin={isAdmin}
+                  onClick={() => handleSubcategoryClick(subcategory)}
+                  onUpdate={handleSubcategoryUpdate}
+                  onDelete={handleSubcategoryDelete}
+                />
+              ))}
 
-            {/* Menu Items */}
-            {items.map((item) => (
-              <EditableItemCard
-                key={item.id}
-                item={item}
-                isAdmin={isAdmin}
-                onClick={() => handleItemClick(item)}
-              />
-            ))}
+              {/* Menu Items */}
+              {items.map((item) => (
+                <EditableItemCard
+                  key={item.id}
+                  item={item}
+                  isAdmin={isAdmin}
+                  onClick={() => handleItemClick(item)}
+                />
+              ))}
+            </div>
 
-            {/* Add Item Card for Admins */}
-            {isAdmin && <AddItemCard onAdd={handleAddItem} />}
+            {/* Add Item Button for Admins - Subtle centered plus */}
+            {isAdmin && (
+              <div className="mt-6">
+                <AddItemCard onAdd={handleAddItem} />
+              </div>
+            )}
           </div>
         ) : (
-          <div className="text-center py-12 bg-muted/30 rounded-xl">
+          <div className="text-center py-12 bg-muted/30 rounded-xl max-w-md mx-auto">
             <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <h3 className="font-semibold text-foreground mb-1">No Items Yet</h3>
             <p className="text-sm text-muted-foreground">

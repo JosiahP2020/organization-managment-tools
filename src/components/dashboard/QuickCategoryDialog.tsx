@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import { IconPicker } from "@/components/menu-config/IconPicker";
 import { Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
 interface CategoryData {
   id: string;
   name: string;

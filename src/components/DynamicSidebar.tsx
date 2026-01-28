@@ -1,4 +1,4 @@
-import { Home, Users, Building2, LogOut, Settings } from "lucide-react";
+import { Users, Building2, LogOut, Settings, LayoutDashboard } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
@@ -21,6 +21,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function DynamicSidebar() {
   const { state } = useSidebar();
@@ -28,6 +30,8 @@ export function DynamicSidebar() {
   const { profile, organization, isAdmin, signOut } = useAuth();
   const { subLogoUrl } = useThemeLogos();
   const { categories, isLoading } = useSidebarCategories();
+  const navigate = useNavigate();
+  const [isProfileHovered, setIsProfileHovered] = useState(false);
 
   const getInitials = (name: string) => {
     return name
@@ -40,15 +44,9 @@ export function DynamicSidebar() {
 
   const basePath = organization?.slug ? `/dashboard/${organization.slug}` : "/login";
 
-  // Static items that are always present
-  const mainItems = [
-    { title: "Dashboard", url: basePath, icon: Home },
-  ];
-
   const adminItems = [
-    { title: "Users", url: "/admin/users", icon: Users },
-    { title: "Organization", url: "/admin/organization", icon: Building2 },
-    { title: "Menu Config", url: "/admin/menu-config", icon: Settings },
+    { title: "User Management", url: "/admin/users", icon: Users },
+    { title: "Organization Settings", url: "/admin/organization", icon: Building2 },
   ];
 
   // Build URL for a category based on its type/name
@@ -65,6 +63,10 @@ export function DynamicSidebar() {
     
     // For custom categories, use a generic category route
     return `${basePath}/category/${category.id}`;
+  };
+
+  const handleSettingsClick = () => {
+    navigate("/settings");
   };
 
   return (
@@ -85,51 +87,75 @@ export function DynamicSidebar() {
         </div>
       </SidebarHeader>
 
+      {/* User Profile Section */}
+      <div className="px-3 pb-3">
+        <div 
+          className="flex items-center gap-3 px-3 py-2 bg-muted/50 rounded-lg relative"
+          onMouseEnter={() => setIsProfileHovered(true)}
+          onMouseLeave={() => setIsProfileHovered(false)}
+        >
+          <Avatar className="h-9 w-9 shrink-0">
+            <AvatarImage src={profile?.avatar_url || undefined} />
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+              {profile?.full_name ? getInitials(profile.full_name) : "U"}
+            </AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {profile?.full_name || "User"}
+                </p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {isAdmin ? "Admin" : "Employee"}
+                </p>
+              </div>
+              {/* Settings gear icon - only visible on hover */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSettingsClick}
+                className={`h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground transition-opacity ${
+                  isProfileHovered ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
       <SidebarContent>
-        {/* Main Navigation */}
+        {/* Dashboard - No group label, direct item */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Main
-          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                      activeClassName="bg-accent text-primary font-medium border-l-2 border-primary"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to={basePath}
+                    end
+                    className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                    activeClassName="bg-accent text-primary font-medium border-l-2 border-primary"
+                  >
+                    <LayoutDashboard className="h-5 w-5 shrink-0" />
+                    {!collapsed && <span>Dashboard</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         {/* Dynamic Categories from Database */}
         {isLoading ? (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Modules
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <div className="space-y-2 px-3">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-3/4" />
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <div className="space-y-2 px-3">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
         ) : categories.length > 0 ? (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Modules
-            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {categories.map((category) => (
@@ -140,7 +166,7 @@ export function DynamicSidebar() {
                         className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                         activeClassName="bg-accent text-primary font-medium border-l-2 border-primary"
                       >
-                        <DynamicIcon name={category.icon} className="h-4 w-4 shrink-0" />
+                        <DynamicIcon name={category.icon} className="h-5 w-5 shrink-0" />
                         {!collapsed && <span>{category.name}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -167,7 +193,7 @@ export function DynamicSidebar() {
                         className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                         activeClassName="bg-accent text-primary font-medium border-l-2 border-primary"
                       >
-                        <item.icon className="h-4 w-4 shrink-0" />
+                        <item.icon className="h-5 w-5 shrink-0" />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -180,33 +206,14 @@ export function DynamicSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={profile?.avatar_url || undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-              {profile?.full_name ? getInitials(profile.full_name) : "U"}
-            </AvatarFallback>
-          </Avatar>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                {profile?.full_name || "User"}
-              </p>
-              <p className="text-xs text-muted-foreground capitalize">
-                {isAdmin ? "Admin" : "Employee"}
-              </p>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={signOut}
-            className="shrink-0 text-muted-foreground hover:text-destructive"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          onClick={signOut}
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        >
+          <LogOut className="h-4 w-4" />
+          {!collapsed && <span>Sign Out</span>}
+        </Button>
       </SidebarFooter>
     </Sidebar>
   );
