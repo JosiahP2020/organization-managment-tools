@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -108,6 +109,11 @@ export function QuickCategoryDialog({
             <DialogTitle>
               {mode === "create" ? "Add Category" : "Edit Category"}
             </DialogTitle>
+            <DialogDescription>
+              {mode === "create" 
+                ? "Create a new category for your dashboard and sidebar navigation." 
+                : "Edit the category name, icon, or description."}
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">

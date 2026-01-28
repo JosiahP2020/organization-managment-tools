@@ -64,11 +64,19 @@ export function useMenuCategories() {
       if (!organization?.id || !user?.id) throw new Error("Not authenticated");
 
       // Get max sort_order for new category
-      const { data: existing } = await supabase
+      let query = supabase
         .from("menu_categories")
         .select("sort_order")
-        .eq("organization_id", organization.id)
-        .eq("parent_category_id", input.parent_category_id ?? null)
+        .eq("organization_id", organization.id);
+      
+      // Use .is() for null comparison, .eq() for actual IDs
+      if (input.parent_category_id) {
+        query = query.eq("parent_category_id", input.parent_category_id);
+      } else {
+        query = query.is("parent_category_id", null);
+      }
+      
+      const { data: existing } = await query
         .order("sort_order", { ascending: false })
         .limit(1);
 
@@ -95,6 +103,8 @@ export function useMenuCategories() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menu-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["sidebar-categories"] });
       toast({ title: "Category created successfully" });
     },
     onError: (error) => {
@@ -118,6 +128,8 @@ export function useMenuCategories() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menu-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["sidebar-categories"] });
       toast({ title: "Category updated successfully" });
     },
     onError: (error) => {
@@ -136,6 +148,8 @@ export function useMenuCategories() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menu-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["sidebar-categories"] });
       toast({ title: "Category deleted successfully" });
     },
     onError: (error) => {
