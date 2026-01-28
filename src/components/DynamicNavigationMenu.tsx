@@ -43,8 +43,8 @@ function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
       onClick={onClick}
       className="flex items-center gap-3 px-4 py-3 rounded-xl text-foreground hover:bg-accent transition-colors min-h-[48px]"
     >
-      <span className="text-primary">{icon}</span>
-      <span className="font-medium flex-1">{label}</span>
+      <span className="text-primary shrink-0 flex items-center justify-center">{icon}</span>
+      <span className="font-medium flex-1 leading-tight">{label}</span>
       {badge && (
         <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
           {badge}
