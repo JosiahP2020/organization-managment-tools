@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
-import { useSidebarCategories } from "@/hooks/useSidebarCategories";
+import { useDashboardCategories } from "@/hooks/useDashboardCategories";
 import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
 import {
   LayoutDashboard,
@@ -57,9 +57,12 @@ function NavItem({ to, icon, label, badge, onClick }: NavItemProps) {
 export function DynamicNavigationMenu({ open, onOpenChange }: NavigationMenuProps) {
   const { profile, isAdmin, signOut, organization } = useAuth();
   const { subLogoUrl, logoFilterClass } = useThemeLogos();
-  const { categories, isLoading } = useSidebarCategories();
+  const { categories, isLoading } = useDashboardCategories();
   const navigate = useNavigate();
   const [isProfileHovered, setIsProfileHovered] = useState(false);
+
+  // Filter categories that should show in sidebar
+  const sidebarCategories = categories.filter(c => c.show_in_sidebar);
 
   const handleClose = () => onOpenChange(false);
 
@@ -177,8 +180,8 @@ export function DynamicNavigationMenu({ open, onOpenChange }: NavigationMenuProp
               <Skeleton className="h-12 w-full rounded-xl" />
               <Skeleton className="h-12 w-3/4 rounded-xl" />
             </div>
-          ) : categories.length > 0 ? (
-            categories.map((category) => (
+          ) : sidebarCategories.length > 0 ? (
+            sidebarCategories.map((category) => (
               <NavItem
                 key={category.id}
                 to={getCategoryUrl(category)}
