@@ -1,5 +1,6 @@
 import { Clock, BarChart3, Bell, Calendar, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AddWidgetButton } from "./AddWidgetButton";
 
 interface WidgetPlaceholderProps {
   type?: 'clock' | 'stats' | 'notifications' | 'calendar' | 'activity';
@@ -58,6 +59,10 @@ export function WidgetColumn() {
       <WidgetPlaceholder type="stats" size="normal" />
       <WidgetPlaceholder type="activity" size="normal" />
       <WidgetPlaceholder type="notifications" size="small" />
+      {/* Add widget button */}
+      <div className="flex justify-center pt-2">
+        <AddWidgetButton />
+      </div>
     </div>
   );
 }
@@ -68,6 +73,10 @@ export function SidebarWidgets() {
       <WidgetPlaceholder type="clock" size="small" />
       <WidgetPlaceholder type="calendar" size="small" />
       <WidgetPlaceholder type="notifications" size="small" />
+      {/* Add widget button */}
+      <div className="flex justify-center pt-2">
+        <AddWidgetButton />
+      </div>
     </div>
   );
 }
