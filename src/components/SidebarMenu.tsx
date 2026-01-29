@@ -1,14 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, Building2, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, Building2, LogOut } from "lucide-react";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { Logo } from "@/components/Logo";
@@ -57,7 +55,7 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
       onClick={() => handleNavigation(to)}
       className="flex items-center gap-3 w-full px-3 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-colors min-h-[44px]"
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="h-5 w-5 text-primary" />
       <span className="font-medium">{children}</span>
     </button>
   );
@@ -66,14 +64,14 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-80 p-0 flex flex-col bg-sidebar border-sidebar-border"
+        className="w-80 p-0 flex flex-col bg-sidebar border-sidebar-border [&>button]:hidden"
       >
-        {/* Header - Logo + User Profile + Close */}
-        <SheetHeader className="p-4 border-b border-sidebar-border">
+        {/* Header - Logo + User Profile */}
+        <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between">
-            {/* Sub-logo on left */}
+            {/* Sub-logo on left - larger size */}
             <div className="flex-shrink-0">
-              <Logo customSrc={subLogoUrl} variant="icon" size="md" />
+              <Logo customSrc={subLogoUrl} variant="icon" size="xl" />
             </div>
 
             {/* User profile - clickable to settings */}
@@ -81,37 +79,26 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
               onClick={() => handleNavigation("/settings")}
               className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             >
-              <div className="text-right">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                  {getInitials(profile?.full_name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-left">
                 <p className="font-medium text-sidebar-foreground text-sm">
                   {profile?.full_name || "User"}
                 </p>
                 <Badge
                   variant="secondary"
-                  className="text-xs bg-sidebar-accent text-sidebar-accent-foreground"
+                  className="text-xs bg-sidebar-accent text-sidebar-accent-foreground mt-0.5"
                 >
                   {isAdmin ? "Admin" : "Employee"}
                 </Badge>
               </div>
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-sidebar-accent text-sidebar-accent-foreground">
-                  {getInitials(profile?.full_name)}
-                </AvatarFallback>
-              </Avatar>
             </button>
-
-            {/* Close button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="h-10 w-10 text-sidebar-foreground hover:bg-sidebar-accent"
-            >
-              <X className="h-5 w-5" />
-              <span className="sr-only">Close menu</span>
-            </Button>
           </div>
-        </SheetHeader>
+        </div>
 
         {/* Scrollable Navigation */}
         <div className="flex-1 overflow-y-auto p-4">
