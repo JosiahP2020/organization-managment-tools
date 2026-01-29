@@ -1,158 +1,95 @@
 
-# Plan: Rebuild Sidebar Menu Navigation
+
+# Dashboard Add Menu Card Feature
 
 ## Overview
-Create a new sidebar menu component that slides in from the left side of the screen, featuring the organization's sub-logo, user profile information, navigation links, and sign-out functionality. The sidebar will be triggered by a Menu button in the header.
+Add a subtle "Add" button (ghost design with circular dashed plus icon) to the dashboard that appears in available empty spaces next to/below existing menu cards. For now, clicking this button will allow adding a new menu card.
 
-## Visual Structure
+## Current State Analysis
+- The dashboard displays menu cards in a responsive 2-column grid on desktop, 1-column on mobile
+- Cards are fetched from the `menu_categories` table via the `useDashboardCategories` hook
+- Three card style variants exist: Left Accent, Stat Card, and Clean Minimal
+- The `dashboard_widgets` table exists for widgets but no widget functionality is implemented yet
+- The UI follows a minimalist aesthetic with the organization's accent color
 
-```text
-+------------------------------------------+
-| [Sub-Logo]        [Avatar] Name     [X]  |
-|                           Role Badge     |
-+------------------------------------------+
-|                                          |
-|  MENUS                                   |
-|  ────────────────────────────────────    |
-|  🏠 Dashboard                            |
-|                                          |
-|  ADMIN                                   |
-|  ────────────────────────────────────    |
-|  👥 User Management                      |
-|  🏢 Organization Settings                |
-|                                          |
-|                                          |
-|                                          |
-|                                          |
-+------------------------------------------+
-|  ↪ Sign Out                              |
-+------------------------------------------+
-```
+## Implementation Plan
 
-## Key Features
-1. **Top Section**: Sub-logo on the left, user avatar + name + role badge on the right, X close button
-2. **Menus Section**: Gray "MENUS" label with Dashboard navigation button below
-3. **Admin Section**: Gray "ADMIN" label with User Management and Organization Settings (admin-only)
-4. **Bottom Section**: Sign Out button pinned to bottom
-5. **User Profile**: Clickable to navigate to Settings page
+### 1. Create the Add Menu Card Button Component
+**File: `src/components/dashboard/AddMenuCardButton.tsx`**
+
+Create a new component for the ghost-style add button:
+- Circular dashed border design with a Plus icon
+- Uses `border-dashed border-muted-foreground/30` for subtle appearance
+- Hover state transitions to the accent color
+- Size matches the height of existing menu cards
+- Touch-friendly (min 44x44px target)
+
+### 2. Create the Add Menu Card Dialog
+**File: `src/components/dashboard/AddMenuCardDialog.tsx`**
+
+Dialog for creating a new menu category:
+- Fields: Name (required), Description (optional), Icon (with IconPicker)
+- Uses existing `IconPicker` component for icon selection
+- Inserts into `menu_categories` table with:
+  - `show_on_dashboard: true`
+  - `show_in_sidebar: true`
+  - Auto-calculated `sort_order`
+- Invalidates the dashboard categories query on success
+
+### 3. Update the DashboardCategoryGrid Component
+**File: `src/components/dashboard/DashboardCategoryGrid.tsx`**
+
+Modify to include the add button:
+- Add the ghost plus button after the last category card in the grid
+- Button only visible to admin users (using `isAdmin` from AuthContext)
+- Maintains responsive grid layout:
+  - Desktop: Button appears in the next available grid cell
+  - Mobile: Button stacks below existing cards
+- Dialog state management for the add card flow
 
 ## Technical Details
 
-### New Components to Create
-
-**1. `src/components/SidebarMenu.tsx`**
-A new Sheet-based sidebar component with:
-- Uses Radix UI Sheet component (slides from left)
-- Receives `open` and `onOpenChange` props for controlled state
-- Structure:
-  - Header row with sub-logo, user profile (avatar, name, badge), and close button
-  - Scrollable content area with navigation sections
-  - Footer with Sign Out button
-
-**2. Menu Trigger Button**
-Add a Menu button to `DashboardHeader.tsx` that opens the sidebar
-
-### Files to Modify
-
-**1. `src/components/DashboardHeader.tsx`**
-- Add Menu button (hamburger icon) on the left side of the header
-- Import and render the new SidebarMenu component
-- Manage open/close state for the sidebar
-
-**2. `src/components/SidebarMenu.tsx` (new file)**
-- Import required dependencies:
-  - Sheet components from `@/components/ui/sheet`
-  - Avatar components from `@/components/ui/avatar`
-  - Badge from `@/components/ui/badge`
-  - Separator from `@/components/ui/separator`
-  - Icons: `Menu`, `X`, `LayoutDashboard`, `Users`, `Building2`, `LogOut`
-  - `useAuth` hook for user/profile/organization/role data
-  - `useThemeLogos` hook for sub-logo URL
-  - `useNavigate` from react-router-dom
-  - `Logo` component for rendering sub-logo
-
-### Component Structure
-
-```tsx
-// SidebarMenu.tsx structure
-<Sheet open={open} onOpenChange={onOpenChange}>
-  <SheetContent side="left" className="w-80 p-0 flex flex-col">
-    {/* Header - Logo + User Profile */}
-    <div className="flex items-center justify-between p-4 border-b">
-      {/* Sub-logo on left */}
-      <Logo customSrc={subLogoUrl} variant="icon" size="md" />
-      
-      {/* User profile - clickable to settings */}
-      <button onClick={() => navigate('/settings')} className="flex items-center gap-3">
-        <Avatar>
-          <AvatarImage src={profile?.avatar_url} />
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="font-medium">{profile?.full_name}</p>
-          <Badge variant="secondary">{role}</Badge>
-        </div>
-      </button>
-    </div>
-    
-    {/* Scrollable Navigation */}
-    <div className="flex-1 overflow-y-auto p-4">
-      {/* MENUS Section */}
-      <p className="text-xs text-muted-foreground mb-2">MENUS</p>
-      <Separator className="mb-3" />
-      <NavLink to={`/dashboard/${org.slug}`}>
-        <LayoutDashboard /> Dashboard
-      </NavLink>
-      
-      {/* ADMIN Section - only for admins */}
-      {isAdmin && (
-        <>
-          <p className="text-xs text-muted-foreground mt-6 mb-2">ADMIN</p>
-          <Separator className="mb-3" />
-          <NavLink to="/admin/users">
-            <Users /> User Management
-          </NavLink>
-          <NavLink to="/admin/organization">
-            <Building2 /> Organization Settings
-          </NavLink>
-        </>
-      )}
-    </div>
-    
-    {/* Footer - Sign Out */}
-    <div className="border-t p-4">
-      <button onClick={handleSignOut}>
-        <LogOut /> Sign Out
-      </button>
-    </div>
-  </SheetContent>
-</Sheet>
+### Add Button Design (Ghost Style)
+```text
++------------------+
+|                  |
+|    +-------+     |
+|    |   +   |     |  <- Circular dashed border
+|    +-------+     |     with Plus icon centered
+|                  |
++------------------+
+     Card-height     
+     container
 ```
 
-### Styling Considerations
-- Sidebar background uses `bg-sidebar-background` from CSS variables
-- Text uses `text-sidebar-foreground`
-- Active nav items highlighted with `bg-sidebar-accent`
-- Muted section labels use `text-muted-foreground`
-- Sign Out button styled with destructive/red color
-- User profile area has subtle hover state
-- Touch-friendly targets (min 44x44px)
-- Responsive for both mobile and desktop
+Styling approach:
+- Container: Same height as category cards, dashed border
+- Inner circle: `rounded-full border-2 border-dashed`
+- Icon: `Plus` from lucide-react, muted color by default
+- Hover: Border and icon transition to primary accent color
 
-### Navigation Behavior
-- Dashboard link: `/dashboard/{org.slug}`
-- User Management link: `/admin/users`
-- Organization Settings link: `/admin/organization`
-- User profile click: `/settings`
-- Sign Out: Calls `signOut()` and redirects to `/`
-- All navigation closes the sidebar automatically
+### Database Interaction
+Uses existing `menu_categories` table structure:
+- `name`: Required string
+- `icon`: Defaults to "folder"
+- `description`: Optional
+- `organization_id`: From current user's organization
+- `created_by`: Current user ID
+- `show_on_dashboard`: true
+- `show_in_sidebar`: true
+- `sort_order`: Max existing + 1
 
-## Implementation Steps
+### Admin-Only Visibility
+The add button will only be visible when `isAdmin` is true from the AuthContext, ensuring only administrators can add new menu cards.
 
-1. Create `src/components/SidebarMenu.tsx` with the full sidebar layout
-2. Update `src/components/DashboardHeader.tsx` to:
-   - Add state for sidebar open/close
-   - Add Menu button on the left side
-   - Render the SidebarMenu component
-3. Ensure dark/light theme compatibility
-4. Test navigation and sign-out flows
+## Files to Create/Modify
+1. **Create**: `src/components/dashboard/AddMenuCardButton.tsx` - Ghost add button component
+2. **Create**: `src/components/dashboard/AddMenuCardDialog.tsx` - Dialog for adding menu cards
+3. **Modify**: `src/components/dashboard/DashboardCategoryGrid.tsx` - Integrate add button into grid
+
+## Theme Compatibility
+- Uses Tailwind CSS classes that work with both light and dark themes
+- Border colors use `border-muted-foreground/30` for subtle appearance
+- Hover states use `primary` color for accent (organization's accent color)
+- All text uses `text-foreground` and `text-muted-foreground` for theme compatibility
+
