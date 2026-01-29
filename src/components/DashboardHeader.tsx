@@ -1,8 +1,6 @@
-import { Menu, Settings, Users, Building2 } from "lucide-react";
+import { Settings, Users, Building2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { DynamicNavigationMenu } from "@/components/DynamicNavigationMenu";
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { BackButton } from "@/components/BackButton";
 import {
@@ -14,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function DashboardHeader() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const { isAdmin, organization } = useAuth();
   const location = useLocation();
   
@@ -27,17 +24,8 @@ export function DashboardHeader() {
     <>
       {/* Floating buttons without header background */}
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 pointer-events-none">
-        {/* Left side - Menu Button */}
+        {/* Left side - Back Button only on sub-pages */}
         <div className="flex items-center gap-2 pointer-events-auto">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setMenuOpen(true)}
-            className="h-14 w-14 text-foreground bg-background border-border shadow-md hover:bg-accent"
-            aria-label="Open menu"
-          >
-            <Menu className="h-8 w-8" />
-          </Button>
           {showBackButton && <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />}
         </div>
 
@@ -88,8 +76,6 @@ export function DashboardHeader() {
       
       {/* Spacer to prevent content from going under fixed buttons */}
       <div className="h-20" />
-
-      <DynamicNavigationMenu open={menuOpen} onOpenChange={setMenuOpen} />
     </>
   );
 }
