@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Building2, Calendar, Key, Image, Save, Type, Palette, LayoutGrid, CreditCard } from "lucide-react";
+import { Building2, Calendar, Key, Image, Save, Palette, LayoutGrid, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
@@ -51,7 +51,6 @@ const OrganizationSettings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  const [displayName, setDisplayName] = useState("");
   const [orgCode, setOrgCode] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [mainLogoUrl, setMainLogoUrl] = useState<string | null>(null);
@@ -66,7 +65,6 @@ const OrganizationSettings = () => {
   // Initialize state from organization data
   useEffect(() => {
     if (organization) {
-      setDisplayName(organization.display_name || organization.name || "");
       setOrgCode(organization.slug || "");
       setMainLogoUrl(organization.main_logo_url || organization.logo_url || null);
       setSubLogoUrl(organization.sub_logo_url || null);
@@ -85,7 +83,6 @@ const OrganizationSettings = () => {
   useEffect(() => {
     if (!organization) return;
     
-    const originalDisplayName = organization.display_name || organization.name || "";
     const originalCode = organization.slug || "";
     const originalMainLogo = organization.main_logo_url || organization.logo_url || null;
     const originalSubLogo = organization.sub_logo_url || null;
@@ -101,7 +98,6 @@ const OrganizationSettings = () => {
     const subColorsChanged = JSON.stringify(subLogoColors) !== JSON.stringify(originalSubColors);
     
     const changed = 
-      displayName !== originalDisplayName ||
       orgCode !== originalCode ||
       mainLogoUrl !== originalMainLogo ||
       subLogoUrl !== originalSubLogo ||
@@ -112,19 +108,10 @@ const OrganizationSettings = () => {
       cardStyle !== originalCardStyle;
     
     setHasChanges(changed);
-  }, [displayName, orgCode, mainLogoUrl, subLogoUrl, accentColor, mainLogoColors, subLogoColors, dashboardLayout, cardStyle, organization]);
+  }, [orgCode, mainLogoUrl, subLogoUrl, accentColor, mainLogoColors, subLogoColors, dashboardLayout, cardStyle, organization]);
 
   const handleSaveAll = async () => {
     if (!organization) return;
-
-    if (!displayName.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a display name",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (!orgCode.trim()) {
       toast({
@@ -146,8 +133,6 @@ const OrganizationSettings = () => {
     const { error } = await supabase
       .from("organizations")
       .update({ 
-        display_name: displayName.trim(),
-        name: displayName.trim(), // Keep name in sync for backward compatibility
         slug: cleanCode,
         main_logo_url: mainLogoUrl,
         sub_logo_url: subLogoUrl,
@@ -335,34 +320,6 @@ const OrganizationSettings = () => {
               >
                 <CleanMinimalCardPreview />
               </LayoutPreviewCard>
-            </div>
-          </div>
-          <div className="bg-card border border-border rounded-xl p-6 mb-6">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                <Type className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-foreground">Company Display Name</h2>
-                <p className="text-sm text-muted-foreground">
-                  The name shown on your dashboard and throughout the app
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="displayName">Display Name</Label>
-              <Input
-                id="displayName"
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Shell Star Custom Cabinets"
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                This is the full name of your company for display purposes
-              </p>
             </div>
           </div>
 

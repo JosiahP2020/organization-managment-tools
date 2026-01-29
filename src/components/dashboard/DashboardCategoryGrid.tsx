@@ -74,11 +74,11 @@ export function DashboardCategoryGrid() {
           showEditButton={false}
         />
       ))}
-      {isAdmin && (
-        <div className="flex h-20 md:h-24 items-center justify-center">
-          <AddMenuCardButton onAddMenu={() => setIsAddDialogOpen(true)} />
-        </div>
-      )}
+        {isAdmin && (
+          <div className="flex h-16 md:h-20 items-center justify-center">
+            <AddMenuCardButton onAddMenu={() => setIsAddDialogOpen(true)} />
+          </div>
+        )}
     </>
   );
 
