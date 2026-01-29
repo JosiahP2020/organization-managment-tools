@@ -69,15 +69,10 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
         {/* Header - Logo + User Profile */}
         <div className="p-4">
           <div className="flex items-center justify-between">
-            {/* Sub-logo on left - larger size */}
-            <div className="flex-shrink-0">
-              <Logo customSrc={subLogoUrl} variant="icon" size="xl" />
-            </div>
-
             {/* User profile - clickable to settings */}
             <button
               onClick={() => handleNavigation("/settings")}
-              className="flex items-center gap-4 hover:opacity-80 transition-opacity mr-4"
+              className="flex items-center gap-4 hover:opacity-80 transition-opacity"
             >
               <Avatar className="h-12 w-12 flex-shrink-0">
                 <AvatarImage src={profile?.avatar_url || undefined} />
@@ -94,6 +89,11 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
                 </p>
               </div>
             </button>
+
+            {/* Sub-logo on right */}
+            <div className="flex-shrink-0">
+              <Logo customSrc={subLogoUrl} variant="icon" size="xl" />
+            </div>
           </div>
         </div>
 
