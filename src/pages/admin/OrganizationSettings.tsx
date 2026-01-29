@@ -13,9 +13,18 @@ import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
 import { AccentColorPicker } from "@/components/AccentColorPicker";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ThemeColorMappings } from "@/components/SvgColorEditor";
 import type { DashboardLayout as DashboardLayoutType, CardStyle } from "@/hooks/useOrganizationSettings";
+import {
+  LayoutPreviewCard,
+  FullWidthPreview,
+  GridRightColumnPreview,
+  SidebarLeftPreview,
+  MasonryPreview,
+  LeftAccentCardPreview,
+  StatCardPreview,
+  CleanMinimalCardPreview,
+} from "@/components/admin/LayoutPreviewCard";
 
 // Helper to ensure we have a valid ThemeColorMappings structure
 function parseThemeColors(data: unknown): ThemeColorMappings {
@@ -246,21 +255,42 @@ const OrganizationSettings = () => {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="dashboardLayout">Layout Style</Label>
-                <Select value={dashboardLayout} onValueChange={(value) => setDashboardLayout(value as DashboardLayoutType)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select layout" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="full-width">Full Width (single column)</SelectItem>
-                    <SelectItem value="grid-right-column">Grid + Right Column (default)</SelectItem>
-                    <SelectItem value="sidebar-left">Sidebar Left</SelectItem>
-                    <SelectItem value="masonry">Masonry Grid</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              <LayoutPreviewCard
+                title="Full Width"
+                description="Single column, stacked cards"
+                selected={dashboardLayout === 'full-width'}
+                onClick={() => setDashboardLayout('full-width')}
+              >
+                <FullWidthPreview />
+              </LayoutPreviewCard>
+              
+              <LayoutPreviewCard
+                title="Grid + Widgets"
+                description="Grid with right widget column"
+                selected={dashboardLayout === 'grid-right-column'}
+                onClick={() => setDashboardLayout('grid-right-column')}
+              >
+                <GridRightColumnPreview />
+              </LayoutPreviewCard>
+              
+              <LayoutPreviewCard
+                title="Sidebar Left"
+                description="Navigation sidebar with grid"
+                selected={dashboardLayout === 'sidebar-left'}
+                onClick={() => setDashboardLayout('sidebar-left')}
+              >
+                <SidebarLeftPreview />
+              </LayoutPreviewCard>
+              
+              <LayoutPreviewCard
+                title="Masonry"
+                description="Pinterest-style varied heights"
+                selected={dashboardLayout === 'masonry'}
+                onClick={() => setDashboardLayout('masonry')}
+              >
+                <MasonryPreview />
+              </LayoutPreviewCard>
             </div>
           </div>
 
@@ -278,20 +308,33 @@ const OrganizationSettings = () => {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="cardStyle">Card Design</Label>
-                <Select value={cardStyle} onValueChange={(value) => setCardStyle(value as CardStyle)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select card style" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="left-accent">Left Accent Bar (default)</SelectItem>
-                    <SelectItem value="stat-card">Stat Card (centered)</SelectItem>
-                    <SelectItem value="clean-minimal">Clean Minimal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-3 gap-3">
+              <LayoutPreviewCard
+                title="Left Accent"
+                description="Accent bar on left"
+                selected={cardStyle === 'left-accent'}
+                onClick={() => setCardStyle('left-accent')}
+              >
+                <LeftAccentCardPreview />
+              </LayoutPreviewCard>
+              
+              <LayoutPreviewCard
+                title="Stat Card"
+                description="Centered icon & text"
+                selected={cardStyle === 'stat-card'}
+                onClick={() => setCardStyle('stat-card')}
+              >
+                <StatCardPreview />
+              </LayoutPreviewCard>
+              
+              <LayoutPreviewCard
+                title="Clean Minimal"
+                description="Simple horizontal layout"
+                selected={cardStyle === 'clean-minimal'}
+                onClick={() => setCardStyle('clean-minimal')}
+              >
+                <CleanMinimalCardPreview />
+              </LayoutPreviewCard>
             </div>
           </div>
           <div className="bg-card border border-border rounded-xl p-6 mb-6">
