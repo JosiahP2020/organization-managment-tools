@@ -77,24 +77,21 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
             {/* User profile - clickable to settings */}
             <button
               onClick={() => handleNavigation("/settings")}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-4 px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/15 transition-colors flex-1 ml-4"
             >
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-12 w-12 flex-shrink-0">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                <AvatarFallback className="bg-primary/30 text-primary font-semibold text-lg">
                   {getInitials(profile?.full_name)}
                 </AvatarFallback>
               </Avatar>
               <div className="text-left">
-                <p className="font-medium text-sidebar-foreground text-sm">
+                <p className="font-medium text-sidebar-foreground">
                   {profile?.full_name || "User"}
                 </p>
-                <Badge
-                  variant="secondary"
-                  className="text-xs bg-sidebar-accent text-sidebar-accent-foreground mt-0.5"
-                >
+                <p className="text-sm text-muted-foreground">
                   {isAdmin ? "Admin" : "Employee"}
-                </Badge>
+                </p>
               </div>
             </button>
           </div>
