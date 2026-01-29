@@ -22,6 +22,11 @@ import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
 import NotFound from "./pages/NotFound";
+// Dev test pages
+import DashboardFullWidth from "./pages/dev/DashboardFullWidth";
+import DashboardGridRight from "./pages/dev/DashboardGridRight";
+import DashboardSidebarLeft from "./pages/dev/DashboardSidebarLeft";
+import DashboardMasonry from "./pages/dev/DashboardMasonry";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +66,11 @@ const App = () => (
                 <Route path="/settings/preferences" element={<Settings />} />
                 <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/admin/organization" element={<OrganizationSettings />} />
+                {/* Dev test pages for layout/card style testing */}
+                <Route path="/dev/dashboard-full-width" element={<DashboardFullWidth />} />
+                <Route path="/dev/dashboard-grid-right" element={<DashboardGridRight />} />
+                <Route path="/dev/dashboard-sidebar-left" element={<DashboardSidebarLeft />} />
+                <Route path="/dev/dashboard-masonry" element={<DashboardMasonry />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
