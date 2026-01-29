@@ -1,4 +1,5 @@
-import { Settings, Users, Building2 } from "lucide-react";
+import { useState } from "react";
+import { Settings, Users, Building2, Menu } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,10 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SidebarMenu } from "@/components/SidebarMenu";
 
 export function DashboardHeader() {
   const { isAdmin, organization } = useAuth();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Show back button on sub-pages, not on main dashboard (/dashboard/:orgSlug)
   const pathParts = location.pathname.split('/').filter(Boolean);
@@ -24,9 +27,21 @@ export function DashboardHeader() {
     <>
       {/* Floating buttons without header background */}
       <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 pointer-events-none">
-        {/* Left side - Back Button only on sub-pages */}
+        {/* Left side - Menu Button or Back Button */}
         <div className="flex items-center gap-2 pointer-events-auto">
-          {showBackButton && <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />}
+          {isMainDashboard ? (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setSidebarOpen(true)}
+              className="h-14 w-14 text-foreground bg-background border-border shadow-md hover:bg-accent"
+              aria-label="Open menu"
+            >
+              <Menu className="h-8 w-8" />
+            </Button>
+          ) : (
+            <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />
+          )}
         </div>
 
         {/* Settings Dropdown - Right - Only show on main dashboard */}
@@ -76,6 +91,9 @@ export function DashboardHeader() {
       
       {/* Spacer to prevent content from going under fixed buttons */}
       <div className="h-20" />
+
+      {/* Sidebar Menu */}
+      <SidebarMenu open={sidebarOpen} onOpenChange={setSidebarOpen} />
     </>
   );
 }
