@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardCategories } from "@/hooks/useDashboardCategories";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { LeftAccentCard, StatCard, CleanMinimalCard } from "./CategoryCardVariants";
+import { AddMenuCardButton } from "./AddMenuCardButton";
+import { AddMenuCardDialog } from "./AddMenuCardDialog";
 import { FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +13,8 @@ export function DashboardCategoryGrid() {
   const { categories, isLoading } = useDashboardCategories();
   const { cardStyle } = useOrganizationSettings();
   const navigate = useNavigate();
-  const { organization } = useAuth();
+  const { organization, isAdmin } = useAuth();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   // Loading state
   if (isLoading) {
@@ -61,15 +65,25 @@ export function DashboardCategoryGrid() {
 
   // Render category grid
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-      {categories.map((category) => (
-        <CardComponent
-          key={category.id}
-          category={category}
-          onClick={() => handleCategoryClick(category)}
-          showEditButton={false}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+        {categories.map((category) => (
+          <CardComponent
+            key={category.id}
+            category={category}
+            onClick={() => handleCategoryClick(category)}
+            showEditButton={false}
+          />
+        ))}
+        {isAdmin && (
+          <AddMenuCardButton onClick={() => setIsAddDialogOpen(true)} />
+        )}
+      </div>
+      
+      <AddMenuCardDialog 
+        open={isAddDialogOpen} 
+        onOpenChange={setIsAddDialogOpen} 
+      />
+    </>
   );
 }
