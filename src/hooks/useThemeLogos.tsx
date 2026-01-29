@@ -1,6 +1,6 @@
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { 
   fetchSvgContent, 
   applySvgColorMappings, 
@@ -35,57 +35,71 @@ export function useThemeLogos() {
   const rawSubLogoUrl = organization?.sub_logo_url || null;
   
   // Color mappings from organization (stored as JSON)
-  const mainLogoColors = (organization?.main_logo_colors as ThemeColorMappings) || { light: {}, dark: {} };
-  const subLogoColors = (organization?.sub_logo_colors as ThemeColorMappings) || { light: {}, dark: {} };
+  const mainLogoColors = (organization?.main_logo_colors as ThemeColorMappings) || null;
+  const subLogoColors = (organization?.sub_logo_colors as ThemeColorMappings) || null;
+
+  // Transform SVG logo with color mappings
+  const transformLogo = useCallback(async (
+    url: string | null,
+    colorMappings: ThemeColorMappings | null,
+    mode: "light" | "dark"
+  ): Promise<string | null> => {
+    if (!url) {
+      return null;
+    }
+
+    // Only transform SVG files that have color mappings
+    if (!isSvgUrl(url)) {
+      return url;
+    }
+
+    const mappings = colorMappings?.[mode] || {};
+    if (Object.keys(mappings).length === 0) {
+      // No color mappings, use original URL
+      return url;
+    }
+
+    try {
+      const svgContent = await fetchSvgContent(url);
+      const modifiedSvg = applySvgColorMappings(svgContent, mappings);
+      const dataUri = svgToDataUri(modifiedSvg);
+      return dataUri;
+    } catch (error) {
+      console.error("Failed to transform SVG:", error);
+      // Fall back to original URL on error
+      return url;
+    }
+  }, []);
 
   // Apply color transformations to SVG logos
   useEffect(() => {
-    async function transformLogo(
-      url: string | null,
-      colorMappings: ThemeColorMappings,
-      mode: "light" | "dark",
-      setTransformed: (url: string | null) => void
-    ) {
-      if (!url) {
-        setTransformed(null);
-        return;
-      }
+    if (!mounted) return;
 
-      // Only transform SVG files that have color mappings
-      if (!isSvgUrl(url)) {
-        setTransformed(url);
-        return;
-      }
+    let isCancelled = false;
 
-      const mappings = colorMappings[mode] || {};
-      if (Object.keys(mappings).length === 0) {
-        // No color mappings, use original URL
-        setTransformed(url);
-        return;
-      }
+    async function applyTransformations() {
+      const [mainResult, subResult] = await Promise.all([
+        transformLogo(rawMainLogoUrl, mainLogoColors, currentMode),
+        transformLogo(rawSubLogoUrl, subLogoColors, currentMode)
+      ]);
 
-      try {
-        const svgContent = await fetchSvgContent(url);
-        const modifiedSvg = applySvgColorMappings(svgContent, mappings);
-        const dataUri = svgToDataUri(modifiedSvg);
-        setTransformed(dataUri);
-      } catch (error) {
-        console.error("Failed to transform SVG:", error);
-        // Fall back to original URL on error
-        setTransformed(url);
+      if (!isCancelled) {
+        setTransformedMainLogo(mainResult);
+        setTransformedSubLogo(subResult);
       }
     }
 
-    if (mounted) {
-      transformLogo(rawMainLogoUrl, mainLogoColors, currentMode, setTransformedMainLogo);
-      transformLogo(rawSubLogoUrl, subLogoColors, currentMode, setTransformedSubLogo);
-    }
-  }, [rawMainLogoUrl, rawSubLogoUrl, mainLogoColors, subLogoColors, currentMode, mounted]);
+    applyTransformations();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [rawMainLogoUrl, rawSubLogoUrl, mainLogoColors, subLogoColors, currentMode, mounted, transformLogo]);
 
   // CSS class to apply brightness filter in dark mode (dims white to light gray)
   // Only apply if no custom dark mode colors are set
-  const hasCustomDarkMainColors = Object.keys(mainLogoColors.dark || {}).length > 0;
-  const hasCustomDarkSubColors = Object.keys(subLogoColors.dark || {}).length > 0;
+  const hasCustomDarkMainColors = Object.keys(mainLogoColors?.dark || {}).length > 0;
+  const hasCustomDarkSubColors = Object.keys(subLogoColors?.dark || {}).length > 0;
   const logoFilterClass = isDarkMode && !hasCustomDarkMainColors ? "dark-mode-logo" : "";
 
   return {
