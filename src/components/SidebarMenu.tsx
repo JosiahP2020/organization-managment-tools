@@ -77,7 +77,7 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
             {/* User profile - clickable to settings */}
             <button
               onClick={() => handleNavigation("/settings")}
-              className="flex items-center gap-4 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-4 hover:opacity-80 transition-opacity mr-4"
             >
               <Avatar className="h-12 w-12 flex-shrink-0">
                 <AvatarImage src={profile?.avatar_url || undefined} />
