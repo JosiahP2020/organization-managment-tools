@@ -68,7 +68,7 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
       >
         {/* Header - Logo + User Profile */}
         <div className="p-4">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between">
             {/* Sub-logo on left - larger size */}
             <div className="flex-shrink-0">
               <Logo customSrc={subLogoUrl} variant="icon" size="xl" />
