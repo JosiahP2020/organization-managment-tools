@@ -67,8 +67,8 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
         className="w-80 p-0 flex flex-col bg-sidebar border-sidebar-border [&>button]:hidden"
       >
         {/* Header - Logo + User Profile */}
-        <div className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center justify-between">
+        <div className="p-4">
+          <div className="flex items-center gap-3">
             {/* Sub-logo on left - larger size */}
             <div className="flex-shrink-0">
               <Logo customSrc={subLogoUrl} variant="icon" size="xl" />
@@ -77,11 +77,11 @@ export function SidebarMenu({ open, onOpenChange }: SidebarMenuProps) {
             {/* User profile - clickable to settings */}
             <button
               onClick={() => handleNavigation("/settings")}
-              className="flex items-center gap-4 px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/15 transition-colors flex-1 ml-4"
+              className="flex items-center gap-4 hover:opacity-80 transition-opacity"
             >
               <Avatar className="h-12 w-12 flex-shrink-0">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary/30 text-primary font-semibold text-lg">
+                <AvatarFallback className="bg-primary/20 text-primary font-semibold text-lg">
                   {getInitials(profile?.full_name)}
                 </AvatarFallback>
               </Avatar>
