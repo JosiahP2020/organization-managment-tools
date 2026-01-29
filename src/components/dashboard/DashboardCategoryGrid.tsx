@@ -76,7 +76,9 @@ export function DashboardCategoryGrid() {
           />
         ))}
         {isAdmin && (
-          <AddMenuCardButton onClick={() => setIsAddDialogOpen(true)} />
+          <div className="flex h-20 md:h-24 items-center justify-center">
+            <AddMenuCardButton onClick={() => setIsAddDialogOpen(true)} />
+          </div>
         )}
       </div>
       
