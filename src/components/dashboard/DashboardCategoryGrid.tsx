@@ -1,19 +1,16 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardCategories } from "@/hooks/useDashboardCategories";
-import { useMenuCategories } from "@/hooks/useMenuCategories";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { EditableCategoryCard } from "./EditableCategoryCard";
-import { AddCategoryCard } from "./AddCategoryCard";
-import { useAuth } from "@/contexts/AuthContext";
-import { useEditMode } from "@/contexts/EditModeContext";
+import { LeftAccentCard, StatCard, CleanMinimalCard } from "./CategoryCardVariants";
 import { FolderOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function DashboardCategoryGrid() {
   const { categories, isLoading } = useDashboardCategories();
-  const { isAdmin } = useAuth();
-  const { isEditMode } = useEditMode();
-  const { dashboardLayout, cardStyle } = useOrganizationSettings();
-  const { createCategory, updateCategory, deleteCategory } = useMenuCategories();
+  const { cardStyle } = useOrganizationSettings();
+  const navigate = useNavigate();
+  const { organization } = useAuth();
 
   // Loading state
   if (isLoading) {
@@ -25,45 +22,7 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  const handleCreate = (data: { name: string; description?: string; icon: string; show_on_dashboard: boolean; show_in_sidebar: boolean }) => {
-    createCategory.mutate({
-      name: data.name,
-      description: data.description,
-      icon: data.icon,
-      show_on_dashboard: data.show_on_dashboard,
-      show_in_sidebar: data.show_in_sidebar,
-    });
-  };
-
-  const handleUpdate = (input: { id: string; name?: string; description?: string | null; icon?: string; show_on_dashboard?: boolean; show_in_sidebar?: boolean }) => {
-    updateCategory.mutate(input);
-  };
-
-  const handleDelete = (id: string) => {
-    deleteCategory.mutate(id);
-  };
-
-  // Empty state for admins - show message and add card in edit mode
-  if (categories.length === 0 && isAdmin) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-8 bg-muted/30 rounded-xl">
-          <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-          <h3 className="font-semibold text-foreground mb-1">No Categories Yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            {isEditMode ? "Add your first category below" : "Enter Edit Mode to add categories"}
-          </p>
-        </div>
-        {isEditMode && (
-          <div className="max-w-md mx-auto">
-            <AddCategoryCard onCreate={handleCreate} />
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Empty state for employees
+  // Empty state
   if (categories.length === 0) {
     return (
       <div className="text-center py-12 bg-muted/30 rounded-xl">
@@ -76,44 +35,41 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  // Get grid classes based on layout setting
-  const getLayoutClasses = () => {
-    switch (dashboardLayout) {
-      case 'full-width':
-        return 'grid grid-cols-1 gap-4 md:gap-5';
-      case 'masonry':
-        // CSS columns for masonry effect
-        return 'columns-1 md:columns-2 lg:columns-3 gap-4 md:gap-5 space-y-4 md:space-y-5';
-      case 'sidebar-left':
-        // This layout is handled at a higher level, grid here
-        return 'grid grid-cols-1 gap-4 md:gap-5';
-      case 'grid-right-column':
-      default:
-        return 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5';
+  const handleCategoryClick = (category: typeof categories[0]) => {
+    if (!organization?.slug) return;
+    const basePath = `/dashboard/${organization.slug}`;
+    const slug = category.name.toLowerCase().replace(/\s+/g, "-").replace(/&/g, "and");
+    
+    if (slug === "shop-and-install" || slug === "shop-install") {
+      navigate(`${basePath}/shop-install`);
+      return;
     }
+    if (slug === "sop" || slug === "training" || slug === "standard-operating-procedures") {
+      navigate(`${basePath}/training`);
+      return;
+    }
+    // For other categories, we would navigate to a generic category page
+    console.log("Navigate to category:", category.id);
   };
 
-  // For masonry layout, cards need break-inside-avoid
-  const isMasonry = dashboardLayout === 'masonry';
+  // Get the right card component based on style
+  const CardComponent = cardStyle === 'stat-card' 
+    ? StatCard 
+    : cardStyle === 'clean-minimal' 
+    ? CleanMinimalCard 
+    : LeftAccentCard;
 
-  // Render category grid with layout-based styling
+  // Render category grid
   return (
-    <div className={getLayoutClasses()}>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
       {categories.map((category) => (
-        <div key={category.id} className={isMasonry ? 'break-inside-avoid' : ''}>
-          <EditableCategoryCard
-            category={category}
-            onUpdate={handleUpdate}
-            onDelete={handleDelete}
-          />
-        </div>
+        <CardComponent
+          key={category.id}
+          category={category}
+          onClick={() => handleCategoryClick(category)}
+          showEditButton={false}
+        />
       ))}
-      {/* Add card for admins - only shows in edit mode */}
-      {isAdmin && (
-        <div className={isMasonry ? 'break-inside-avoid' : ''}>
-          <AddCategoryCard onCreate={handleCreate} />
-        </div>
-      )}
     </div>
   );
 }
