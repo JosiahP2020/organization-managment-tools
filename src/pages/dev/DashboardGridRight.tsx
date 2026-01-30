@@ -35,7 +35,7 @@ export default function DashboardGridRight() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Dev: Grid + Right Column Layout</h1>
-        <p className="text-muted-foreground">Testing all card styles with a widget column on the right</p>
+        <p className="text-muted-foreground">Testing all card styles with real widgets on the right</p>
       </div>
 
       {/* Style Toggle */}
@@ -77,7 +77,7 @@ export default function DashboardGridRight() {
           </div>
         </div>
 
-        {/* Right Widget Column */}
+        {/* Right Widget Column - Real Widgets */}
         <div className="hidden lg:block">
           <WidgetColumn />
         </div>

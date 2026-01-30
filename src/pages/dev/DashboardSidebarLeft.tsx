@@ -35,7 +35,7 @@ export default function DashboardSidebarLeft() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Dev: Sidebar Left Layout</h1>
-        <p className="text-muted-foreground">Testing all card styles with a widget sidebar on the left</p>
+        <p className="text-muted-foreground">Testing all card styles with real widgets on the left</p>
       </div>
 
       {/* Style Toggle */}
@@ -56,7 +56,7 @@ export default function DashboardSidebarLeft() {
 
       {/* Sidebar Left Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-6">
-        {/* Left Sidebar Widgets */}
+        {/* Left Sidebar - Real Widgets */}
         <div className="hidden lg:block">
           <SidebarWidgets />
         </div>
