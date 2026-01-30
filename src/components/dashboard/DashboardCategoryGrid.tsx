@@ -37,7 +37,8 @@ export function DashboardCategoryGrid() {
       navigate(`${basePath}/training`);
       return;
     }
-    console.log("Navigate to category:", category.id);
+    // Navigate to the menu detail page using the category ID
+    navigate(`${basePath}/menu/${category.id}`);
   };
 
   // Loading state

@@ -11,6 +11,7 @@ import OrganizationLogin from "./pages/OrganizationLogin";
 import EmployeeLogin from "./pages/EmployeeLogin";
 import CreateOrganization from "./pages/CreateOrganization";
 import Dashboard from "./pages/Dashboard";
+import MenuDetail from "./pages/MenuDetail";
 import Training from "./pages/Training";
 import CategoryDocuments from "./pages/training/CategoryDocuments";
 import ChecklistEditor from "./pages/training/ChecklistEditor";
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/login/:organizationName" element={<EmployeeLogin />} />
                 <Route path="/create-organization" element={<CreateOrganization />} />
                 <Route path="/dashboard/:orgSlug" element={<Dashboard />} />
+                <Route path="/dashboard/:orgSlug/menu/:menuId" element={<MenuDetail />} />
                 <Route path="/dashboard/:orgSlug/training" element={<Training />} />
                 <Route path="/dashboard/:orgSlug/training/:category" element={<CategoryDocuments />} />
                 <Route path="/dashboard/:orgSlug/training/:category/:checklistId" element={<ChecklistEditor />} />
@@ -59,7 +61,6 @@ const App = () => (
                 <Route path="/dashboard/:orgSlug/shop-install/projects" element={<ProjectList />} />
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId" element={<ProjectDetail />} />
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId/follow-up-list/:checklistId" element={<ChecklistEditor />} />
-                {/* Category detail route removed during teardown - will be rebuilt */}
                 <Route path="/settings" element={<Settings />} />
                 {/* Legacy routes redirect to new combined settings */}
                 <Route path="/settings/account" element={<Settings />} />
