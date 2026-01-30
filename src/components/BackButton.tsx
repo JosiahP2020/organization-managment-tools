@@ -26,6 +26,10 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
     // Path: /dashboard/{org}/category/{categoryId}
     const categoryIndex = pathParts.indexOf('category');
     
+    // Check if we're in a menu detail page
+    // Path: /dashboard/{org}/menu/{menuId}
+    const menuIndex = pathParts.indexOf('menu');
+    
     if (gembaIndex !== -1) {
       // For SOP Guides, go back to the category page (before 'gemba')
       const parentPath = '/' + pathParts.slice(0, gembaIndex).join('/');
@@ -37,6 +41,10 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
     } else if (categoryIndex !== -1) {
       // For category pages, go back to the dashboard (before 'category')
       const parentPath = '/' + pathParts.slice(0, categoryIndex).join('/');
+      navigate(parentPath);
+    } else if (menuIndex !== -1) {
+      // For menu pages, go back to the dashboard (before 'menu')
+      const parentPath = '/' + pathParts.slice(0, menuIndex).join('/');
       navigate(parentPath);
     } else if (pathParts.length > 2) {
       // Regular behavior: remove the last segment
