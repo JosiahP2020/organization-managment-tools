@@ -214,7 +214,8 @@ const UserManagement = () => {
 
           {/* Users List */}
           <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-border bg-muted/30">
+            {/* Desktop Header - Hidden on mobile */}
+            <div className="hidden md:block px-6 py-4 border-b border-border bg-muted/30">
               <div className="grid grid-cols-12 gap-4 text-sm font-medium text-muted-foreground">
                 <div className="col-span-4">User</div>
                 <div className="col-span-2">Role</div>
@@ -233,10 +234,11 @@ const UserManagement = () => {
                 <p className="text-muted-foreground">No users found</p>
               </div>
             ) : (
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border max-h-[calc(100vh-280px)] overflow-y-auto">
                 {users.map((user) => (
-                  <div key={user.id} className="px-6 py-4 hover:bg-muted/20 transition-colors">
-                    <div className="grid grid-cols-12 gap-4 items-center">
+                  <div key={user.id} className="px-4 md:px-6 py-4 hover:bg-muted/20 transition-colors">
+                    {/* Desktop Layout */}
+                    <div className="hidden md:grid grid-cols-12 gap-4 items-center">
                       <div className="col-span-4 flex items-center gap-3">
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={user.avatar_url || undefined} />
@@ -331,6 +333,102 @@ const UserManagement = () => {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Mobile Layout - Card style */}
+                    <div className="md:hidden space-y-4">
+                      {/* User info and actions row */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.avatar_url || undefined} />
+                            <AvatarFallback className="bg-primary/10 text-primary">
+                              {getInitials(user.full_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium text-foreground">{user.full_name}</p>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                              user.role === "admin"
+                                ? "bg-primary/10 text-primary"
+                                : "bg-muted text-muted-foreground"
+                            }`}>
+                              {user.role === "admin" ? (
+                                <Shield className="w-3 h-3" />
+                              ) : (
+                                <User className="w-3 h-3" />
+                              )}
+                              {user.role === "admin" ? "Admin" : "Employee"}
+                              {user.id === currentUser?.id && " (You)"}
+                            </span>
+                          </div>
+                        </div>
+                        {user.id !== currentUser?.id && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-popover">
+                              <DropdownMenuItem
+                                onClick={() => handleRoleChange(
+                                  user.id,
+                                  user.role === "admin" ? "employee" : "admin"
+                                )}
+                                className="gap-2"
+                              >
+                                <UserCog className="w-4 h-4" />
+                                {user.role === "admin" ? "Demote to Employee" : "Promote to Admin"}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setDeleteUserId(user.id)}
+                                className="gap-2 text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete User
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+
+                      {/* Permissions grid - 2x2 on mobile */}
+                      <div className="grid grid-cols-2 gap-3 pl-1">
+                        <div className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
+                          <span className="text-sm text-muted-foreground">Create</span>
+                          <Switch
+                            checked={user.permissions.canCreate}
+                            disabled={user.id === currentUser?.id}
+                            onCheckedChange={(checked) => handlePermissionChange(user.id, 'canCreate', checked)}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
+                          <span className="text-sm text-muted-foreground">Delete</span>
+                          <Switch
+                            checked={user.permissions.canDelete}
+                            disabled={user.id === currentUser?.id}
+                            onCheckedChange={(checked) => handlePermissionChange(user.id, 'canDelete', checked)}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
+                          <span className="text-sm text-muted-foreground">Archive</span>
+                          <Switch
+                            checked={user.permissions.canArchive}
+                            disabled={user.id === currentUser?.id}
+                            onCheckedChange={(checked) => handlePermissionChange(user.id, 'canArchive', checked)}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between bg-muted/30 rounded-lg px-3 py-2">
+                          <span className="text-sm text-muted-foreground">Widgets</span>
+                          <Switch
+                            checked={user.permissions.canCustomizeWidgets}
+                            disabled={user.id === currentUser?.id}
+                            onCheckedChange={(checked) => handlePermissionChange(user.id, 'canCustomizeWidgets', checked)}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
