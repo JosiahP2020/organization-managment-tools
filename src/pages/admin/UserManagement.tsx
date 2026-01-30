@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Shield, User, MoreVertical, Trash2, UserCog, UserPlus } from "lucide-react";
+import { Users, Shield, User, MoreVertical, Trash2, UserCog, UserPlus, LayoutGrid } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -34,6 +34,7 @@ interface UserPermissions {
   canCreate: boolean;
   canDelete: boolean;
   canArchive: boolean;
+  canCustomizeWidgets: boolean;
 }
 
 interface UserWithRole {
@@ -91,6 +92,7 @@ const UserManagement = () => {
           canCreate: isAdmin,
           canDelete: isAdmin,
           canArchive: isAdmin,
+          canCustomizeWidgets: isAdmin,
         },
       };
     });
@@ -168,7 +170,7 @@ const UserManagement = () => {
     }
   };
 
-  const handlePermissionChange = (userId: string, permission: 'canCreate' | 'canDelete' | 'canArchive', value: boolean) => {
+  const handlePermissionChange = (userId: string, permission: 'canCreate' | 'canDelete' | 'canArchive' | 'canCustomizeWidgets', value: boolean) => {
     setUsers(prevUsers => 
       prevUsers.map(user => 
         user.id === userId 
@@ -264,7 +266,7 @@ const UserManagement = () => {
                         </span>
                       </div>
                       <div className="col-span-5">
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-4">
                           <div className="flex flex-col items-center gap-1">
                             <span className="text-xs text-muted-foreground">Create</span>
                             <Switch
@@ -287,6 +289,14 @@ const UserManagement = () => {
                               checked={user.permissions.canArchive}
                               disabled={user.id === currentUser?.id}
                               onCheckedChange={(checked) => handlePermissionChange(user.id, 'canArchive', checked)}
+                            />
+                          </div>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-xs text-muted-foreground">Widgets</span>
+                            <Switch
+                              checked={user.permissions.canCustomizeWidgets}
+                              disabled={user.id === currentUser?.id}
+                              onCheckedChange={(checked) => handlePermissionChange(user.id, 'canCustomizeWidgets', checked)}
                             />
                           </div>
                         </div>
