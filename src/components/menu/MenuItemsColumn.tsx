@@ -35,7 +35,8 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     deleteItem,
     reorderItems,
     moveItem,
-    reorderSections,
+    moveSectionUp,
+    moveSectionDown,
   } = useMenuItems(categoryId);
 
   const [addSubmenuDialogOpen, setAddSubmenuDialogOpen] = useState(false);
@@ -49,11 +50,8 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
   });
   const sensors = useSensors(pointerSensor, touchSensor);
 
-  // Collect all sortable IDs: sections first, then items
-  const allSortableIds = [
-    ...sections.map((section) => `section-${section.id}`),
-    ...sections.flatMap((section) => section.items.map((item) => item.id)),
-  ];
+  // Collect all item IDs for SortableContext
+  const allItemIds = sections.flatMap((section) => section.items.map((item) => item.id));
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -62,31 +60,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    if (!activeData) return;
-
-    // Handle section reordering
-    if (activeData.type === "section") {
-      const activeId = (active.id as string).replace("section-", "");
-      
-      // Can drop on another section
-      if (overData?.type === "section" && active.id !== over.id) {
-        const overId = (over.id as string).replace("section-", "");
-        
-        const oldIndex = sections.findIndex((s) => s.id === activeId);
-        const newIndex = sections.findIndex((s) => s.id === overId);
-        
-        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-          const newOrder = [...sections];
-          const [moved] = newOrder.splice(oldIndex, 1);
-          newOrder.splice(newIndex, 0, moved);
-          reorderSections.mutate(newOrder.map((s) => s.id));
-        }
-      }
-      return;
-    }
-
-    // Handle menu item dragging
-    if (activeData.type !== "menu-item") return;
+    if (!activeData || activeData.type !== "menu-item") return;
 
     const sourceSectionId = activeData.sectionId;
 
@@ -164,6 +138,9 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     );
   }
 
+  // Find the first non-default section index for determining isFirstSection
+  const firstRealSectionIndex = sections.findIndex(s => s.id !== "default");
+
   return (
     <>
       <DndContext
@@ -171,26 +148,37 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={allSortableIds} strategy={verticalListSortingStrategy}>
+        <SortableContext items={allItemIds} strategy={verticalListSortingStrategy}>
           <div className="flex flex-col">
-            {sections.map((section, index) => (
-              <MenuItemSection
-                key={section.id}
-                section={section}
-                isAdmin={isAdmin}
-                isLastSection={index === sections.length - 1}
-                totalSections={sections.length}
-                onTitleChange={(sectionId, newTitle) => 
-                  updateItemName.mutate({ itemId: sectionId, name: newTitle })
-                }
-                onAddSubmenu={handleAddSubmenu}
-                onAddSection={() => handleAddSection(section.id)}
-                onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
-                onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
-                onEditItem={(itemId, name) => updateItemName.mutate({ itemId, name })}
-                onItemClick={onItemClick}
-              />
-            ))}
+            {sections.map((section, index) => {
+              // For real sections, determine if first/last among real sections
+              const realSections = sections.filter(s => s.id !== "default");
+              const realIndex = realSections.findIndex(s => s.id === section.id);
+              const isFirstRealSection = realIndex === 0;
+              const isLastRealSection = realIndex === realSections.length - 1;
+
+              return (
+                <MenuItemSection
+                  key={section.id}
+                  section={section}
+                  isAdmin={isAdmin}
+                  isFirstSection={section.id === "default" || isFirstRealSection}
+                  isLastSection={section.id === "default" || isLastRealSection}
+                  totalSections={sections.length}
+                  onTitleChange={(sectionId, newTitle) => 
+                    updateItemName.mutate({ itemId: sectionId, name: newTitle })
+                  }
+                  onAddSubmenu={handleAddSubmenu}
+                  onAddSection={() => handleAddSection(section.id)}
+                  onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
+                  onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
+                  onEditItem={(itemId, name) => updateItemName.mutate({ itemId, name })}
+                  onMoveUp={(sectionId) => moveSectionUp.mutate(sectionId)}
+                  onMoveDown={(sectionId) => moveSectionDown.mutate(sectionId)}
+                  onItemClick={onItemClick}
+                />
+              );
+            })}
 
             {/* Show add button if no sections exist */}
             {sections.length === 0 && isAdmin && (
