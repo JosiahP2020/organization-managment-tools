@@ -22,6 +22,8 @@ interface MenuItemSectionProps {
   onEditItem: (itemId: string, name: string) => void;
   onMoveUp: (sectionId: string) => void;
   onMoveDown: (sectionId: string) => void;
+  onMoveItemUp: (itemId: string, sectionId: string) => void;
+  onMoveItemDown: (itemId: string, sectionId: string) => void;
   onItemClick?: (item: any) => void;
 }
 
@@ -39,6 +41,8 @@ export function MenuItemSection({
   onEditItem,
   onMoveUp,
   onMoveDown,
+  onMoveItemUp,
+  onMoveItemDown,
   onItemClick,
 }: MenuItemSectionProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -118,14 +122,18 @@ export function MenuItemSection({
             isOver ? "bg-primary/10 ring-2 ring-primary/50" : ""
           }`}
         >
-          {section.items.map((item) => (
+          {section.items.map((item, index) => (
             <MenuItemCard
               key={item.id}
               item={item}
               sectionId={section.id}
               isAdmin={isAdmin}
+              isFirst={index === 0}
+              isLast={index === section.items.length - 1}
               onDelete={() => onDeleteItem(item.id)}
               onEdit={(name) => onEditItem(item.id, name)}
+              onMoveUp={() => onMoveItemUp(item.id, section.id)}
+              onMoveDown={() => onMoveItemDown(item.id, section.id)}
               onClick={() => onItemClick?.(item)}
             />
           ))}

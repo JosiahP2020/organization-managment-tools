@@ -1,19 +1,4 @@
 import { useState } from "react";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable";
 import { AddWidgetButton } from "./AddWidgetButton";
 import { SortableWidget } from "./SortableWidget";
 import type { WidgetType, WidgetSize } from "@/types/widgets";
@@ -42,15 +27,6 @@ export function WidgetColumn() {
   const [widgets, setWidgets] = useState<WidgetInstance[]>(defaultColumnWidgets);
   const { isAdmin } = useAuth();
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
   const handleWidgetAdd = (type: WidgetType, size: WidgetSize) => {
     const newWidget: WidgetInstance = {
       id: crypto.randomUUID(),
@@ -64,41 +40,47 @@ export function WidgetColumn() {
     setWidgets(widgets.filter((w) => w.id !== id));
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = widgets.findIndex((w) => w.id === active.id);
-      const newIndex = widgets.findIndex((w) => w.id === over.id);
+  const handleMoveUp = (id: string) => {
+    const index = widgets.findIndex((w) => w.id === id);
+    if (index > 0) {
       const newWidgets = [...widgets];
-      const [removed] = newWidgets.splice(oldIndex, 1);
-      newWidgets.splice(newIndex, 0, removed);
+      [newWidgets[index - 1], newWidgets[index]] = [newWidgets[index], newWidgets[index - 1]];
+      setWidgets(newWidgets);
+    }
+  };
+
+  const handleMoveDown = (id: string) => {
+    const index = widgets.findIndex((w) => w.id === id);
+    if (index < widgets.length - 1) {
+      const newWidgets = [...widgets];
+      [newWidgets[index], newWidgets[index + 1]] = [newWidgets[index + 1], newWidgets[index]];
       setWidgets(newWidgets);
     }
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={widgets.map((w) => w.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-4">
-          {widgets.map((widget) => (
-            <SortableWidget
-              key={widget.id}
-              id={widget.id}
-              type={widget.type}
-              size={widget.size}
-              isAdmin={isAdmin}
-              onDelete={() => handleWidgetDelete(widget.id)}
-            />
-          ))}
-          {/* Add widget button */}
-          {isAdmin && (
-            <div className="flex justify-center pt-2">
-              <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
-            </div>
-          )}
+    <div className="flex flex-col gap-4">
+      {widgets.map((widget, index) => (
+        <SortableWidget
+          key={widget.id}
+          id={widget.id}
+          type={widget.type}
+          size={widget.size}
+          isAdmin={isAdmin}
+          isFirst={index === 0}
+          isLast={index === widgets.length - 1}
+          onDelete={() => handleWidgetDelete(widget.id)}
+          onMoveUp={() => handleMoveUp(widget.id)}
+          onMoveDown={() => handleMoveDown(widget.id)}
+        />
+      ))}
+      {/* Add widget button */}
+      {isAdmin && (
+        <div className="flex justify-center pt-2">
+          <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
         </div>
-      </SortableContext>
-    </DndContext>
+      )}
+    </div>
   );
 }
 
@@ -106,15 +88,6 @@ export function SidebarWidgets() {
   const [widgets, setWidgets] = useState<WidgetInstance[]>(defaultSidebarWidgets);
   const { isAdmin } = useAuth();
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
   const handleWidgetAdd = (type: WidgetType, size: WidgetSize) => {
     const newWidget: WidgetInstance = {
       id: crypto.randomUUID(),
@@ -128,41 +101,47 @@ export function SidebarWidgets() {
     setWidgets(widgets.filter((w) => w.id !== id));
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = widgets.findIndex((w) => w.id === active.id);
-      const newIndex = widgets.findIndex((w) => w.id === over.id);
+  const handleMoveUp = (id: string) => {
+    const index = widgets.findIndex((w) => w.id === id);
+    if (index > 0) {
       const newWidgets = [...widgets];
-      const [removed] = newWidgets.splice(oldIndex, 1);
-      newWidgets.splice(newIndex, 0, removed);
+      [newWidgets[index - 1], newWidgets[index]] = [newWidgets[index], newWidgets[index - 1]];
+      setWidgets(newWidgets);
+    }
+  };
+
+  const handleMoveDown = (id: string) => {
+    const index = widgets.findIndex((w) => w.id === id);
+    if (index < widgets.length - 1) {
+      const newWidgets = [...widgets];
+      [newWidgets[index], newWidgets[index + 1]] = [newWidgets[index + 1], newWidgets[index]];
       setWidgets(newWidgets);
     }
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={widgets.map((w) => w.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex flex-col gap-3">
-          {widgets.map((widget) => (
-            <SortableWidget
-              key={widget.id}
-              id={widget.id}
-              type={widget.type}
-              size={widget.size}
-              isAdmin={isAdmin}
-              onDelete={() => handleWidgetDelete(widget.id)}
-            />
-          ))}
-          {/* Add widget button */}
-          {isAdmin && (
-            <div className="flex justify-center pt-2">
-              <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
-            </div>
-          )}
+    <div className="flex flex-col gap-3">
+      {widgets.map((widget, index) => (
+        <SortableWidget
+          key={widget.id}
+          id={widget.id}
+          type={widget.type}
+          size={widget.size}
+          isAdmin={isAdmin}
+          isFirst={index === 0}
+          isLast={index === widgets.length - 1}
+          onDelete={() => handleWidgetDelete(widget.id)}
+          onMoveUp={() => handleMoveUp(widget.id)}
+          onMoveDown={() => handleMoveDown(widget.id)}
+        />
+      ))}
+      {/* Add widget button */}
+      {isAdmin && (
+        <div className="flex justify-center pt-2">
+          <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
         </div>
-      </SortableContext>
-    </DndContext>
+      )}
+    </div>
   );
 }
 
@@ -171,15 +150,6 @@ export function WidgetGrid() {
   const [widgets, setWidgets] = useState<WidgetInstance[]>(defaultColumnWidgets);
   const { isAdmin } = useAuth();
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
   const handleWidgetAdd = (type: WidgetType, size: WidgetSize) => {
     const newWidget: WidgetInstance = {
       id: crypto.randomUUID(),
@@ -193,40 +163,46 @@ export function WidgetGrid() {
     setWidgets(widgets.filter((w) => w.id !== id));
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = widgets.findIndex((w) => w.id === active.id);
-      const newIndex = widgets.findIndex((w) => w.id === over.id);
+  const handleMoveUp = (id: string) => {
+    const index = widgets.findIndex((w) => w.id === id);
+    if (index > 0) {
       const newWidgets = [...widgets];
-      const [removed] = newWidgets.splice(oldIndex, 1);
-      newWidgets.splice(newIndex, 0, removed);
+      [newWidgets[index - 1], newWidgets[index]] = [newWidgets[index], newWidgets[index - 1]];
+      setWidgets(newWidgets);
+    }
+  };
+
+  const handleMoveDown = (id: string) => {
+    const index = widgets.findIndex((w) => w.id === id);
+    if (index < widgets.length - 1) {
+      const newWidgets = [...widgets];
+      [newWidgets[index], newWidgets[index + 1]] = [newWidgets[index + 1], newWidgets[index]];
       setWidgets(newWidgets);
     }
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={widgets.map((w) => w.id)} strategy={rectSortingStrategy}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {widgets.map((widget) => (
-            <SortableWidget
-              key={widget.id}
-              id={widget.id}
-              type={widget.type}
-              size={widget.size}
-              isAdmin={isAdmin}
-              onDelete={() => handleWidgetDelete(widget.id)}
-            />
-          ))}
-          {/* Add widget button */}
-          {isAdmin && (
-            <div className="flex items-center justify-center min-h-[100px]">
-              <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
-            </div>
-          )}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {widgets.map((widget, index) => (
+        <SortableWidget
+          key={widget.id}
+          id={widget.id}
+          type={widget.type}
+          size={widget.size}
+          isAdmin={isAdmin}
+          isFirst={index === 0}
+          isLast={index === widgets.length - 1}
+          onDelete={() => handleWidgetDelete(widget.id)}
+          onMoveUp={() => handleMoveUp(widget.id)}
+          onMoveDown={() => handleMoveDown(widget.id)}
+        />
+      ))}
+      {/* Add widget button */}
+      {isAdmin && (
+        <div className="flex items-center justify-center min-h-[100px]">
+          <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
         </div>
-      </SortableContext>
-    </DndContext>
+      )}
+    </div>
   );
 }
