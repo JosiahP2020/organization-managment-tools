@@ -217,7 +217,40 @@ export function useMenuItems(categoryId: string | undefined) {
   // Update item/section name
   const updateItemName = useMutation({
     mutationFn: async ({ itemId, name }: { itemId: string; name: string }) => {
-      if (itemId === "default") return { id: "default", name };
+      // Special handling for the default section - create a real section record
+      if (itemId === "default") {
+        if (!organization?.id || !user?.id || !categoryId) {
+          throw new Error("Not authenticated");
+        }
+
+        // Create a new section record with this name
+        const { data: newSection, error: sectionError } = await supabase
+          .from("menu_items")
+          .insert({
+            name: name.trim(),
+            item_type: "section",
+            category_id: categoryId,
+            organization_id: organization.id,
+            created_by: user.id,
+            sort_order: -1, // Keep it first
+          })
+          .select()
+          .single();
+
+        if (sectionError) throw sectionError;
+
+        // Move all items with section_id = null to this new section
+        const { error: updateError } = await supabase
+          .from("menu_items")
+          .update({ section_id: newSection.id })
+          .eq("category_id", categoryId)
+          .is("section_id", null)
+          .neq("item_type", "section");
+
+        if (updateError) throw updateError;
+
+        return newSection;
+      }
 
       const { data, error } = await supabase
         .from("menu_items")
