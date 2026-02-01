@@ -378,6 +378,32 @@ export function useMenuItems(categoryId: string | undefined) {
     },
   });
 
+  // Reorder sections
+  const reorderSections = useMutation({
+    mutationFn: async (sectionIds: string[]) => {
+      for (let i = 0; i < sectionIds.length; i++) {
+        const sectionId = sectionIds[i];
+        // Skip the default section as it's not a real DB record
+        if (sectionId === "default") continue;
+        
+        const { error } = await supabase
+          .from("menu_items")
+          .update({ sort_order: i })
+          .eq("id", sectionId)
+          .eq("item_type", "section");
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
+    },
+    onError: (error) => {
+      console.error("Failed to reorder sections:", error);
+      toast.error("Failed to reorder sections");
+    },
+  });
+
   return {
     sections,
     isLoading,
@@ -388,5 +414,6 @@ export function useMenuItems(categoryId: string | undefined) {
     deleteItem,
     reorderItems,
     moveItem,
+    reorderSections,
   };
 }
