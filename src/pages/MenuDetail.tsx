@@ -80,14 +80,55 @@ const MenuDetail = () => {
     }
   };
 
+  // Create linked category for legacy submenus
+  const createLinkedCategory = useMutation({
+    mutationFn: async (item: any) => {
+      if (!organization?.id) throw new Error("No organization");
+
+      // Create a new menu_category for this submenu (hidden from dashboard/sidebar)
+      const { data: newCategory, error: categoryError } = await supabase
+        .from("menu_categories")
+        .insert({
+          name: item.name,
+          description: item.description || null,
+          icon: item.icon || "folder",
+          organization_id: organization.id,
+          created_by: item.created_by,
+          show_on_dashboard: false,
+          show_in_sidebar: false,
+        })
+        .select()
+        .single();
+
+      if (categoryError) throw categoryError;
+
+      // Update the menu_item to link to the new category
+      const { error: updateError } = await supabase
+        .from("menu_items")
+        .update({ target_category_id: newCategory.id })
+        .eq("id", item.id);
+
+      if (updateError) throw updateError;
+
+      return newCategory;
+    },
+    onSuccess: (newCategory) => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", menuId] });
+      navigate(`/dashboard/${slug}/menu/${newCategory.id}`);
+    },
+    onError: () => {
+      toast.error("Failed to open submenu");
+    },
+  });
+
   // Handle submenu click - navigate to that submenu's linked category
   const handleSubmenuClick = (item: any) => {
-    // All submenus now have a target_category_id that links to their nested menu
     if (item.target_category_id) {
+      // Navigate to existing linked category
       navigate(`/dashboard/${slug}/menu/${item.target_category_id}`);
     } else {
-      // Fallback for older items without target_category_id
-      toast.error("This submenu doesn't have a linked category");
+      // Create linked category on-the-fly for legacy submenus
+      createLinkedCategory.mutate(item);
     }
   };
 
