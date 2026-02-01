@@ -58,7 +58,7 @@ export function AddMenuCardDialog({ open, onOpenChange, sectionId }: AddMenuCard
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-categories-with-sections"] });
       toast.success("Menu card created successfully");
       handleClose();
     },
