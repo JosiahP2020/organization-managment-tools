@@ -47,8 +47,9 @@ export function MenuItemSection({
   });
 
   const canDelete = section.id !== "default";
-  // Only show section title if there's more than one section
-  const showSectionTitle = totalSections > 1 && section.id !== "default";
+  // Show section titles for ALL sections when there are 2+ sections
+  // If only 1 section, no titles needed
+  const showSectionTitle = totalSections > 1;
 
   return (
     <>
