@@ -157,6 +157,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
                 onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
                 onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
                 onEditItem={(itemId, name) => updateItemName.mutate({ itemId, name })}
+                onItemClick={onItemClick}
               />
             ))}
 
