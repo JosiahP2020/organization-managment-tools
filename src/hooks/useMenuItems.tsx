@@ -70,7 +70,7 @@ export function useMenuItems(categoryId: string | undefined) {
       if (unsortedItems.length > 0 || sectionItems.length === 0) {
         result.push({
           id: "default",
-          title: "Items",
+          title: "New Section",
           sort_order: -1,
           items: unsortedItems,
         });
