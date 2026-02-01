@@ -33,6 +33,7 @@ export function MenuItemCard({
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -107,9 +108,10 @@ export function MenuItemCard({
         {isAdmin && !isEditing && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             <Button
+              ref={setActivatorNodeRef}
               variant="ghost"
               size="icon"
-              className="h-6 w-6 cursor-grab active:cursor-grabbing"
+              className="h-6 w-6 cursor-grab active:cursor-grabbing touch-none"
               {...attributes}
               {...listeners}
               onClick={(e) => e.stopPropagation()}
