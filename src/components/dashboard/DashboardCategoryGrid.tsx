@@ -5,7 +5,7 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { LeftAccentCard, StatCard, CleanMinimalCard } from "./CategoryCardVariants";
 import { AddMenuCardButton } from "./AddMenuCardButton";
 import { AddMenuCardDialog } from "./AddMenuCardDialog";
-import { WidgetColumn, SidebarWidgets } from "./WidgetPlaceholder";
+import { WidgetColumn, SidebarWidgets, WidgetGrid } from "./WidgetPlaceholder";
 import { FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -168,11 +168,9 @@ export function DashboardCategoryGrid() {
         </aside>
       </div>
       
-      {/* Mobile widgets below grid */}
+      {/* Mobile widgets below grid - horizontal flow */}
       <div className="lg:hidden mt-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <WidgetColumn />
-        </div>
+        <WidgetGrid />
       </div>
       
       <AddMenuCardDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />

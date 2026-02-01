@@ -71,3 +71,29 @@ export function SidebarWidgets() {
     </div>
   );
 }
+
+// Grid layout for widgets - flows left to right, then wraps down
+export function WidgetGrid() {
+  const [widgets, setWidgets] = useState<WidgetInstance[]>(defaultColumnWidgets);
+
+  const handleWidgetAdd = (type: WidgetType, size: WidgetSize) => {
+    const newWidget: WidgetInstance = {
+      id: crypto.randomUUID(),
+      type,
+      size,
+    };
+    setWidgets([...widgets, newWidget]);
+  };
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {widgets.map((widget) => (
+        <WidgetRenderer key={widget.id} type={widget.type} size={widget.size} />
+      ))}
+      {/* Add widget button */}
+      <div className="flex items-center justify-center min-h-[100px]">
+        <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
+      </div>
+    </div>
+  );
+}
