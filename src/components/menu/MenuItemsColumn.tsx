@@ -35,6 +35,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     deleteItem,
     reorderItems,
     moveItem,
+    reorderSections,
   } = useMenuItems(categoryId);
 
   const [addSubmenuDialogOpen, setAddSubmenuDialogOpen] = useState(false);
@@ -48,8 +49,11 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
   });
   const sensors = useSensors(pointerSensor, touchSensor);
 
-  // Collect all item IDs for SortableContext
+  // Collect all item IDs for SortableContext (items only)
   const allItemIds = sections.flatMap((section) => section.items.map((item) => item.id));
+  
+  // Collect all section IDs for SortableContext (sections)
+  const allSectionIds = sections.map((section) => `section-${section.id}`);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -58,7 +62,29 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    if (!activeData || activeData.type !== "menu-item") return;
+    if (!activeData) return;
+
+    // Handle section reordering
+    if (activeData.type === "section") {
+      if (overData?.type === "section" && active.id !== over.id) {
+        const activeId = (active.id as string).replace("section-", "");
+        const overId = (over.id as string).replace("section-", "");
+        
+        const oldIndex = sections.findIndex((s) => s.id === activeId);
+        const newIndex = sections.findIndex((s) => s.id === overId);
+        
+        if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+          const newOrder = [...sections];
+          const [moved] = newOrder.splice(oldIndex, 1);
+          newOrder.splice(newIndex, 0, moved);
+          reorderSections.mutate(newOrder.map((s) => s.id));
+        }
+      }
+      return;
+    }
+
+    // Handle menu item dragging
+    if (activeData.type !== "menu-item") return;
 
     const sourceSectionId = activeData.sectionId;
 
@@ -143,39 +169,42 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={allItemIds} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col">
-            {sections.map((section, index) => (
-              <MenuItemSection
-                key={section.id}
-                section={section}
-                isAdmin={isAdmin}
-                isLastSection={index === sections.length - 1}
-                totalSections={sections.length}
-                onTitleChange={(sectionId, newTitle) => 
-                  updateItemName.mutate({ itemId: sectionId, name: newTitle })
-                }
-                onAddSubmenu={handleAddSubmenu}
-                onAddSection={handleAddSection}
-                onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
-                onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
-                onEditItem={(itemId, name) => updateItemName.mutate({ itemId, name })}
-                onItemClick={onItemClick}
-              />
-            ))}
-
-            {/* Show add button if no sections exist */}
-            {sections.length === 0 && isAdmin && (
-              <div className="flex justify-center py-4">
-                <AddSubmenuDialog
-                  open={addSubmenuDialogOpen}
-                  onOpenChange={setAddSubmenuDialogOpen}
-                  onSubmit={handleCreateSubmenu}
-                  isPending={createSubmenu.isPending}
+        {/* Nested SortableContexts: one for sections, items handled inside */}
+        <SortableContext items={allSectionIds} strategy={verticalListSortingStrategy}>
+          <SortableContext items={allItemIds} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col">
+              {sections.map((section, index) => (
+                <MenuItemSection
+                  key={section.id}
+                  section={section}
+                  isAdmin={isAdmin}
+                  isLastSection={index === sections.length - 1}
+                  totalSections={sections.length}
+                  onTitleChange={(sectionId, newTitle) => 
+                    updateItemName.mutate({ itemId: sectionId, name: newTitle })
+                  }
+                  onAddSubmenu={handleAddSubmenu}
+                  onAddSection={handleAddSection}
+                  onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
+                  onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
+                  onEditItem={(itemId, name) => updateItemName.mutate({ itemId, name })}
+                  onItemClick={onItemClick}
                 />
-              </div>
-            )}
-          </div>
+              ))}
+
+              {/* Show add button if no sections exist */}
+              {sections.length === 0 && isAdmin && (
+                <div className="flex justify-center py-4">
+                  <AddSubmenuDialog
+                    open={addSubmenuDialogOpen}
+                    onOpenChange={setAddSubmenuDialogOpen}
+                    onSubmit={handleCreateSubmenu}
+                    isPending={createSubmenu.isPending}
+                  />
+                </div>
+              )}
+            </div>
+          </SortableContext>
         </SortableContext>
       </DndContext>
 

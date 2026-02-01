@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
@@ -37,8 +39,26 @@ export function MenuItemSection({
 }: MenuItemSectionProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  // Section sortable (for reordering sections)
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `section-${section.id}`,
+    data: {
+      type: "section",
+      sectionId: section.id,
+    },
+    disabled: !isAdmin || section.id === "default",
+  });
+
   // Section droppable (for receiving items)
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: `section-drop-${section.id}`,
     data: {
       type: "section-drop",
@@ -46,35 +66,52 @@ export function MenuItemSection({
     },
   });
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   const canDelete = section.id !== "default";
+  const canDrag = section.id !== "default";
   // Show section titles for ALL sections when there are 2+ sections
-  // If only 1 section, no titles needed
   const showSectionTitle = totalSections > 1;
 
   return (
     <>
-      <div className="mb-6 last:mb-0 group/section relative">
+      <div
+        ref={setSortableRef}
+        style={style}
+        className="mb-6 last:mb-0 group/section relative"
+      >
         {/* Section Header - only show if more than one section */}
         {showSectionTitle && (
           <div className="flex justify-center mb-3 relative">
             {/* Admin controls for section */}
-            {isAdmin && canDelete && (
+            {isAdmin && (canDelete || canDrag) && (
               <div className="absolute left-0 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover/section:opacity-100 transition-opacity">
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="h-7 w-7 shadow-md cursor-grab active:cursor-grabbing"
-                >
-                  <GripVertical className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="h-7 w-7 shadow-md"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                {canDrag && (
+                  <Button
+                    ref={setActivatorNodeRef}
+                    variant="secondary"
+                    size="icon"
+                    className="h-7 w-7 shadow-md cursor-grab active:cursor-grabbing touch-none"
+                    {...attributes}
+                    {...listeners}
+                  >
+                    <GripVertical className="h-4 w-4" />
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-7 w-7 shadow-md"
+                    onClick={() => setShowDeleteDialog(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             )}
 
@@ -88,7 +125,7 @@ export function MenuItemSection({
 
         {/* Items list - droppable zone */}
         <div
-          ref={setNodeRef}
+          ref={setDroppableRef}
           className={`flex flex-col gap-2 min-h-[3rem] rounded-xl p-2 transition-colors ${
             isOver ? "bg-primary/10 ring-2 ring-primary/50" : ""
           }`}
