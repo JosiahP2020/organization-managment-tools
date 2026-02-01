@@ -6,6 +6,7 @@ import { LeftAccentCard, StatCard, CleanMinimalCard } from "./CategoryCardVarian
 import { AddMenuCardButton } from "./AddMenuCardButton";
 import { AddMenuCardDialog } from "./AddMenuCardDialog";
 import { WidgetColumn, SidebarWidgets, WidgetGrid } from "./WidgetPlaceholder";
+import { EditableSectionTitle } from "./EditableSectionTitle";
 import { FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +17,7 @@ export function DashboardCategoryGrid() {
   const navigate = useNavigate();
   const { organization, isAdmin } = useAuth();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [sectionTitle, setSectionTitle] = useState("Main Menu");
 
   // Get the right card component based on style
   const CardComponent = cardStyle === 'stat-card' 
@@ -64,9 +66,21 @@ export function DashboardCategoryGrid() {
     );
   }
 
+  // Section title component
+  const renderSectionTitle = () => (
+    <div className="col-span-full flex justify-center mb-2">
+      <EditableSectionTitle
+        title={sectionTitle}
+        onTitleChange={setSectionTitle}
+        isEditable={isAdmin}
+      />
+    </div>
+  );
+
   // Render cards based on selected layout
   const renderCards = () => (
     <>
+      {renderSectionTitle()}
       {categories.map((category) => (
         <CardComponent
           key={category.id}
