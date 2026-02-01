@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import shellstarLogo from "@/assets/shellstar-logo.png";
 import sccIcon from "@/assets/scc-icon.gif";
 import sccLogo from "@/assets/scc-logo.gif";
@@ -8,6 +9,8 @@ interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   variant?: "full" | "icon" | "scc";
   customSrc?: string | null;
+  /** Disable click navigation to dashboard */
+  disableNavigation?: boolean;
 }
 
 const sizeClasses = {
@@ -53,17 +56,33 @@ export const Logo = forwardRef<HTMLImageElement, LogoImgProps>(({
   size = "md", 
   variant = "full",
   customSrc = null,
-  filterClass = ""
+  filterClass = "",
+  disableNavigation = false
 }, ref) => {
+  const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
+  
   const logoSrc = customSrc || defaultLogos[variant];
   const altText = customSrc ? "Organization Logo" : altTexts[variant];
+
+  const handleClick = () => {
+    if (disableNavigation) return;
+    
+    // Navigate to the main dashboard
+    if (slug) {
+      navigate(`/dashboard/${slug}`);
+    } else {
+      navigate('/');
+    }
+  };
   
   return (
     <img
       ref={ref}
       src={logoSrc}
       alt={altText}
-      className={`${sizeClasses[variant][size]} w-auto object-contain ${filterClass} ${className}`}
+      onClick={handleClick}
+      className={`${sizeClasses[variant][size]} w-auto object-contain ${filterClass} ${className} ${!disableNavigation ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
     />
   );
 });
