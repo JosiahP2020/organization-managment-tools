@@ -19,9 +19,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface MenuItemsColumnProps {
   categoryId: string;
+  onItemClick?: (item: any) => void;
 }
 
-export function MenuItemsColumn({ categoryId }: MenuItemsColumnProps) {
+export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProps) {
   const { isAdmin } = useAuth();
 
   const {
@@ -147,6 +148,7 @@ export function MenuItemsColumn({ categoryId }: MenuItemsColumnProps) {
                 section={section}
                 isAdmin={isAdmin}
                 isLastSection={index === sections.length - 1}
+                totalSections={sections.length}
                 onTitleChange={(sectionId, newTitle) => 
                   updateItemName.mutate({ itemId: sectionId, name: newTitle })
                 }
@@ -154,6 +156,7 @@ export function MenuItemsColumn({ categoryId }: MenuItemsColumnProps) {
                 onAddSection={handleAddSection}
                 onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
                 onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
+                onEditItem={(itemId, name) => updateItemName.mutate({ itemId, name })}
               />
             ))}
 
