@@ -40,14 +40,13 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
   const [addSubmenuDialogOpen, setAddSubmenuDialogOpen] = useState(false);
   const [currentSectionId, setCurrentSectionId] = useState<string | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 5 },
-    })
-  );
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: { distance: 8 },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: { delay: 200, tolerance: 5 },
+  });
+  const sensors = useSensors(pointerSensor, touchSensor);
 
   // Collect all item IDs for SortableContext
   const allItemIds = sections.flatMap((section) => section.items.map((item) => item.id));
