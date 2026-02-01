@@ -170,23 +170,57 @@ export function useMenuItems(categoryId: string | undefined) {
 
   // Create a new section
   const createSection = useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async ({ title, afterSectionId }: { title: string; afterSectionId?: string }) => {
       if (!organization?.id || !user?.id || !categoryId) {
         throw new Error("Not authenticated");
       }
 
-      // Get max sort_order for sections in this category
+      // Fetch all existing sections to determine sort order
       const { data: existingSections } = await supabase
         .from("menu_items")
-        .select("sort_order")
+        .select("id, sort_order")
         .eq("category_id", categoryId)
         .eq("item_type", "section")
-        .order("sort_order", { ascending: false })
-        .limit(1);
+        .order("sort_order", { ascending: true });
 
-      const nextSortOrder = existingSections?.[0]?.sort_order 
-        ? existingSections[0].sort_order + 1 
-        : 0;
+      const sections = existingSections || [];
+      
+      let newSortOrder: number;
+      
+      if (afterSectionId && afterSectionId !== "default") {
+        // Find the section we're inserting after
+        const afterIndex = sections.findIndex(s => s.id === afterSectionId);
+        if (afterIndex !== -1) {
+          const afterSortOrder = sections[afterIndex].sort_order;
+          const nextSection = sections[afterIndex + 1];
+          
+          // Shift all subsequent sections down
+          for (let i = afterIndex + 1; i < sections.length; i++) {
+            await supabase
+              .from("menu_items")
+              .update({ sort_order: sections[i].sort_order + 1 })
+              .eq("id", sections[i].id);
+          }
+          
+          newSortOrder = afterSortOrder + 1;
+        } else {
+          // Fallback to end
+          newSortOrder = sections.length > 0 ? sections[sections.length - 1].sort_order + 1 : 0;
+        }
+      } else if (afterSectionId === "default") {
+        // Insert after the default section (which has sort_order -1), so before all other sections
+        // Shift all existing sections down
+        for (const section of sections) {
+          await supabase
+            .from("menu_items")
+            .update({ sort_order: section.sort_order + 1 })
+            .eq("id", section.id);
+        }
+        newSortOrder = 0;
+      } else {
+        // No context, append to end
+        newSortOrder = sections.length > 0 ? sections[sections.length - 1].sort_order + 1 : 0;
+      }
 
       const { data, error } = await supabase
         .from("menu_items")
@@ -196,7 +230,7 @@ export function useMenuItems(categoryId: string | undefined) {
           category_id: categoryId,
           organization_id: organization.id,
           created_by: user.id,
-          sort_order: nextSortOrder,
+          sort_order: newSortOrder,
         })
         .select()
         .single();
