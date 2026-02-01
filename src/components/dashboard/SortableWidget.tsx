@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Trash2, GripVertical } from "lucide-react";
+import { Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { WidgetRenderer } from "@/components/widgets/WidgetRenderer";
@@ -13,7 +11,11 @@ interface SortableWidgetProps {
   type: WidgetType;
   size: WidgetSize;
   isAdmin: boolean;
+  isFirst: boolean;
+  isLast: boolean;
   onDelete: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }
 
 export function SortableWidget({
@@ -21,47 +23,44 @@ export function SortableWidget({
   type,
   size,
   isAdmin,
+  isFirst,
+  isLast,
   onDelete,
+  onMoveUp,
+  onMoveDown,
 }: SortableWidgetProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
 
   const widgetName = WIDGET_TYPES.find((w) => w.type === type)?.name || "Widget";
 
   return (
     <>
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="group relative"
-      >
+      <div className="group relative">
         {/* Admin controls - visible on hover */}
         {isAdmin && (
           <div className="absolute -top-2 -right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {/* Drag handle */}
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-7 w-7 shadow-md cursor-grab active:cursor-grabbing"
-              {...attributes}
-              {...listeners}
-            >
-              <GripVertical className="h-4 w-4" />
-            </Button>
+            {!isFirst && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-7 w-7 shadow-md"
+                onClick={onMoveUp}
+                title="Move up"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+            )}
+            {!isLast && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="h-7 w-7 shadow-md"
+                onClick={onMoveDown}
+                title="Move down"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            )}
             {/* Delete button */}
             <Button
               variant="destructive"

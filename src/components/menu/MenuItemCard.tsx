@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trash2, GripVertical, Pencil } from "lucide-react";
+import { Trash2, ChevronUp, ChevronDown, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
@@ -12,8 +12,12 @@ interface MenuItemCardProps {
   item: MenuItem;
   sectionId: string;
   isAdmin: boolean;
+  isFirst: boolean;
+  isLast: boolean;
   onDelete: () => void;
   onEdit: (name: string) => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   onClick?: () => void;
 }
 
@@ -21,8 +25,12 @@ export function MenuItemCard({
   item, 
   sectionId, 
   isAdmin, 
+  isFirst,
+  isLast,
   onDelete,
   onEdit,
+  onMoveUp,
+  onMoveDown,
   onClick,
 }: MenuItemCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -33,7 +41,6 @@ export function MenuItemCard({
     attributes,
     listeners,
     setNodeRef,
-    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -107,17 +114,34 @@ export function MenuItemCard({
         {/* Admin controls - grouped on the right */}
         {isAdmin && !isEditing && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            <Button
-              ref={setActivatorNodeRef}
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 cursor-grab active:cursor-grabbing touch-none"
-              {...attributes}
-              {...listeners}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <GripVertical className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            {!isFirst && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoveUp();
+                }}
+                title="Move up"
+              >
+                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
+            {!isLast && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMoveDown();
+                }}
+                title="Move down"
+              >
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"

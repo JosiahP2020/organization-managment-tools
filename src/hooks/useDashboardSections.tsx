@@ -182,32 +182,125 @@ export function useDashboardSections() {
     },
   });
 
-  // Reorder sections
-  const reorderSections = useMutation({
-    mutationFn: async (sectionIds: string[]) => {
-      // Filter out "default" section and update sort_order for the rest
-      const updates = sectionIds
-        .filter((id) => id !== "default")
-        .map((id, index) => ({
-          id,
-          sort_order: index,
-        }));
-
-      for (const update of updates) {
-        const { error } = await supabase
-          .from("dashboard_sections")
-          .update({ sort_order: update.sort_order })
-          .eq("id", update.id);
-
-        if (error) throw error;
-      }
+  // Move section up
+  const moveSectionUp = useMutation({
+    mutationFn: async (sectionId: string) => {
+      const realSections = sections.filter(s => s.id !== "default");
+      const currentIndex = realSections.findIndex(s => s.id === sectionId);
+      
+      if (currentIndex <= 0) return;
+      
+      const prevSection = realSections[currentIndex - 1];
+      const currentSection = realSections[currentIndex];
+      
+      await supabase
+        .from("dashboard_sections")
+        .update({ sort_order: prevSection.sort_order })
+        .eq("id", sectionId);
+        
+      await supabase
+        .from("dashboard_sections")
+        .update({ sort_order: currentSection.sort_order })
+        .eq("id", prevSection.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-sections"] });
     },
     onError: (error) => {
-      console.error("Failed to reorder sections:", error);
-      toast.error("Failed to reorder sections");
+      console.error("Failed to move section:", error);
+      toast.error("Failed to move section");
+    },
+  });
+
+  // Move section down
+  const moveSectionDown = useMutation({
+    mutationFn: async (sectionId: string) => {
+      const realSections = sections.filter(s => s.id !== "default");
+      const currentIndex = realSections.findIndex(s => s.id === sectionId);
+      
+      if (currentIndex === -1 || currentIndex >= realSections.length - 1) return;
+      
+      const nextSection = realSections[currentIndex + 1];
+      const currentSection = realSections[currentIndex];
+      
+      await supabase
+        .from("dashboard_sections")
+        .update({ sort_order: nextSection.sort_order })
+        .eq("id", sectionId);
+        
+      await supabase
+        .from("dashboard_sections")
+        .update({ sort_order: currentSection.sort_order })
+        .eq("id", nextSection.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sections"] });
+    },
+    onError: (error) => {
+      console.error("Failed to move section:", error);
+      toast.error("Failed to move section");
+    },
+  });
+
+  // Move category up within section
+  const moveCategoryUp = useMutation({
+    mutationFn: async ({ categoryId, sectionId }: { categoryId: string; sectionId: string }) => {
+      const section = sections.find(s => s.id === sectionId);
+      if (!section) return;
+      
+      const currentIndex = section.categories.findIndex(c => c.id === categoryId);
+      if (currentIndex <= 0) return;
+      
+      const prevCategory = section.categories[currentIndex - 1];
+      const currentCategory = section.categories[currentIndex];
+      
+      await supabase
+        .from("menu_categories")
+        .update({ sort_order: prevCategory.sort_order })
+        .eq("id", categoryId);
+        
+      await supabase
+        .from("menu_categories")
+        .update({ sort_order: currentCategory.sort_order })
+        .eq("id", prevCategory.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sections"] });
+    },
+    onError: (error) => {
+      console.error("Failed to move category:", error);
+      toast.error("Failed to move menu card");
+    },
+  });
+
+  // Move category down within section
+  const moveCategoryDown = useMutation({
+    mutationFn: async ({ categoryId, sectionId }: { categoryId: string; sectionId: string }) => {
+      const section = sections.find(s => s.id === sectionId);
+      if (!section) return;
+      
+      const currentIndex = section.categories.findIndex(c => c.id === categoryId);
+      if (currentIndex === -1 || currentIndex >= section.categories.length - 1) return;
+      
+      const nextCategory = section.categories[currentIndex + 1];
+      const currentCategory = section.categories[currentIndex];
+      
+      await supabase
+        .from("menu_categories")
+        .update({ sort_order: nextCategory.sort_order })
+        .eq("id", categoryId);
+        
+      await supabase
+        .from("menu_categories")
+        .update({ sort_order: currentCategory.sort_order })
+        .eq("id", nextCategory.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sections"] });
+    },
+    onError: (error) => {
+      console.error("Failed to move category:", error);
+      toast.error("Failed to move menu card");
     },
   });
 
@@ -292,9 +385,12 @@ export function useDashboardSections() {
     createSection,
     updateSectionTitle,
     deleteSection,
-    reorderSections,
+    moveSectionUp,
+    moveSectionDown,
     deleteCategory,
     reorderCategories,
     moveCategory,
+    moveCategoryUp,
+    moveCategoryDown,
   };
 }

@@ -37,6 +37,8 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     moveItem,
     moveSectionUp,
     moveSectionDown,
+    moveItemUp,
+    moveItemDown,
   } = useMenuItems(categoryId);
 
   const [addSubmenuDialogOpen, setAddSubmenuDialogOpen] = useState(false);
@@ -175,6 +177,8 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
                   onEditItem={(itemId, name) => updateItemName.mutate({ itemId, name })}
                   onMoveUp={(sectionId) => moveSectionUp.mutate(sectionId)}
                   onMoveDown={(sectionId) => moveSectionDown.mutate(sectionId)}
+                  onMoveItemUp={(itemId, sectionId) => moveItemUp.mutate({ itemId, sectionId })}
+                  onMoveItemDown={(itemId, sectionId) => moveItemDown.mutate({ itemId, sectionId })}
                   onItemClick={onItemClick}
                 />
               );

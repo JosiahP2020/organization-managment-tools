@@ -1,25 +1,6 @@
 import { useState } from "react";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-  DragOverEvent,
-  DragStartEvent,
-  pointerWithin,
-  rectIntersection,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDashboardSections, DashboardSection } from "@/hooks/useDashboardSections";
+import { useDashboardSections } from "@/hooks/useDashboardSections";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { AddMenuCardDialog } from "./AddMenuCardDialog";
 import { AddMenuCardButton } from "./AddMenuCardButton";
@@ -37,10 +18,11 @@ export function DashboardCategoryGrid() {
     createSection, 
     updateSectionTitle, 
     deleteSection,
-    reorderSections,
+    moveSectionUp,
+    moveSectionDown,
     deleteCategory,
-    reorderCategories,
-    moveCategory,
+    moveCategoryUp,
+    moveCategoryDown,
   } = useDashboardSections();
   const { cardStyle, dashboardLayout } = useOrganizationSettings();
   const navigate = useNavigate();
@@ -48,16 +30,6 @@ export function DashboardCategoryGrid() {
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addToSectionId, setAddToSectionId] = useState<string | null>(null);
-  const [activeCardId, setActiveCardId] = useState<string | null>(null);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   const handleCategoryClick = (category: DashboardCategory) => {
     if (!organization?.slug) return;
@@ -96,86 +68,20 @@ export function DashboardCategoryGrid() {
     deleteCategory.mutate(categoryId);
   };
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    if (active.data.current?.type === "card") {
-      setActiveCardId(active.id as string);
-    }
+  const handleMoveSectionUp = (sectionId: string) => {
+    moveSectionUp.mutate(sectionId);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveCardId(null);
+  const handleMoveSectionDown = (sectionId: string) => {
+    moveSectionDown.mutate(sectionId);
+  };
 
-    if (!over) return;
+  const handleMoveCategoryUp = (categoryId: string, sectionId: string) => {
+    moveCategoryUp.mutate({ categoryId, sectionId });
+  };
 
-    const activeData = active.data.current;
-    const overData = over.data.current;
-
-    // Handle section reordering
-    if (activeData?.type === "section" && overData?.type === "section") {
-      if (active.id !== over.id) {
-        const oldIndex = sections.findIndex((s) => s.id === active.id);
-        const newIndex = sections.findIndex((s) => s.id === over.id);
-        if (oldIndex !== -1 && newIndex !== -1) {
-          const newOrder = arrayMove(sections, oldIndex, newIndex);
-          reorderSections.mutate(newOrder.map((s) => s.id));
-        }
-      }
-      return;
-    }
-
-    // Handle card operations
-    if (activeData?.type === "card") {
-      const sourceSectionId = activeData.sectionId as string;
-      let targetSectionId: string | null = null;
-      let targetCategoryIndex = -1;
-
-      // Determine target section and position
-      if (overData?.type === "card") {
-        // Dropped on another card
-        targetSectionId = overData.sectionId as string;
-        const targetSection = sections.find((s) => s.id === targetSectionId);
-        if (targetSection) {
-          targetCategoryIndex = targetSection.categories.findIndex((c) => c.id === over.id);
-        }
-      } else if (overData?.type === "section-drop") {
-        // Dropped on section droppable area
-        targetSectionId = overData.sectionId as string;
-        const targetSection = sections.find((s) => s.id === targetSectionId);
-        if (targetSection) {
-          targetCategoryIndex = targetSection.categories.length; // Append at end
-        }
-      }
-
-      if (!targetSectionId) return;
-
-      // Same section reorder
-      if (sourceSectionId === targetSectionId) {
-        const section = sections.find((s) => s.id === sourceSectionId);
-        if (section && overData?.type === "card") {
-          const oldIndex = section.categories.findIndex((c) => c.id === active.id);
-          const newIndex = section.categories.findIndex((c) => c.id === over.id);
-          if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-            const newOrder = arrayMove(section.categories, oldIndex, newIndex);
-            reorderCategories.mutate({ 
-              sectionId: sourceSectionId, 
-              categoryIds: newOrder.map((c) => c.id) 
-            });
-          }
-        }
-      } else {
-        // Cross-section move
-        const targetSection = sections.find((s) => s.id === targetSectionId);
-        const newSortOrder = targetCategoryIndex >= 0 ? targetCategoryIndex : (targetSection?.categories.length || 0);
-        
-        moveCategory.mutate({
-          categoryId: active.id as string,
-          targetSectionId,
-          newSortOrder,
-        });
-      }
-    }
+  const handleMoveCategoryDown = (categoryId: string, sectionId: string) => {
+    moveCategoryDown.mutate({ categoryId, sectionId });
   };
 
   // Loading state
@@ -210,36 +116,39 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  // Get all card IDs across all sections for the unified SortableContext
-  const allCardIds = sections.flatMap((s) => s.categories.map((c) => c.id));
+  // Determine first/last real sections (excluding default)
+  const realSections = sections.filter(s => s.id !== "default");
 
-  // Render all sections with unified drag-and-drop
+  // Render all sections
   const renderSections = () => (
-    <DndContext 
-      sensors={sensors} 
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      {/* Context for section reordering */}
-      <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-        {sections.map((section, index) => (
+    <div className="flex flex-col gap-6">
+      {sections.map((section, index) => {
+        const realIndex = realSections.findIndex(s => s.id === section.id);
+        const isFirstReal = realIndex === 0;
+        const isLastReal = realIndex === realSections.length - 1;
+
+        return (
           <SortableSection
             key={section.id}
             section={section}
             cardStyle={cardStyle}
             isAdmin={isAdmin}
-            isLastSection={index === sections.length - 1}
+            isFirstSection={section.id === "default" || isFirstReal}
+            isLastSection={section.id === "default" || isLastReal}
             onTitleChange={handleTitleChange}
             onAddMenu={handleAddMenu}
             onAddSection={handleAddSection}
             onDeleteSection={handleDeleteSection}
             onDeleteCategory={handleDeleteCategory}
             onCategoryClick={handleCategoryClick}
+            onMoveUp={handleMoveSectionUp}
+            onMoveDown={handleMoveSectionDown}
+            onMoveCategoryUp={handleMoveCategoryUp}
+            onMoveCategoryDown={handleMoveCategoryDown}
           />
-        ))}
-      </SortableContext>
-    </DndContext>
+        );
+      })}
+    </div>
   );
 
   // Full Width Layout

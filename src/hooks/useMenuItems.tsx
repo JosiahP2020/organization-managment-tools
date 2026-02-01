@@ -480,6 +480,68 @@ export function useMenuItems(categoryId: string | undefined) {
     },
   });
 
+  // Move item up within section
+  const moveItemUp = useMutation({
+    mutationFn: async ({ itemId, sectionId }: { itemId: string; sectionId: string }) => {
+      const section = sections.find(s => s.id === sectionId);
+      if (!section) return;
+      
+      const currentIndex = section.items.findIndex(i => i.id === itemId);
+      if (currentIndex <= 0) return;
+      
+      const prevItem = section.items[currentIndex - 1];
+      const currentItem = section.items[currentIndex];
+      
+      await supabase
+        .from("menu_items")
+        .update({ sort_order: prevItem.sort_order })
+        .eq("id", itemId);
+        
+      await supabase
+        .from("menu_items")
+        .update({ sort_order: currentItem.sort_order })
+        .eq("id", prevItem.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
+    },
+    onError: (error) => {
+      console.error("Failed to move item:", error);
+      toast.error("Failed to move item");
+    },
+  });
+
+  // Move item down within section
+  const moveItemDown = useMutation({
+    mutationFn: async ({ itemId, sectionId }: { itemId: string; sectionId: string }) => {
+      const section = sections.find(s => s.id === sectionId);
+      if (!section) return;
+      
+      const currentIndex = section.items.findIndex(i => i.id === itemId);
+      if (currentIndex === -1 || currentIndex >= section.items.length - 1) return;
+      
+      const nextItem = section.items[currentIndex + 1];
+      const currentItem = section.items[currentIndex];
+      
+      await supabase
+        .from("menu_items")
+        .update({ sort_order: nextItem.sort_order })
+        .eq("id", itemId);
+        
+      await supabase
+        .from("menu_items")
+        .update({ sort_order: currentItem.sort_order })
+        .eq("id", nextItem.id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
+    },
+    onError: (error) => {
+      console.error("Failed to move item:", error);
+      toast.error("Failed to move item");
+    },
+  });
+
   return {
     sections,
     isLoading,
@@ -492,5 +554,7 @@ export function useMenuItems(categoryId: string | undefined) {
     moveItem,
     moveSectionUp,
     moveSectionDown,
+    moveItemUp,
+    moveItemDown,
   };
 }
