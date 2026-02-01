@@ -6,6 +6,7 @@ import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MenuItemsColumn } from "@/components/menu/MenuItemsColumn";
 
 const MenuDetail = () => {
   const { menuId } = useParams<{ menuId: string }>();
@@ -33,11 +34,14 @@ const MenuDetail = () => {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-2xl mx-auto px-4">
           <div className="flex justify-center mb-6 md:mb-8">
             <Skeleton className="h-32 w-48" />
           </div>
-          <Skeleton className="h-10 w-64 mx-auto" />
+          <Skeleton className="h-10 w-64 mx-auto mb-8" />
+          <Skeleton className="h-16 w-full mb-2" />
+          <Skeleton className="h-16 w-full mb-2" />
+          <Skeleton className="h-16 w-full" />
         </div>
       </DashboardLayout>
     );
@@ -45,7 +49,7 @@ const MenuDetail = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-2xl mx-auto px-4">
         {/* Organization Logo - Centered */}
         <div className="flex justify-center mb-6 md:mb-8">
           <Logo 
@@ -69,12 +73,8 @@ const MenuDetail = () => {
           )}
         </div>
 
-        {/* Menu content will go here */}
-        <div className="text-center py-12 bg-muted/30 rounded-xl">
-          <p className="text-muted-foreground">
-            Menu items will be displayed here.
-          </p>
-        </div>
+        {/* Menu Items Column */}
+        {menuId && <MenuItemsColumn categoryId={menuId} />}
       </div>
     </DashboardLayout>
   );
