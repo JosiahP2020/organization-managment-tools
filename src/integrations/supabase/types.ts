@@ -210,44 +210,6 @@ export type Database = {
           },
         ]
       }
-      dashboard_sections: {
-        Row: {
-          created_at: string
-          created_by: string
-          id: string
-          organization_id: string
-          sort_order: number
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          id?: string
-          organization_id: string
-          sort_order?: number
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          id?: string
-          organization_id?: string
-          sort_order?: number
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dashboard_sections_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       dashboard_widgets: {
         Row: {
           config: Json
@@ -431,7 +393,6 @@ export type Database = {
           name: string
           organization_id: string
           parent_category_id: string | null
-          section_id: string | null
           show_in_sidebar: boolean
           show_on_dashboard: boolean
           sort_order: number
@@ -446,7 +407,6 @@ export type Database = {
           name: string
           organization_id: string
           parent_category_id?: string | null
-          section_id?: string | null
           show_in_sidebar?: boolean
           show_on_dashboard?: boolean
           sort_order?: number
@@ -461,7 +421,6 @@ export type Database = {
           name?: string
           organization_id?: string
           parent_category_id?: string | null
-          section_id?: string | null
           show_in_sidebar?: boolean
           show_on_dashboard?: boolean
           sort_order?: number
@@ -480,13 +439,6 @@ export type Database = {
             columns: ["parent_category_id"]
             isOneToOne: false
             referencedRelation: "menu_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "menu_categories_section_id_fkey"
-            columns: ["section_id"]
-            isOneToOne: false
-            referencedRelation: "dashboard_sections"
             referencedColumns: ["id"]
           },
         ]

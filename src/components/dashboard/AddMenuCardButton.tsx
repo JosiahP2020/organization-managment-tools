@@ -1,4 +1,4 @@
-import { Plus, LayoutGrid, Rows } from "lucide-react";
+import { Plus, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -9,17 +9,10 @@ import {
 
 interface AddMenuCardButtonProps {
   onAddMenu: () => void;
-  onAddSection?: () => void;
-  showSectionOption?: boolean;
   className?: string;
 }
 
-export function AddMenuCardButton({ 
-  onAddMenu, 
-  onAddSection,
-  showSectionOption = false,
-  className 
-}: AddMenuCardButtonProps) {
+export function AddMenuCardButton({ onAddMenu, className }: AddMenuCardButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -42,12 +35,6 @@ export function AddMenuCardButton({
           <LayoutGrid className="mr-2 h-4 w-4" />
           Menu
         </DropdownMenuItem>
-        {showSectionOption && onAddSection && (
-          <DropdownMenuItem onClick={onAddSection} className="cursor-pointer">
-            <Rows className="mr-2 h-4 w-4" />
-            Section
-          </DropdownMenuItem>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

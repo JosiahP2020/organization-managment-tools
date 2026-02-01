@@ -1,121 +1,144 @@
 
-# Plan: Fix Dashboard Menu Section Issues
+# Plan: Dashboard Menu Sections
 
 ## Overview
-Fix four issues with the dashboard menu sections feature:
-1. Adding menus not refreshing the UI
-2. Main section title not always available and centered
-3. Extra plus icon appearing incorrectly
-4. Delete button visible when it should only show on hover
+Add the ability to organize menu cards on the dashboard into titled sections. Admins will be able to add new sections via the existing "+" dropdown, and each section will have an editable title with its own set of menu cards.
 
-## Issue 1: Add Menu Not Working (Query Cache Mismatch)
+## Current State
+- Menu cards (categories) are displayed in a flat grid on the dashboard
+- The "+" button opens a dropdown with only "Menu" option
+- No concept of sections exists for dashboard organization
 
-### Root Cause
-In `AddMenuCardDialog.tsx`, after creating a menu, the code invalidates query key `["dashboard-categories"]`, but the actual query in `useDashboardSections.tsx` uses `["dashboard-categories-with-sections"]`. The menu is created in the database, but the UI doesn't refresh.
+## Database Changes
 
-### Fix
-Update `AddMenuCardDialog.tsx` line 61 to invalidate the correct query key:
-```typescript
-queryClient.invalidateQueries({ queryKey: ["dashboard-categories-with-sections"] });
+### New Table: `dashboard_sections`
+Create a new table to store section information:
+
+| Column | Type | Details |
+|--------|------|---------|
+| id | uuid | Primary key, auto-generated |
+| organization_id | uuid | Foreign key to organizations |
+| title | text | Section title (editable) |
+| sort_order | integer | For ordering sections, default 0 |
+| created_by | uuid | User who created the section |
+| created_at | timestamp | Auto-generated |
+| updated_at | timestamp | Auto-generated |
+
+### Update `menu_categories` Table
+Add a `section_id` column to link categories to sections:
+
+| Column | Type | Details |
+|--------|------|---------|
+| section_id | uuid (nullable) | Foreign key to dashboard_sections |
+
+### Row Level Security
+- Same pattern as other admin-managed tables
+- Admins can CRUD sections in their organization
+- All users can view sections in their organization
+
+### Default Section Migration
+- When a user first adds a section, create a "Default" section and migrate existing categories to it
+- Or handle gracefully by showing categories with `section_id = null` in an "untitled" section
+
+## Frontend Changes
+
+### 1. Update AddMenuCardButton.tsx
+Add "Section" option to the dropdown menu:
+- Icon: `LayoutList` or `Rows` from lucide-react
+- Label: "Section"
+- Triggers a simple dialog or inline creation
+
+### 2. Create AddSectionDialog.tsx
+Simple dialog for creating a new section:
+- Title input field (required)
+- Creates section with next sort_order
+
+### 3. Create DashboardSection.tsx Component
+New component to render a section with:
+- Editable title (click to edit, like ChecklistSection)
+- Grid of menu cards belonging to that section
+- "+" button at the end of the section's grid
+- Reorder buttons (up/down arrows) for admin
+
+### 4. Update DashboardCategoryGrid.tsx
+Major refactor to render sections:
+- Fetch sections with their categories
+- For each section, render title + category grid
+- Show "Add Section" button at the bottom
+- Handle the case where no sections exist (show categories directly or create default section)
+
+### 5. Update useDashboardCategories.tsx
+Modify to include section information:
+- Join with `dashboard_sections` table
+- Group categories by section_id
+- Return both sections and their categories
+
+## UI/UX Flow
+
+```
++------------------------------------------+
+| Section Title (editable)           [^ v] |
++------------------------------------------+
+| [Card 1] [Card 2] [Card 3] [+]           |
++------------------------------------------+
+
++------------------------------------------+
+| Another Section               [^ v] [x]  |
++------------------------------------------+
+| [Card 4] [Card 5] [+]                    |
++------------------------------------------+
+
+[+ Add Section]
 ```
 
-## Issue 2: Main Section Title Always Available and Centered
+### Section Title Behavior
+- Click on title to edit (input field appears)
+- Press Enter or blur to save
+- Escape to cancel editing
+- First section created automatically when user adds their first menu (with title "Main" or custom)
 
-### Current Behavior
-- Unsorted categories only show "Main" title when other sections exist
-- The title is hardcoded, not editable
+### Categories Without Sections
+- Existing categories (with `section_id = null`) display in an "Unsorted" section at the top
+- Or migrate them to a default section automatically
 
-### New Behavior
-- Always show a default section for cards without a section_id
-- Make this "Main" title editable just like other sections
-- Keep it centered within the grid
-
-### Implementation
-Create a virtual "Main" section for unsorted categories that behaves like a regular `DashboardSection`:
-- Modify `DashboardCategoryGrid.tsx` to treat unsorted categories as a pseudo-section
-- Render using the same `DashboardSection` component but with special handling for the "Main" section (no database ID, uses null section_id)
-- The "Main" section title can be stored in organization settings or remain as a simple label
-
-### Simpler Approach
-Since "Main" is a conceptual grouping for unsorted items:
-- Always display the centered title for unsorted categories
-- Make it visually consistent with section titles
-- For the first/main section, just show a centered "Main" title (non-editable) in the same style as section titles
-
-## Issue 3: Extra Plus Icon
-
-### Current State
-Multiple `AddMenuCardButton` instances appear:
-1. Inside each `DashboardSection` (for adding menus to that section)
-2. For unsorted categories grid
-3. At the bottom of the page (for adding new sections)
-
-### Problem
-The bottom button (lines 145-152 in `DashboardCategoryGrid.tsx`) shows when there are sections OR no unsorted categories, creating a duplicate.
-
-### Fix
-Remove or consolidate the extra button:
-- The button inside `DashboardSection` already allows adding menus
-- Each section should have its own "+" in the grid
-- Only show ONE add button at the very bottom for creating new sections (not menus)
-- Or: Only show the bottom button if specifically needed
-
-Update `DashboardCategoryGrid.tsx` to:
-- Remove the duplicate bottom `AddMenuCardButton` when sections already provide add capability
-- OR change the bottom button to only offer "Add Section" (not Menu)
-
-## Issue 4: Delete Button Only on Hover
-
-### Current State
-The delete button is always visible when admin and not editing (lines 123-132 in `DashboardSection.tsx`).
-
-### Fix
-Add hover state tracking using a group class and CSS:
-```tsx
-<div 
-  className="col-span-1 md:col-span-2 flex items-center justify-center gap-2 py-2 group"
->
-  {/* ... title content ... */}
-  
-  {isAdmin && !isEditing && (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-      onClick={() => setShowDeleteConfirm(true)}
-    >
-      <Trash2 className="h-4 w-4" />
-    </Button>
-  )}
-</div>
-```
+## Files to Create
+1. `src/components/dashboard/AddSectionDialog.tsx` - Dialog for creating sections
+2. `src/components/dashboard/DashboardSection.tsx` - Section component with title and category grid
 
 ## Files to Modify
-
-1. **`src/components/dashboard/AddMenuCardDialog.tsx`**
-   - Fix query key from `["dashboard-categories"]` to `["dashboard-categories-with-sections"]`
-
-2. **`src/components/dashboard/DashboardSection.tsx`**
-   - Add `group` class to the title container
-   - Add `opacity-0 group-hover:opacity-100 transition-opacity` to delete button
-
-3. **`src/components/dashboard/DashboardCategoryGrid.tsx`**
-   - Always show centered "Main" title for unsorted categories section
-   - Remove or consolidate duplicate add button at the bottom
-   - Ensure only one "+" icon per section
+1. `src/components/dashboard/AddMenuCardButton.tsx` - Add "Section" option
+2. `src/components/dashboard/AddMenuCardDialog.tsx` - Accept optional section_id prop
+3. `src/components/dashboard/DashboardCategoryGrid.tsx` - Render sections with categories
+4. `src/hooks/useDashboardCategories.tsx` - Fetch sections and join with categories
 
 ## Technical Details
 
-### Query Key Fix (AddMenuCardDialog.tsx)
-Change line 61:
-- Before: `queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });`
-- After: `queryClient.invalidateQueries({ queryKey: ["dashboard-categories-with-sections"] });`
+### Hook: useDashboardSections
+New hook to fetch sections with their categories:
+```typescript
+const { sections, isLoading } = useDashboardSections();
+// sections: [{ id, title, sort_order, categories: [...] }]
+```
 
-### Delete Button Hover (DashboardSection.tsx)
-Add `group` to the container div (line 100) and update Button classes (lines 124-131) to include opacity transition.
+### Section State Management
+- Use React Query for data fetching and caching
+- Invalidate queries on create/update/delete operations
 
-### Main Title Always Visible (DashboardCategoryGrid.tsx)
-Update lines 106-130 to always render a centered "Main" title (matching section title styling), regardless of whether other sections exist.
+### Theme Compatibility
+- Section title uses `text-foreground` for theme compatibility
+- Borders and backgrounds use `border-border` and `bg-card/bg-muted` classes
 
-### Remove Duplicate Button (DashboardCategoryGrid.tsx)
-Remove or modify lines 145-152 to prevent duplicate plus icons from appearing.
+### Organization Logos/Accents
+- Section styling uses organization accent color where appropriate (optional)
+- No new logo placements needed
+
+### Sidebar Integration
+- Sections are dashboard-only; sidebar menu remains flat
+- No changes to SidebarMenu component needed
+
+## Migration Strategy
+1. Create `dashboard_sections` table
+2. Add `section_id` column to `menu_categories`
+3. Existing categories remain with `section_id = null`
+4. UI shows null-section categories in a default "Main" section (or unnamed)
+5. When admin creates first section, they can optionally move existing cards into it

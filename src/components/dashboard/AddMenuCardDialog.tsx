@@ -13,10 +13,9 @@ import { toast } from "sonner";
 interface AddMenuCardDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  sectionId?: string | null;
 }
 
-export function AddMenuCardDialog({ open, onOpenChange, sectionId }: AddMenuCardDialogProps) {
+export function AddMenuCardDialog({ open, onOpenChange }: AddMenuCardDialogProps) {
   const { user, organization } = useAuth();
   const queryClient = useQueryClient();
   
@@ -52,13 +51,12 @@ export function AddMenuCardDialog({ open, onOpenChange, sectionId }: AddMenuCard
         show_on_dashboard: true,
         show_in_sidebar: true,
         sort_order: nextSortOrder,
-        section_id: sectionId || null,
       });
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["dashboard-categories-with-sections"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
       toast.success("Menu card created successfully");
       handleClose();
     },
