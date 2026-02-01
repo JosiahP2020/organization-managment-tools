@@ -253,6 +253,38 @@ export function useDashboardSections() {
     },
   });
 
+  // Move a category to a different section
+  const moveCategory = useMutation({
+    mutationFn: async ({ 
+      categoryId, 
+      targetSectionId, 
+      newSortOrder 
+    }: { 
+      categoryId: string; 
+      targetSectionId: string | null; 
+      newSortOrder: number;
+    }) => {
+      const { error } = await supabase
+        .from("menu_categories")
+        .update({ 
+          section_id: targetSectionId === "default" ? null : targetSectionId,
+          sort_order: newSortOrder,
+        })
+        .eq("id", categoryId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sections"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      toast.success("Menu card moved");
+    },
+    onError: (error) => {
+      console.error("Failed to move category:", error);
+      toast.error("Failed to move menu card");
+    },
+  });
+
   return {
     sections,
     isLoading,
@@ -263,5 +295,6 @@ export function useDashboardSections() {
     reorderSections,
     deleteCategory,
     reorderCategories,
+    moveCategory,
   };
 }
