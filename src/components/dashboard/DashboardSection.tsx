@@ -97,7 +97,7 @@ export function DashboardSection({
         ))}
 
         {/* Section Title - spans full width, centered */}
-        <div className="col-span-1 md:col-span-2 flex items-center justify-center gap-2 py-2">
+        <div className="col-span-1 md:col-span-2 flex items-center justify-center gap-2 py-2 group">
           {isEditing ? (
             <Input
               ref={inputRef}
@@ -124,7 +124,7 @@ export function DashboardSection({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={() => setShowDeleteConfirm(true)}
             >
               <Trash2 className="h-4 w-4" />

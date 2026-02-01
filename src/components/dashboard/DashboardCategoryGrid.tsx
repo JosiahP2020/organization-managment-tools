@@ -102,33 +102,46 @@ export function DashboardCategoryGrid() {
   // Render sections and unsorted categories
   const renderContent = () => (
     <div className="space-y-6">
-      {/* Unsorted categories (no section) */}
-      {unsortedCategories.length > 0 && (
-        <div className="space-y-3">
-          {hasSections && (
+      {/* Main section (unsorted categories) - always show title */}
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
+          {/* First half of unsorted cards */}
+          {unsortedCategories.slice(0, Math.ceil(unsortedCategories.length / 2)).map((category) => (
+            <CardComponent
+              key={category.id}
+              category={category}
+              onClick={() => handleCategoryClick(category)}
+              showEditButton={false}
+            />
+          ))}
+
+          {/* Main Title - centered in grid */}
+          <div className="col-span-1 md:col-span-2 flex items-center justify-center py-2">
             <h2 className="text-lg font-semibold text-foreground">Main</h2>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
-            {unsortedCategories.map((category) => (
-              <CardComponent
-                key={category.id}
-                category={category}
-                onClick={() => handleCategoryClick(category)}
-                showEditButton={false}
-              />
-            ))}
-            {isAdmin && (
-              <div className="flex h-16 md:h-20 items-center justify-center">
-                <AddMenuCardButton 
-                  onAddMenu={handleAddMenuUnsorted}
-                  onAddSection={() => setIsAddSectionDialogOpen(true)}
-                  showSectionOption={true}
-                />
-              </div>
-            )}
           </div>
+
+          {/* Second half of unsorted cards */}
+          {unsortedCategories.slice(Math.ceil(unsortedCategories.length / 2)).map((category) => (
+            <CardComponent
+              key={category.id}
+              category={category}
+              onClick={() => handleCategoryClick(category)}
+              showEditButton={false}
+            />
+          ))}
+
+          {/* Add button for main section */}
+          {isAdmin && (
+            <div className="flex h-16 md:h-20 items-center justify-center">
+              <AddMenuCardButton 
+                onAddMenu={handleAddMenuUnsorted}
+                onAddSection={() => setIsAddSectionDialogOpen(true)}
+                showSectionOption={true}
+              />
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Sections with their categories */}
       {sectionsWithCategories.map((section) => (
@@ -141,16 +154,6 @@ export function DashboardCategoryGrid() {
         />
       ))}
 
-      {/* Add section button at the bottom if there are sections or no unsorted categories */}
-      {isAdmin && (hasSections || unsortedCategories.length === 0) && (
-        <div className="flex justify-start pt-2">
-          <AddMenuCardButton 
-            onAddMenu={handleAddMenuUnsorted}
-            onAddSection={() => setIsAddSectionDialogOpen(true)}
-            showSectionOption={true}
-          />
-        </div>
-      )}
     </div>
   );
 
