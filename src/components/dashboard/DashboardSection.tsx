@@ -78,11 +78,16 @@ export function DashboardSection({
     });
   };
 
+  // Split categories to insert title in the middle
+  const midpoint = Math.ceil(section.categories.length / 2);
+  const firstHalf = section.categories.slice(0, midpoint);
+  const secondHalf = section.categories.slice(midpoint);
+
   return (
-    <div className="space-y-3">
-      {/* Categories Grid with Section Title in center */}
+    <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
-        {section.categories.map((category) => (
+        {/* First half of cards */}
+        {firstHalf.map((category) => (
           <CardComponent
             key={category.id}
             category={category}
@@ -90,9 +95,9 @@ export function DashboardSection({
             showEditButton={false}
           />
         ))}
-        
-        {/* Section Title Card - centered among cards */}
-        <div className="flex items-center justify-center h-16 md:h-20 gap-2">
+
+        {/* Section Title - spans full width, centered */}
+        <div className="col-span-1 md:col-span-2 flex items-center justify-center gap-2 py-2">
           {isEditing ? (
             <Input
               ref={inputRef}
@@ -114,7 +119,7 @@ export function DashboardSection({
               {section.title}
             </h2>
           )}
-          
+
           {isAdmin && !isEditing && (
             <Button
               variant="ghost"
@@ -126,7 +131,18 @@ export function DashboardSection({
             </Button>
           )}
         </div>
-        
+
+        {/* Second half of cards */}
+        {secondHalf.map((category) => (
+          <CardComponent
+            key={category.id}
+            category={category}
+            onClick={() => onCategoryClick(category)}
+            showEditButton={false}
+          />
+        ))}
+
+        {/* Add menu button */}
         {isAdmin && (
           <div className="flex h-16 md:h-20 items-center justify-center">
             <AddMenuCardButton onAddMenu={() => onAddMenu(section.id)} />
@@ -154,6 +170,6 @@ export function DashboardSection({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
