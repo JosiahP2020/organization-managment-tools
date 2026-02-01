@@ -182,6 +182,77 @@ export function useDashboardSections() {
     },
   });
 
+  // Reorder sections
+  const reorderSections = useMutation({
+    mutationFn: async (sectionIds: string[]) => {
+      // Filter out "default" section and update sort_order for the rest
+      const updates = sectionIds
+        .filter((id) => id !== "default")
+        .map((id, index) => ({
+          id,
+          sort_order: index,
+        }));
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("dashboard_sections")
+          .update({ sort_order: update.sort_order })
+          .eq("id", update.id);
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sections"] });
+    },
+    onError: (error) => {
+      console.error("Failed to reorder sections:", error);
+      toast.error("Failed to reorder sections");
+    },
+  });
+
+  // Delete a category
+  const deleteCategory = useMutation({
+    mutationFn: async (categoryId: string) => {
+      const { error } = await supabase
+        .from("menu_categories")
+        .delete()
+        .eq("id", categoryId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sections"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-categories"] });
+      toast.success("Menu card deleted");
+    },
+    onError: (error) => {
+      console.error("Failed to delete category:", error);
+      toast.error("Failed to delete menu card");
+    },
+  });
+
+  // Reorder categories within a section
+  const reorderCategories = useMutation({
+    mutationFn: async ({ sectionId, categoryIds }: { sectionId: string; categoryIds: string[] }) => {
+      for (let i = 0; i < categoryIds.length; i++) {
+        const { error } = await supabase
+          .from("menu_categories")
+          .update({ sort_order: i })
+          .eq("id", categoryIds[i]);
+
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-sections"] });
+    },
+    onError: (error) => {
+      console.error("Failed to reorder categories:", error);
+      toast.error("Failed to reorder menu cards");
+    },
+  });
+
   return {
     sections,
     isLoading,
@@ -189,5 +260,8 @@ export function useDashboardSections() {
     createSection,
     updateSectionTitle,
     deleteSection,
+    reorderSections,
+    deleteCategory,
+    reorderCategories,
   };
 }

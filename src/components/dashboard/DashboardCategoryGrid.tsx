@@ -1,19 +1,41 @@
 import { useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardSections } from "@/hooks/useDashboardSections";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { LeftAccentCard, StatCard, CleanMinimalCard } from "./CategoryCardVariants";
-import { AddMenuCardButton } from "./AddMenuCardButton";
 import { AddMenuCardDialog } from "./AddMenuCardDialog";
+import { AddMenuCardButton } from "./AddMenuCardButton";
 import { WidgetColumn, SidebarWidgets, WidgetGrid } from "./WidgetPlaceholder";
-import { EditableSectionTitle } from "./EditableSectionTitle";
+import { SortableSection } from "./SortableSection";
 import { FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardCategory } from "@/hooks/useDashboardCategories";
 
 export function DashboardCategoryGrid() {
-  const { sections, isLoading, createSection, updateSectionTitle } = useDashboardSections();
+  const { 
+    sections, 
+    isLoading, 
+    createSection, 
+    updateSectionTitle, 
+    deleteSection,
+    reorderSections,
+    deleteCategory,
+    reorderCategories,
+  } = useDashboardSections();
   const { cardStyle, dashboardLayout } = useOrganizationSettings();
   const navigate = useNavigate();
   const { organization, isAdmin } = useAuth();
@@ -21,12 +43,14 @@ export function DashboardCategoryGrid() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addToSectionId, setAddToSectionId] = useState<string | null>(null);
 
-  // Get the right card component based on style
-  const CardComponent = cardStyle === 'stat-card' 
-    ? StatCard 
-    : cardStyle === 'clean-minimal' 
-    ? CleanMinimalCard 
-    : LeftAccentCard;
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleCategoryClick = (category: DashboardCategory) => {
     if (!organization?.slug) return;
@@ -55,6 +79,32 @@ export function DashboardCategoryGrid() {
 
   const handleTitleChange = (sectionId: string, newTitle: string) => {
     updateSectionTitle.mutate({ sectionId, title: newTitle });
+  };
+
+  const handleDeleteSection = (sectionId: string) => {
+    deleteSection.mutate(sectionId);
+  };
+
+  const handleDeleteCategory = (categoryId: string) => {
+    deleteCategory.mutate(categoryId);
+  };
+
+  const handleReorderCategories = (sectionId: string, categoryIds: string[]) => {
+    reorderCategories.mutate({ sectionId, categoryIds });
+  };
+
+  const handleSectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = sections.findIndex((s) => s.id === active.id);
+      const newIndex = sections.findIndex((s) => s.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newOrder = [...sections];
+        const [removed] = newOrder.splice(oldIndex, 1);
+        newOrder.splice(newIndex, 0, removed);
+        reorderSections.mutate(newOrder.map((s) => s.id));
+      }
+    }
   };
 
   // Loading state
@@ -89,49 +139,28 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  // Render a single section
-  const renderSection = (section: typeof sections[0], isLast: boolean) => (
-    <div key={section.id} className="mb-8 last:mb-0">
-      {/* Section Title */}
-      <div className="flex justify-center mb-4">
-        <EditableSectionTitle
-          title={section.title}
-          onTitleChange={(newTitle) => handleTitleChange(section.id, newTitle)}
-          isEditable={isAdmin}
-        />
-      </div>
-
-      {/* Category Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
-        {section.categories.map((category) => (
-          <CardComponent
-            key={category.id}
-            category={category}
-            onClick={() => handleCategoryClick(category)}
-            showEditButton={false}
+  // Render all sections with drag-and-drop
+  const renderSections = () => (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+      <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+        {sections.map((section, index) => (
+          <SortableSection
+            key={section.id}
+            section={section}
+            cardStyle={cardStyle}
+            isAdmin={isAdmin}
+            isLastSection={index === sections.length - 1}
+            onTitleChange={handleTitleChange}
+            onAddMenu={handleAddMenu}
+            onAddSection={handleAddSection}
+            onDeleteSection={handleDeleteSection}
+            onDeleteCategory={handleDeleteCategory}
+            onCategoryClick={handleCategoryClick}
+            onReorderCategories={handleReorderCategories}
           />
         ))}
-        
-        {/* Add button - only show Section option on the last section */}
-        {isAdmin && (
-          <div className="flex h-16 md:h-20 items-center justify-center">
-            <AddMenuCardButton 
-              onAddMenu={() => handleAddMenu(section.id)}
-              onAddSection={isLast ? handleAddSection : undefined}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // Render all sections
-  const renderSections = () => (
-    <>
-      {sections.map((section, index) => 
-        renderSection(section, index === sections.length - 1)
-      )}
-    </>
+      </SortableContext>
+    </DndContext>
   );
 
   // Full Width Layout
@@ -178,42 +207,7 @@ export function DashboardCategoryGrid() {
   if (dashboardLayout === 'masonry') {
     return (
       <>
-        {sections.map((section, sectionIndex) => (
-          <div key={section.id} className="mb-8 last:mb-0">
-            <div className="flex justify-center mb-4">
-              <EditableSectionTitle
-                title={section.title}
-                onTitleChange={(newTitle) => handleTitleChange(section.id, newTitle)}
-                isEditable={isAdmin}
-              />
-            </div>
-            <div className="columns-1 md:columns-2 lg:columns-3 gap-4 md:gap-5 space-y-4 md:space-y-5">
-              {section.categories.map((category, index) => (
-                <div 
-                  key={category.id} 
-                  className="break-inside-avoid"
-                  style={{ 
-                    paddingBottom: index % 3 === 0 ? '1rem' : index % 3 === 1 ? '0.5rem' : '0' 
-                  }}
-                >
-                  <CardComponent
-                    category={category}
-                    onClick={() => handleCategoryClick(category)}
-                    showEditButton={false}
-                  />
-                </div>
-              ))}
-              {isAdmin && (
-                <div className="break-inside-avoid flex h-20 md:h-24 items-center justify-center">
-                  <AddMenuCardButton 
-                    onAddMenu={() => handleAddMenu(section.id)}
-                    onAddSection={sectionIndex === sections.length - 1 ? handleAddSection : undefined}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+        {renderSections()}
         <AddMenuCardDialog 
           open={isAddDialogOpen} 
           onOpenChange={setIsAddDialogOpen}
