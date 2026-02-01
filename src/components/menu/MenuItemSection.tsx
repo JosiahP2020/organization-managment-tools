@@ -12,11 +12,13 @@ interface MenuItemSectionProps {
   section: MenuItemSectionType;
   isAdmin: boolean;
   isLastSection: boolean;
+  totalSections: number;
   onTitleChange: (sectionId: string, newTitle: string) => void;
   onAddSubmenu: (sectionId: string) => void;
   onAddSection: () => void;
   onDeleteSection: (sectionId: string) => void;
   onDeleteItem: (itemId: string) => void;
+  onEditItem: (itemId: string, name: string) => void;
   onItemClick?: (item: any) => void;
 }
 
@@ -24,11 +26,13 @@ export function MenuItemSection({
   section,
   isAdmin,
   isLastSection,
+  totalSections,
   onTitleChange,
   onAddSubmenu,
   onAddSection,
   onDeleteSection,
   onDeleteItem,
+  onEditItem,
   onItemClick,
 }: MenuItemSectionProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -43,39 +47,43 @@ export function MenuItemSection({
   });
 
   const canDelete = section.id !== "default";
+  // Only show section title if there's more than one section
+  const showSectionTitle = totalSections > 1 && section.id !== "default";
 
   return (
     <>
       <div className="mb-6 last:mb-0 group/section relative">
-        {/* Section Header */}
-        <div className="flex justify-center mb-3 relative">
-          {/* Admin controls for section */}
-          {isAdmin && canDelete && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover/section:opacity-100 transition-opacity">
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-7 w-7 shadow-md cursor-grab active:cursor-grabbing"
-              >
-                <GripVertical className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="destructive"
-                size="icon"
-                className="h-7 w-7 shadow-md"
-                onClick={() => setShowDeleteDialog(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+        {/* Section Header - only show if more than one section */}
+        {showSectionTitle && (
+          <div className="flex justify-center mb-3 relative">
+            {/* Admin controls for section */}
+            {isAdmin && canDelete && (
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover/section:opacity-100 transition-opacity">
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="h-7 w-7 shadow-md cursor-grab active:cursor-grabbing"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="h-7 w-7 shadow-md"
+                  onClick={() => setShowDeleteDialog(true)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
 
-          <EditableSectionTitle
-            title={section.title}
-            onTitleChange={(newTitle) => onTitleChange(section.id, newTitle)}
-            isEditable={isAdmin && section.id !== "default"}
-          />
-        </div>
+            <EditableSectionTitle
+              title={section.title}
+              onTitleChange={(newTitle) => onTitleChange(section.id, newTitle)}
+              isEditable={isAdmin}
+            />
+          </div>
+        )}
 
         {/* Items list - droppable zone */}
         <div
@@ -91,6 +99,7 @@ export function MenuItemSection({
               sectionId={section.id}
               isAdmin={isAdmin}
               onDelete={() => onDeleteItem(item.id)}
+              onEdit={(name) => onEditItem(item.id, name)}
               onClick={() => onItemClick?.(item)}
             />
           ))}
@@ -100,7 +109,7 @@ export function MenuItemSection({
             <div className="flex justify-center py-2">
               <AddMenuItemButton
                 onAddSubmenu={() => onAddSubmenu(section.id)}
-                onAddSection={isLastSection ? onAddSection : undefined}
+                onAddSection={onAddSection}
               />
             </div>
           )}

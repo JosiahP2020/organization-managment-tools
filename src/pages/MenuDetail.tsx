@@ -1,17 +1,25 @@
-import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Logo } from "@/components/Logo";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { MenuItemsColumn } from "@/components/menu/MenuItemsColumn";
+import { toast } from "sonner";
 
 const MenuDetail = () => {
-  const { menuId } = useParams<{ menuId: string }>();
-  const { organization } = useAuth();
+  const { menuId, slug } = useParams<{ menuId: string; slug: string }>();
+  const navigate = useNavigate();
+  const { organization, isAdmin } = useAuth();
   const { mainLogoUrl, logoFilterClass } = useThemeLogos();
+  const queryClient = useQueryClient();
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
 
   // Fetch the menu category details
   const { data: category, isLoading } = useQuery({
@@ -30,6 +38,54 @@ const MenuDetail = () => {
     },
     enabled: !!menuId && !!organization?.id,
   });
+
+  // Update menu name mutation
+  const updateMenuName = useMutation({
+    mutationFn: async (name: string) => {
+      const { error } = await supabase
+        .from("menu_categories")
+        .update({ name })
+        .eq("id", menuId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-category", menuId] });
+      toast.success("Menu name updated");
+    },
+    onError: () => {
+      toast.error("Failed to update menu name");
+    },
+  });
+
+  const handleSaveTitle = () => {
+    if (editTitle.trim() && editTitle !== category?.name) {
+      updateMenuName.mutate(editTitle.trim());
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSaveTitle();
+    } else if (e.key === "Escape") {
+      setEditTitle(category?.name || "");
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleStartEditTitle = () => {
+    if (isAdmin) {
+      setEditTitle(category?.name || "");
+      setIsEditingTitle(true);
+    }
+  };
+
+  // Handle submenu click - navigate to that submenu's page
+  const handleSubmenuClick = (item: any) => {
+    if (item.target_category_id) {
+      navigate(`/dashboard/${slug}/menu/${item.target_category_id}`);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -61,12 +117,26 @@ const MenuDetail = () => {
           />
         </div>
 
-        {/* Menu Title - Centered */}
+        {/* Menu Title - Centered and Editable */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            {category?.name || "Menu"}
-          </h1>
-          {category?.description && (
+          {isEditingTitle ? (
+            <Input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleSaveTitle}
+              onKeyDown={handleTitleKeyDown}
+              autoFocus
+              className="text-2xl md:text-3xl font-bold text-center max-w-md mx-auto"
+            />
+          ) : (
+            <h1 
+              className={`text-2xl md:text-3xl font-bold text-foreground ${isAdmin ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+              onClick={handleStartEditTitle}
+            >
+              {category?.name || "Menu"}
+            </h1>
+          )}
+          {category?.description && !isEditingTitle && (
             <p className="text-muted-foreground mt-2">
               {category.description}
             </p>
@@ -74,7 +144,12 @@ const MenuDetail = () => {
         </div>
 
         {/* Menu Items Column */}
-        {menuId && <MenuItemsColumn categoryId={menuId} />}
+        {menuId && (
+          <MenuItemsColumn 
+            categoryId={menuId} 
+            onItemClick={handleSubmenuClick}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
