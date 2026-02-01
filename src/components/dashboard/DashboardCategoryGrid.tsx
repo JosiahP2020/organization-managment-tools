@@ -66,21 +66,9 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  // Section title component
-  const renderSectionTitle = () => (
-    <div className="col-span-full flex justify-center mb-2">
-      <EditableSectionTitle
-        title={sectionTitle}
-        onTitleChange={setSectionTitle}
-        isEditable={isAdmin}
-      />
-    </div>
-  );
-
   // Render cards based on selected layout
   const renderCards = () => (
     <>
-      {renderSectionTitle()}
       {categories.map((category) => (
         <CardComponent
           key={category.id}
@@ -89,18 +77,30 @@ export function DashboardCategoryGrid() {
           showEditButton={false}
         />
       ))}
-        {isAdmin && (
-          <div className="flex h-16 md:h-20 items-center justify-center">
-            <AddMenuCardButton onAddMenu={() => setIsAddDialogOpen(true)} />
-          </div>
-        )}
+      {isAdmin && (
+        <div className="flex h-16 md:h-20 items-center justify-center">
+          <AddMenuCardButton onAddMenu={() => setIsAddDialogOpen(true)} />
+        </div>
+      )}
     </>
+  );
+
+  // Section title component - render separately above grid
+  const SectionTitle = () => (
+    <div className="flex justify-center mb-4">
+      <EditableSectionTitle
+        title={sectionTitle}
+        onTitleChange={setSectionTitle}
+        isEditable={isAdmin}
+      />
+    </div>
   );
 
   // Full Width Layout - Single column, stacked cards
   if (dashboardLayout === 'full-width') {
     return (
       <>
+        <SectionTitle />
         <div className="flex flex-col gap-3 md:gap-4 max-w-2xl mx-auto">
           {renderCards()}
         </div>
@@ -119,9 +119,12 @@ export function DashboardCategoryGrid() {
             <SidebarWidgets />
           </aside>
           
-          {/* Main Grid */}
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
-            {renderCards()}
+          {/* Main Content */}
+          <div className="flex-1">
+            <SectionTitle />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
+              {renderCards()}
+            </div>
           </div>
         </div>
         
@@ -139,6 +142,7 @@ export function DashboardCategoryGrid() {
   if (dashboardLayout === 'masonry') {
     return (
       <>
+        <SectionTitle />
         <div className="columns-1 md:columns-2 lg:columns-3 gap-4 md:gap-5 space-y-4 md:space-y-5">
           {categories.map((category, index) => (
             <div 
@@ -171,9 +175,12 @@ export function DashboardCategoryGrid() {
   return (
     <>
       <div className="flex gap-6 items-start">
-        {/* Main Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
-          {renderCards()}
+        {/* Main Content */}
+        <div className="flex-1">
+          <SectionTitle />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
+            {renderCards()}
+          </div>
         </div>
         
         {/* Right Widget Column - Hidden on mobile */}
