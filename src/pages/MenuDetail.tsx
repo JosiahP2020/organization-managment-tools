@@ -80,10 +80,14 @@ const MenuDetail = () => {
     }
   };
 
-  // Handle submenu click - navigate to that submenu's page
+  // Handle submenu click - navigate to that submenu's linked category
   const handleSubmenuClick = (item: any) => {
+    // All submenus now have a target_category_id that links to their nested menu
     if (item.target_category_id) {
       navigate(`/dashboard/${slug}/menu/${item.target_category_id}`);
+    } else {
+      // Fallback for older items without target_category_id
+      toast.error("This submenu doesn't have a linked category");
     }
   };
 
