@@ -59,7 +59,7 @@ export function LeftAccentCard({ category, onClick, onEditClick, showEditButton 
   );
 }
 
-// Style 2: Stat Card (centered, bigger icon) - Compact card, larger content
+// Style 2: Stat Card (horizontal layout with accent icon) - Compact card matching mobile
 export function StatCard({ category, onClick, onEditClick, showEditButton }: CardVariantProps) {
   return (
     <Card 
@@ -78,26 +78,26 @@ export function StatCard({ category, onClick, onEditClick, showEditButton }: Car
         </Button>
       )}
 
-      <div className="flex flex-col items-center justify-center p-3 md:p-4 text-center">
-        {/* Large Icon */}
-        <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-primary/10 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-200">
-          <DynamicIcon name={category.icon} className="w-8 h-8 md:w-9 md:h-9 text-primary" />
+      <div className="flex items-center p-2 md:p-3">
+        {/* Icon Container */}
+        <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200">
+          <DynamicIcon name={category.icon} className="w-7 h-7 md:w-8 md:h-8 text-primary" />
         </div>
 
-        {/* Title */}
-        <h3 className="text-base md:text-lg font-bold text-foreground">
-          {category.name}
-        </h3>
+        {/* Text Content */}
+        <div className="flex-1 ml-3 min-w-0">
+          <h3 className="text-base md:text-lg font-bold text-foreground truncate">
+            {category.name}
+          </h3>
+          {category.description && (
+            <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
+              {category.description}
+            </p>
+          )}
+        </div>
 
-        {/* Description */}
-        {category.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mt-1 max-w-xs">
-            {category.description}
-          </p>
-        )}
-
-        {/* Bottom Arrow */}
-        <ArrowRight className="w-5 h-5 text-muted-foreground mt-2 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200" />
+        {/* Right Arrow */}
+        <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2 group-hover:text-primary group-hover:translate-x-1 transition-all duration-200" />
       </div>
     </Card>
   );
