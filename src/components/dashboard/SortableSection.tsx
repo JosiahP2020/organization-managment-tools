@@ -1,20 +1,8 @@
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable";
+import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -36,7 +24,6 @@ interface SortableSectionProps {
   onDeleteSection: (sectionId: string) => void;
   onDeleteCategory: (categoryId: string) => void;
   onCategoryClick: (category: DashboardCategory) => void;
-  onReorderCategories: (sectionId: string, categoryIds: string[]) => void;
 }
 
 export function SortableSection({
@@ -50,18 +37,30 @@ export function SortableSection({
   onDeleteSection,
   onDeleteCategory,
   onCategoryClick,
-  onReorderCategories,
 }: SortableSectionProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  // Section sortable (for reordering sections)
   const {
     attributes,
     listeners,
-    setNodeRef,
+    setNodeRef: setSortableRef,
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: section.id });
+  } = useSortable({ 
+    id: section.id,
+    data: { type: "section" },
+  });
+
+  // Section droppable (for receiving cards)
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
+    id: `section-drop-${section.id}`,
+    data: {
+      type: "section-drop",
+      sectionId: section.id,
+    },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -69,41 +68,19 @@ export function SortableSection({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleCardDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = section.categories.findIndex((c) => c.id === active.id);
-      const newIndex = section.categories.findIndex((c) => c.id === over.id);
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newOrder = [...section.categories];
-        const [removed] = newOrder.splice(oldIndex, 1);
-        newOrder.splice(newIndex, 0, removed);
-        onReorderCategories(section.id, newOrder.map((c) => c.id));
-      }
-    }
-  };
-
   const canDelete = section.id !== "default";
 
   return (
     <>
       <div
-        ref={setNodeRef}
+        ref={(node) => {
+          setSortableRef(node);
+          setDroppableRef(node);
+        }}
         style={style}
-        className="mb-8 last:mb-0 group/section relative"
+        className={`mb-8 last:mb-0 group/section relative ${
+          isOver ? "ring-2 ring-primary/50 rounded-xl" : ""
+        }`}
       >
         {/* Section Header with controls */}
         <div className="flex justify-center mb-4 relative">
@@ -139,40 +116,35 @@ export function SortableSection({
           />
         </div>
 
-        {/* Category Cards Grid with drag-and-drop */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleCardDragEnd}
+        {/* Category Cards Grid - uses parent DndContext for cross-section dragging */}
+        <SortableContext
+          items={section.categories.map((c) => c.id)}
+          strategy={rectSortingStrategy}
         >
-          <SortableContext
-            items={section.categories.map((c) => c.id)}
-            strategy={rectSortingStrategy}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
-              {section.categories.map((category) => (
-                <SortableMenuCard
-                  key={category.id}
-                  category={category}
-                  cardStyle={cardStyle}
-                  onClick={() => onCategoryClick(category)}
-                  onDelete={() => onDeleteCategory(category.id)}
-                  isAdmin={isAdmin}
-                />
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start min-h-[4rem]">
+            {section.categories.map((category) => (
+              <SortableMenuCard
+                key={category.id}
+                category={category}
+                cardStyle={cardStyle}
+                sectionId={section.id}
+                onClick={() => onCategoryClick(category)}
+                onDelete={() => onDeleteCategory(category.id)}
+                isAdmin={isAdmin}
+              />
+            ))}
 
-              {/* Add button */}
-              {isAdmin && (
-                <div className="flex h-16 md:h-20 items-center justify-center">
-                  <AddMenuCardButton
-                    onAddMenu={() => onAddMenu(section.id)}
-                    onAddSection={isLastSection ? onAddSection : undefined}
-                  />
-                </div>
-              )}
-            </div>
-          </SortableContext>
-        </DndContext>
+            {/* Add button */}
+            {isAdmin && (
+              <div className="flex h-16 md:h-20 items-center justify-center">
+                <AddMenuCardButton
+                  onAddMenu={() => onAddMenu(section.id)}
+                  onAddSection={isLastSection ? onAddSection : undefined}
+                />
+              </div>
+            )}
+          </div>
+        </SortableContext>
       </div>
 
       <DeleteConfirmDialog

@@ -11,6 +11,7 @@ import type { CardStyle } from "@/hooks/useOrganizationSettings";
 interface SortableMenuCardProps {
   category: DashboardCategory;
   cardStyle: CardStyle;
+  sectionId: string;
   onClick: () => void;
   onDelete: () => void;
   isAdmin: boolean;
@@ -19,6 +20,7 @@ interface SortableMenuCardProps {
 export function SortableMenuCard({
   category,
   cardStyle,
+  sectionId,
   onClick,
   onDelete,
   isAdmin,
@@ -32,7 +34,14 @@ export function SortableMenuCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: category.id });
+  } = useSortable({ 
+    id: category.id,
+    data: {
+      type: "card",
+      sectionId,
+      category,
+    },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),

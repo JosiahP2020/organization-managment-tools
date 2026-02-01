@@ -7,14 +7,19 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  pointerWithin,
+  rectIntersection,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
+  arrayMove,
 } from "@dnd-kit/sortable";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDashboardSections } from "@/hooks/useDashboardSections";
+import { useDashboardSections, DashboardSection } from "@/hooks/useDashboardSections";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { AddMenuCardDialog } from "./AddMenuCardDialog";
 import { AddMenuCardButton } from "./AddMenuCardButton";
@@ -35,6 +40,7 @@ export function DashboardCategoryGrid() {
     reorderSections,
     deleteCategory,
     reorderCategories,
+    moveCategory,
   } = useDashboardSections();
   const { cardStyle, dashboardLayout } = useOrganizationSettings();
   const navigate = useNavigate();
@@ -42,6 +48,7 @@ export function DashboardCategoryGrid() {
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [addToSectionId, setAddToSectionId] = useState<string | null>(null);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -89,20 +96,84 @@ export function DashboardCategoryGrid() {
     deleteCategory.mutate(categoryId);
   };
 
-  const handleReorderCategories = (sectionId: string, categoryIds: string[]) => {
-    reorderCategories.mutate({ sectionId, categoryIds });
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    if (active.data.current?.type === "card") {
+      setActiveCardId(active.id as string);
+    }
   };
 
-  const handleSectionDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = sections.findIndex((s) => s.id === active.id);
-      const newIndex = sections.findIndex((s) => s.id === over.id);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newOrder = [...sections];
-        const [removed] = newOrder.splice(oldIndex, 1);
-        newOrder.splice(newIndex, 0, removed);
-        reorderSections.mutate(newOrder.map((s) => s.id));
+    setActiveCardId(null);
+
+    if (!over) return;
+
+    const activeData = active.data.current;
+    const overData = over.data.current;
+
+    // Handle section reordering
+    if (activeData?.type === "section" && overData?.type === "section") {
+      if (active.id !== over.id) {
+        const oldIndex = sections.findIndex((s) => s.id === active.id);
+        const newIndex = sections.findIndex((s) => s.id === over.id);
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newOrder = arrayMove(sections, oldIndex, newIndex);
+          reorderSections.mutate(newOrder.map((s) => s.id));
+        }
+      }
+      return;
+    }
+
+    // Handle card operations
+    if (activeData?.type === "card") {
+      const sourceSectionId = activeData.sectionId as string;
+      let targetSectionId: string | null = null;
+      let targetCategoryIndex = -1;
+
+      // Determine target section and position
+      if (overData?.type === "card") {
+        // Dropped on another card
+        targetSectionId = overData.sectionId as string;
+        const targetSection = sections.find((s) => s.id === targetSectionId);
+        if (targetSection) {
+          targetCategoryIndex = targetSection.categories.findIndex((c) => c.id === over.id);
+        }
+      } else if (overData?.type === "section-drop") {
+        // Dropped on section droppable area
+        targetSectionId = overData.sectionId as string;
+        const targetSection = sections.find((s) => s.id === targetSectionId);
+        if (targetSection) {
+          targetCategoryIndex = targetSection.categories.length; // Append at end
+        }
+      }
+
+      if (!targetSectionId) return;
+
+      // Same section reorder
+      if (sourceSectionId === targetSectionId) {
+        const section = sections.find((s) => s.id === sourceSectionId);
+        if (section && overData?.type === "card") {
+          const oldIndex = section.categories.findIndex((c) => c.id === active.id);
+          const newIndex = section.categories.findIndex((c) => c.id === over.id);
+          if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+            const newOrder = arrayMove(section.categories, oldIndex, newIndex);
+            reorderCategories.mutate({ 
+              sectionId: sourceSectionId, 
+              categoryIds: newOrder.map((c) => c.id) 
+            });
+          }
+        }
+      } else {
+        // Cross-section move
+        const targetSection = sections.find((s) => s.id === targetSectionId);
+        const newSortOrder = targetCategoryIndex >= 0 ? targetCategoryIndex : (targetSection?.categories.length || 0);
+        
+        moveCategory.mutate({
+          categoryId: active.id as string,
+          targetSectionId,
+          newSortOrder,
+        });
       }
     }
   };
@@ -139,26 +210,37 @@ export function DashboardCategoryGrid() {
     );
   }
 
-  // Render all sections with drag-and-drop
+  // Get all card IDs across all sections for the unified SortableContext
+  const allCardIds = sections.flatMap((s) => s.categories.map((c) => c.id));
+
+  // Render all sections with unified drag-and-drop
   const renderSections = () => (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
+    <DndContext 
+      sensors={sensors} 
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      {/* Context for section reordering */}
       <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-        {sections.map((section, index) => (
-          <SortableSection
-            key={section.id}
-            section={section}
-            cardStyle={cardStyle}
-            isAdmin={isAdmin}
-            isLastSection={index === sections.length - 1}
-            onTitleChange={handleTitleChange}
-            onAddMenu={handleAddMenu}
-            onAddSection={handleAddSection}
-            onDeleteSection={handleDeleteSection}
-            onDeleteCategory={handleDeleteCategory}
-            onCategoryClick={handleCategoryClick}
-            onReorderCategories={handleReorderCategories}
-          />
-        ))}
+        {/* Unified context for all cards to enable cross-section dragging */}
+        <SortableContext items={allCardIds}>
+          {sections.map((section, index) => (
+            <SortableSection
+              key={section.id}
+              section={section}
+              cardStyle={cardStyle}
+              isAdmin={isAdmin}
+              isLastSection={index === sections.length - 1}
+              onTitleChange={handleTitleChange}
+              onAddMenu={handleAddMenu}
+              onAddSection={handleAddSection}
+              onDeleteSection={handleDeleteSection}
+              onDeleteCategory={handleDeleteCategory}
+              onCategoryClick={handleCategoryClick}
+            />
+          ))}
+        </SortableContext>
       </SortableContext>
     </DndContext>
   );
