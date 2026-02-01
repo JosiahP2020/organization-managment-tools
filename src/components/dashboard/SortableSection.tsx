@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -51,6 +50,7 @@ export function SortableSection({
   } = useSortable({ 
     id: section.id,
     data: { type: "section" },
+    disabled: section.id === "default", // Prevent dragging default section
   });
 
   // Section droppable (for receiving cards)
@@ -73,14 +73,9 @@ export function SortableSection({
   return (
     <>
       <div
-        ref={(node) => {
-          setSortableRef(node);
-          setDroppableRef(node);
-        }}
+        ref={setSortableRef}
         style={style}
-        className={`mb-8 last:mb-0 group/section relative ${
-          isOver ? "ring-2 ring-primary/50 rounded-xl" : ""
-        }`}
+        className="mb-8 last:mb-0 group/section relative"
       >
         {/* Section Header with controls */}
         <div className="flex justify-center mb-4 relative">
@@ -116,35 +111,35 @@ export function SortableSection({
           />
         </div>
 
-        {/* Category Cards Grid - uses parent DndContext for cross-section dragging */}
-        <SortableContext
-          items={section.categories.map((c) => c.id)}
-          strategy={rectSortingStrategy}
+        {/* Category Cards Grid - droppable zone */}
+        <div 
+          ref={setDroppableRef}
+          className={`grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start min-h-[4rem] rounded-xl transition-colors ${
+            isOver ? "bg-primary/10 ring-2 ring-primary/50" : ""
+          }`}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start min-h-[4rem]">
-            {section.categories.map((category) => (
-              <SortableMenuCard
-                key={category.id}
-                category={category}
-                cardStyle={cardStyle}
-                sectionId={section.id}
-                onClick={() => onCategoryClick(category)}
-                onDelete={() => onDeleteCategory(category.id)}
-                isAdmin={isAdmin}
-              />
-            ))}
+          {section.categories.map((category) => (
+            <SortableMenuCard
+              key={category.id}
+              category={category}
+              cardStyle={cardStyle}
+              sectionId={section.id}
+              onClick={() => onCategoryClick(category)}
+              onDelete={() => onDeleteCategory(category.id)}
+              isAdmin={isAdmin}
+            />
+          ))}
 
-            {/* Add button */}
-            {isAdmin && (
-              <div className="flex h-16 md:h-20 items-center justify-center">
-                <AddMenuCardButton
-                  onAddMenu={() => onAddMenu(section.id)}
-                  onAddSection={isLastSection ? onAddSection : undefined}
-                />
-              </div>
-            )}
-          </div>
-        </SortableContext>
+          {/* Add button */}
+          {isAdmin && (
+            <div className="flex h-16 md:h-20 items-center justify-center">
+              <AddMenuCardButton
+                onAddMenu={() => onAddMenu(section.id)}
+                onAddSection={isLastSection ? onAddSection : undefined}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <DeleteConfirmDialog

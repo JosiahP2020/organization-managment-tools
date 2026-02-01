@@ -223,24 +223,21 @@ export function DashboardCategoryGrid() {
     >
       {/* Context for section reordering */}
       <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-        {/* Unified context for all cards to enable cross-section dragging */}
-        <SortableContext items={allCardIds}>
-          {sections.map((section, index) => (
-            <SortableSection
-              key={section.id}
-              section={section}
-              cardStyle={cardStyle}
-              isAdmin={isAdmin}
-              isLastSection={index === sections.length - 1}
-              onTitleChange={handleTitleChange}
-              onAddMenu={handleAddMenu}
-              onAddSection={handleAddSection}
-              onDeleteSection={handleDeleteSection}
-              onDeleteCategory={handleDeleteCategory}
-              onCategoryClick={handleCategoryClick}
-            />
-          ))}
-        </SortableContext>
+        {sections.map((section, index) => (
+          <SortableSection
+            key={section.id}
+            section={section}
+            cardStyle={cardStyle}
+            isAdmin={isAdmin}
+            isLastSection={index === sections.length - 1}
+            onTitleChange={handleTitleChange}
+            onAddMenu={handleAddMenu}
+            onAddSection={handleAddSection}
+            onDeleteSection={handleDeleteSection}
+            onDeleteCategory={handleDeleteCategory}
+            onCategoryClick={handleCategoryClick}
+          />
+        ))}
       </SortableContext>
     </DndContext>
   );
