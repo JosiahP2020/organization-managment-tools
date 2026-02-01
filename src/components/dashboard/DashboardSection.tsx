@@ -80,43 +80,7 @@ export function DashboardSection({
 
   return (
     <div className="space-y-3">
-      {/* Section Header */}
-      <div className="flex items-center gap-2">
-        {isEditing ? (
-          <Input
-            ref={inputRef}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className="text-lg font-semibold h-9 max-w-xs"
-            maxLength={100}
-          />
-        ) : (
-          <h2
-            onClick={handleTitleClick}
-            className={cn(
-              "text-lg font-semibold text-foreground",
-              isAdmin && "cursor-pointer hover:text-primary transition-colors"
-            )}
-          >
-            {section.title}
-          </h2>
-        )}
-        
-        {isAdmin && !isEditing && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-      
-      {/* Categories Grid */}
+      {/* Categories Grid with Section Title in center */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
         {section.categories.map((category) => (
           <CardComponent
@@ -126,6 +90,42 @@ export function DashboardSection({
             showEditButton={false}
           />
         ))}
+        
+        {/* Section Title Card - centered among cards */}
+        <div className="flex items-center justify-center h-16 md:h-20 gap-2">
+          {isEditing ? (
+            <Input
+              ref={inputRef}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={handleSave}
+              onKeyDown={handleKeyDown}
+              className="text-lg font-semibold h-9 max-w-xs text-center"
+              maxLength={100}
+            />
+          ) : (
+            <h2
+              onClick={handleTitleClick}
+              className={cn(
+                "text-lg font-semibold text-foreground",
+                isAdmin && "cursor-pointer hover:text-primary transition-colors"
+              )}
+            >
+              {section.title}
+            </h2>
+          )}
+          
+          {isAdmin && !isEditing && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         
         {isAdmin && (
           <div className="flex h-16 md:h-20 items-center justify-center">
