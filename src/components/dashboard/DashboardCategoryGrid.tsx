@@ -87,7 +87,7 @@ export function DashboardCategoryGrid() {
   if (dashboardLayout === 'full-width') {
     return (
       <>
-        <div className="flex flex-col gap-4 md:gap-5 max-w-2xl mx-auto">
+        <div className="flex flex-col gap-3 md:gap-4 max-w-2xl mx-auto">
           {renderCards()}
         </div>
         <AddMenuCardDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} />
@@ -106,7 +106,7 @@ export function DashboardCategoryGrid() {
           </aside>
           
           {/* Main Grid */}
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
             {renderCards()}
           </div>
         </div>
@@ -156,9 +156,9 @@ export function DashboardCategoryGrid() {
   // Grid + Right Column Layout (default) - Grid with right widget column
   return (
     <>
-      <div className="flex gap-6">
+      <div className="flex gap-6 items-start">
         {/* Main Grid */}
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start content-start">
           {renderCards()}
         </div>
         
