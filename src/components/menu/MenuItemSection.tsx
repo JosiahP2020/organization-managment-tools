@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Trash2, GripVertical } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import { EditableSectionTitle } from "@/components/dashboard/EditableSectionTitle";
@@ -13,6 +11,7 @@ import type { MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItem
 interface MenuItemSectionProps {
   section: MenuItemSectionType;
   isAdmin: boolean;
+  isFirstSection: boolean;
   isLastSection: boolean;
   totalSections: number;
   onTitleChange: (sectionId: string, newTitle: string) => void;
@@ -21,12 +20,15 @@ interface MenuItemSectionProps {
   onDeleteSection: (sectionId: string) => void;
   onDeleteItem: (itemId: string) => void;
   onEditItem: (itemId: string, name: string) => void;
+  onMoveUp: (sectionId: string) => void;
+  onMoveDown: (sectionId: string) => void;
   onItemClick?: (item: any) => void;
 }
 
 export function MenuItemSection({
   section,
   isAdmin,
+  isFirstSection,
   isLastSection,
   totalSections,
   onTitleChange,
@@ -35,27 +37,11 @@ export function MenuItemSection({
   onDeleteSection,
   onDeleteItem,
   onEditItem,
+  onMoveUp,
+  onMoveDown,
   onItemClick,
 }: MenuItemSectionProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  // Section sortable (for reordering sections)
-  const {
-    attributes,
-    listeners,
-    setNodeRef: setSortableRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: `section-${section.id}`,
-    data: {
-      type: "section",
-      sectionId: section.id,
-    },
-    disabled: !isAdmin || section.id === "default",
-  });
 
   // Section droppable (for receiving items)
   const { setNodeRef: setDroppableRef, isOver } = useDroppable({
@@ -66,40 +52,47 @@ export function MenuItemSection({
     },
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   const canDelete = section.id !== "default";
-  const canDrag = section.id !== "default";
+  const canMoveUp = section.id !== "default" && !isFirstSection;
+  const canMoveDown = section.id !== "default" && !isLastSection;
   // Show section titles for ALL sections when there are 2+ sections
   const showSectionTitle = totalSections > 1;
 
   return (
     <>
-      <div
-        ref={setSortableRef}
-        style={style}
-        className="mb-6 last:mb-0 group/section relative"
-      >
+      <div className="mb-6 last:mb-0 group/section relative">
         {/* Section Header - only show if more than one section */}
         {showSectionTitle && (
           <div className="flex justify-center mb-3 relative">
-            {/* Admin controls for section */}
-            {isAdmin && (canDelete || canDrag) && (
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover/section:opacity-100 transition-opacity">
-                {canDrag && (
+            <EditableSectionTitle
+              title={section.title}
+              onTitleChange={(newTitle) => onTitleChange(section.id, newTitle)}
+              isEditable={isAdmin}
+            />
+
+            {/* Admin controls for section - now on the right */}
+            {isAdmin && (canDelete || canMoveUp || canMoveDown) && (
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover/section:opacity-100 transition-opacity">
+                {canMoveUp && (
                   <Button
-                    ref={setActivatorNodeRef}
                     variant="secondary"
                     size="icon"
-                    className="h-7 w-7 shadow-md cursor-grab active:cursor-grabbing touch-none"
-                    {...attributes}
-                    {...listeners}
+                    className="h-7 w-7 shadow-md"
+                    onClick={() => onMoveUp(section.id)}
+                    title="Move up"
                   >
-                    <GripVertical className="h-4 w-4" />
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                )}
+                {canMoveDown && (
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-7 w-7 shadow-md"
+                    onClick={() => onMoveDown(section.id)}
+                    title="Move down"
+                  >
+                    <ChevronDown className="h-4 w-4" />
                   </Button>
                 )}
                 {canDelete && (
@@ -108,18 +101,13 @@ export function MenuItemSection({
                     size="icon"
                     className="h-7 w-7 shadow-md"
                     onClick={() => setShowDeleteDialog(true)}
+                    title="Delete section"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
               </div>
             )}
-
-            <EditableSectionTitle
-              title={section.title}
-              onTitleChange={(newTitle) => onTitleChange(section.id, newTitle)}
-              isEditable={isAdmin}
-            />
           </div>
         )}
 

@@ -412,29 +412,71 @@ export function useMenuItems(categoryId: string | undefined) {
     },
   });
 
-  // Reorder sections
-  const reorderSections = useMutation({
-    mutationFn: async (sectionIds: string[]) => {
-      for (let i = 0; i < sectionIds.length; i++) {
-        const sectionId = sectionIds[i];
-        // Skip the default section as it's not a real DB record
-        if (sectionId === "default") continue;
+  // Move section up
+  const moveSectionUp = useMutation({
+    mutationFn: async (sectionId: string) => {
+      // Find current sections (excluding default)
+      const realSections = sections.filter(s => s.id !== "default");
+      const currentIndex = realSections.findIndex(s => s.id === sectionId);
+      
+      if (currentIndex <= 0) return; // Already at top or not found
+      
+      const prevSection = realSections[currentIndex - 1];
+      const currentSection = realSections[currentIndex];
+      
+      // Swap sort_orders
+      await supabase
+        .from("menu_items")
+        .update({ sort_order: prevSection.sort_order })
+        .eq("id", sectionId)
+        .eq("item_type", "section");
         
-        const { error } = await supabase
-          .from("menu_items")
-          .update({ sort_order: i })
-          .eq("id", sectionId)
-          .eq("item_type", "section");
-
-        if (error) throw error;
-      }
+      await supabase
+        .from("menu_items")
+        .update({ sort_order: currentSection.sort_order })
+        .eq("id", prevSection.id)
+        .eq("item_type", "section");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
     },
     onError: (error) => {
-      console.error("Failed to reorder sections:", error);
-      toast.error("Failed to reorder sections");
+      console.error("Failed to move section:", error);
+      toast.error("Failed to move section");
+    },
+  });
+
+  // Move section down
+  const moveSectionDown = useMutation({
+    mutationFn: async (sectionId: string) => {
+      // Find current sections (excluding default)
+      const realSections = sections.filter(s => s.id !== "default");
+      const currentIndex = realSections.findIndex(s => s.id === sectionId);
+      
+      if (currentIndex === -1 || currentIndex >= realSections.length - 1) return; // At bottom or not found
+      
+      const nextSection = realSections[currentIndex + 1];
+      const currentSection = realSections[currentIndex];
+      
+      // Swap sort_orders
+      await supabase
+        .from("menu_items")
+        .update({ sort_order: nextSection.sort_order })
+        .eq("id", sectionId)
+        .eq("item_type", "section");
+        
+      await supabase
+        .from("menu_items")
+        .update({ sort_order: currentSection.sort_order })
+        .eq("id", nextSection.id)
+        .eq("item_type", "section");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
+    },
+    onError: (error) => {
+      console.error("Failed to move section:", error);
+      toast.error("Failed to move section");
     },
   });
 
@@ -448,6 +490,7 @@ export function useMenuItems(categoryId: string | undefined) {
     deleteItem,
     reorderItems,
     moveItem,
-    reorderSections,
+    moveSectionUp,
+    moveSectionDown,
   };
 }
