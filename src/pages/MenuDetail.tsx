@@ -121,6 +121,15 @@ const MenuDetail = () => {
     },
   });
 
+  // Handle item click - submenus or tools
+  const handleItemClick = (item: any) => {
+    if (item.item_type === "submenu") {
+      handleSubmenuClick(item);
+    } else if (item.item_type === "tool") {
+      handleToolClick(item);
+    }
+  };
+
   // Handle submenu click - navigate to that submenu's linked category
   const handleSubmenuClick = (item: any) => {
     if (item.target_category_id) {
@@ -129,6 +138,37 @@ const MenuDetail = () => {
     } else {
       // Create linked category on-the-fly for legacy submenus
       createLinkedCategory.mutate(item);
+    }
+  };
+
+  // Handle tool click - navigate to the tool editor
+  const handleToolClick = async (item: any) => {
+    const toolType = item.tool_type;
+    
+    // Get the linked document for single-use mode
+    const { data: docLink } = await supabase
+      .from("menu_item_documents")
+      .select("document_id, document_type")
+      .eq("menu_item_id", item.id)
+      .maybeSingle();
+
+    if (item.tool_mode === "single" && docLink?.document_id) {
+      // Navigate directly to the document editor
+      if (toolType === "checklist" || toolType === "follow_up_list") {
+        const category = toolType === "follow_up_list" ? "follow_up_list" : "machine_operation";
+        navigate(`/dashboard/${slug}/training/${category}/${docLink.document_id}`);
+      } else if (toolType === "sop_guide") {
+        navigate(`/dashboard/${slug}/training/machine_operation/gemba/${docLink.document_id}`);
+      }
+    } else {
+      // Unlimited mode - navigate to a list view (for now, go to training category)
+      if (toolType === "checklist") {
+        navigate(`/dashboard/${slug}/training/checklists`);
+      } else if (toolType === "sop_guide") {
+        navigate(`/dashboard/${slug}/training/sop_guides`);
+      } else if (toolType === "follow_up_list") {
+        navigate(`/dashboard/${slug}/training/follow_up_list`);
+      }
     }
   };
 
@@ -192,7 +232,7 @@ const MenuDetail = () => {
         {menuId && (
           <MenuItemsColumn 
             categoryId={menuId} 
-            onItemClick={handleSubmenuClick}
+            onItemClick={handleItemClick}
           />
         )}
       </div>

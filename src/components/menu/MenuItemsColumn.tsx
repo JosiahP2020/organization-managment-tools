@@ -15,6 +15,7 @@ import {
 import { MenuItemSection } from "./MenuItemSection";
 import { AddSubmenuDialog } from "./AddSubmenuDialog";
 import { AddFileDirectoryDialog } from "./AddFileDirectoryDialog";
+import { AddToolDialog, type ToolType, type ToolMode } from "./AddToolDialog";
 import { useMenuItems, type MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItems";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +33,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     isLoading,
     createSubmenu,
     createFileDirectory,
+    createTool,
     createSection,
     updateItemName,
     deleteItem,
@@ -45,6 +47,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
 
   const [addSubmenuDialogOpen, setAddSubmenuDialogOpen] = useState(false);
   const [addFileDirectoryDialogOpen, setAddFileDirectoryDialogOpen] = useState(false);
+  const [addToolDialogOpen, setAddToolDialogOpen] = useState(false);
   const [currentSectionId, setCurrentSectionId] = useState<string | null>(null);
 
   const pointerSensor = useSensor(PointerSensor, {
@@ -126,6 +129,11 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     setAddFileDirectoryDialogOpen(true);
   };
 
+  const handleAddTool = (sectionId: string) => {
+    setCurrentSectionId(sectionId);
+    setAddToolDialogOpen(true);
+  };
+
   const handleCreateSubmenu = (data: { name: string; description?: string; icon: string }) => {
     createSubmenu.mutate({
       ...data,
@@ -138,6 +146,14 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
       ...data,
       sectionId: currentSectionId,
     });
+  };
+
+  const handleCreateTool = (data: { name: string; description?: string; toolType: ToolType; toolMode: ToolMode }) => {
+    createTool.mutate({
+      ...data,
+      sectionId: currentSectionId,
+    });
+    setAddToolDialogOpen(false);
   };
 
   const handleAddSection = (afterSectionId: string) => {
@@ -187,6 +203,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
                   }
                   onAddSubmenu={handleAddSubmenu}
                   onAddFileDirectory={handleAddFileDirectory}
+                  onAddTool={handleAddTool}
                   onAddSection={() => handleAddSection(section.id)}
                   onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
                   onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
@@ -227,6 +244,13 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
         onOpenChange={setAddFileDirectoryDialogOpen}
         onSubmit={handleCreateFileDirectory}
         isPending={createFileDirectory.isPending}
+      />
+
+      <AddToolDialog
+        open={addToolDialogOpen}
+        onOpenChange={setAddToolDialogOpen}
+        onSubmit={handleCreateTool}
+        isPending={createTool.isPending}
       />
     </>
   );

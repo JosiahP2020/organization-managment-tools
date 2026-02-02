@@ -7,6 +7,7 @@ import { EditableSectionTitle } from "@/components/dashboard/EditableSectionTitl
 import { AddMenuItemButton } from "./AddMenuItemButton";
 import { MenuItemCard } from "./MenuItemCard";
 import { FileDirectoryCard } from "./FileDirectoryCard";
+import { ToolCard } from "./ToolCard";
 import type { MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItems";
 
 interface MenuItemSectionProps {
@@ -18,6 +19,7 @@ interface MenuItemSectionProps {
   onTitleChange: (sectionId: string, newTitle: string) => void;
   onAddSubmenu: (sectionId: string) => void;
   onAddFileDirectory: (sectionId: string) => void;
+  onAddTool: (sectionId: string) => void;
   onAddSection: () => void;
   onDeleteSection: (sectionId: string) => void;
   onDeleteItem: (itemId: string) => void;
@@ -38,6 +40,7 @@ export function MenuItemSection({
   onTitleChange,
   onAddSubmenu,
   onAddFileDirectory,
+  onAddTool,
   onAddSection,
   onDeleteSection,
   onDeleteItem,
@@ -125,19 +128,39 @@ export function MenuItemSection({
             isOver ? "bg-primary/10 ring-2 ring-primary/50" : ""
           }`}
         >
-          {section.items.map((item, index) => (
-            item.item_type === "file_directory" ? (
-              <FileDirectoryCard
-                key={item.id}
-                item={item}
-                isFirst={index === 0}
-                isLast={index === section.items.length - 1}
-                onMoveUp={() => onMoveItemUp(item.id, section.id)}
-                onMoveDown={() => onMoveItemDown(item.id, section.id)}
-                onDelete={() => onDeleteItem(item.id)}
-                onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
-              />
-            ) : (
+          {section.items.map((item, index) => {
+            if (item.item_type === "file_directory") {
+              return (
+                <FileDirectoryCard
+                  key={item.id}
+                  item={item}
+                  isFirst={index === 0}
+                  isLast={index === section.items.length - 1}
+                  onMoveUp={() => onMoveItemUp(item.id, section.id)}
+                  onMoveDown={() => onMoveItemDown(item.id, section.id)}
+                  onDelete={() => onDeleteItem(item.id)}
+                  onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
+                />
+              );
+            }
+            
+            if (item.item_type === "tool") {
+              return (
+                <ToolCard
+                  key={item.id}
+                  item={item}
+                  isFirst={index === 0}
+                  isLast={index === section.items.length - 1}
+                  onMoveUp={() => onMoveItemUp(item.id, section.id)}
+                  onMoveDown={() => onMoveItemDown(item.id, section.id)}
+                  onDelete={() => onDeleteItem(item.id)}
+                  onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
+                  onClick={() => onItemClick?.(item)}
+                />
+              );
+            }
+            
+            return (
               <MenuItemCard
                 key={item.id}
                 item={item}
@@ -151,8 +174,8 @@ export function MenuItemSection({
                 onMoveDown={() => onMoveItemDown(item.id, section.id)}
                 onClick={() => onItemClick?.(item)}
               />
-            )
-          ))}
+            );
+          })}
 
           {/* Add button */}
           {isAdmin && (
@@ -160,6 +183,7 @@ export function MenuItemSection({
               <AddMenuItemButton
                 onAddSubmenu={() => onAddSubmenu(section.id)}
                 onAddFileDirectory={() => onAddFileDirectory(section.id)}
+                onAddTool={() => onAddTool(section.id)}
                 onAddSection={onAddSection}
               />
             </div>
