@@ -125,15 +125,26 @@ export function useMenuItems(categoryId: string | undefined) {
 
       if (categoryError) throw categoryError;
 
-      // Get max sort_order for this category
-      const { data: existingItems } = await supabase
+      // Get max sort_order for items in this section (or with null section_id)
+      const sectionFilter = sectionId && sectionId !== "default" ? sectionId : null;
+      
+      let query = supabase
         .from("menu_items")
         .select("sort_order")
         .eq("category_id", categoryId)
+        .neq("item_type", "section")
         .order("sort_order", { ascending: false })
         .limit(1);
+      
+      if (sectionFilter) {
+        query = query.eq("section_id", sectionFilter);
+      } else {
+        query = query.is("section_id", null);
+      }
+      
+      const { data: existingItems } = await query;
 
-      const nextSortOrder = existingItems?.[0]?.sort_order 
+      const nextSortOrder = existingItems?.[0]?.sort_order != null
         ? existingItems[0].sort_order + 1 
         : 0;
 
@@ -185,15 +196,26 @@ export function useMenuItems(categoryId: string | undefined) {
         throw new Error("Not authenticated");
       }
 
-      // Get max sort_order for this category
-      const { data: existingItems } = await supabase
+      // Get max sort_order for items in this section (or with null section_id)
+      const sectionFilter = sectionId && sectionId !== "default" ? sectionId : null;
+      
+      let query = supabase
         .from("menu_items")
         .select("sort_order")
         .eq("category_id", categoryId)
+        .neq("item_type", "section")
         .order("sort_order", { ascending: false })
         .limit(1);
+      
+      if (sectionFilter) {
+        query = query.eq("section_id", sectionFilter);
+      } else {
+        query = query.is("section_id", null);
+      }
+      
+      const { data: existingItems } = await query;
 
-      const nextSortOrder = existingItems?.[0]?.sort_order 
+      const nextSortOrder = existingItems?.[0]?.sort_order != null
         ? existingItems[0].sort_order + 1 
         : 0;
 
