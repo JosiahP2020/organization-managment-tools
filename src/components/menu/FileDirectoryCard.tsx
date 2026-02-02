@@ -15,6 +15,7 @@ interface FileDirectoryCardProps {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onDelete: () => void;
+  onTitleChange: (newTitle: string) => void;
 }
 
 export function FileDirectoryCard({
@@ -24,6 +25,7 @@ export function FileDirectoryCard({
   onMoveUp,
   onMoveDown,
   onDelete,
+  onTitleChange,
 }: FileDirectoryCardProps) {
   const { isAdmin } = useAuth();
 
@@ -67,7 +69,11 @@ export function FileDirectoryCard({
       )}
 
       {/* File Directory View - inline */}
-      <FileDirectoryView menuItemId={item.id} title={item.name} />
+      <FileDirectoryView 
+        menuItemId={item.id} 
+        title={item.name} 
+        onTitleChange={onTitleChange}
+      />
     </div>
   );
 }
