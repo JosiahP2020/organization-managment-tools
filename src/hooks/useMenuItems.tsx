@@ -168,7 +168,65 @@ export function useMenuItems(categoryId: string | undefined) {
     },
   });
 
-  // Create a new section
+  // Create a new file directory item
+  const createFileDirectory = useMutation({
+    mutationFn: async ({ 
+      name, 
+      description, 
+      icon = "folder-open",
+      sectionId 
+    }: { 
+      name: string; 
+      description?: string; 
+      icon?: string;
+      sectionId?: string | null;
+    }) => {
+      if (!organization?.id || !user?.id || !categoryId) {
+        throw new Error("Not authenticated");
+      }
+
+      // Get max sort_order for this category
+      const { data: existingItems } = await supabase
+        .from("menu_items")
+        .select("sort_order")
+        .eq("category_id", categoryId)
+        .order("sort_order", { ascending: false })
+        .limit(1);
+
+      const nextSortOrder = existingItems?.[0]?.sort_order 
+        ? existingItems[0].sort_order + 1 
+        : 0;
+
+      // Create the file_directory menu item
+      const { data, error } = await supabase
+        .from("menu_items")
+        .insert({
+          name: name.trim(),
+          description: description?.trim() || null,
+          icon,
+          item_type: "file_directory",
+          category_id: categoryId,
+          section_id: sectionId && sectionId !== "default" ? sectionId : null,
+          organization_id: organization.id,
+          created_by: user.id,
+          sort_order: nextSortOrder,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
+      toast.success("File directory created");
+    },
+    onError: (error) => {
+      console.error("Failed to create file directory:", error);
+      toast.error("Failed to create file directory");
+    },
+  });
+
   const createSection = useMutation({
     mutationFn: async ({ title, afterSectionId }: { title: string; afterSectionId?: string }) => {
       if (!organization?.id || !user?.id || !categoryId) {
@@ -547,6 +605,7 @@ export function useMenuItems(categoryId: string | undefined) {
     isLoading,
     error,
     createSubmenu,
+    createFileDirectory,
     createSection,
     updateItemName,
     deleteItem,
