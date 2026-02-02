@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Logo } from "@/components/Logo";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, FileText, Lock, Search, Pencil, Archive, Trash2, ArrowUpDown, ChevronDown, ArchiveRestore, Grid3X3, CheckSquare } from "lucide-react";
+import { Plus, FileText, Lock, Search, Pencil, Archive, Trash2, ArrowUpDown, ChevronDown, ArchiveRestore, Grid3X3, CheckSquare, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateChecklistDialog } from "@/components/training/CreateChecklistDialog";
 import { CreateDocumentTypeDialog } from "@/components/training/CreateDocumentTypeDialog";
@@ -71,6 +71,8 @@ type DocumentItem = {
 
 const CategoryDocuments = () => {
   const { category, orgSlug } = useParams<{ category: string; orgSlug: string }>();
+  const [searchParams] = useSearchParams();
+  const toolId = searchParams.get("toolId");
   const { organization, isAdmin } = useAuth();
   const { mainLogoUrl } = useThemeLogos();
   const navigate = useNavigate();
@@ -92,7 +94,47 @@ const CategoryDocuments = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
 
-  const categoryLabel = categoryLabels[category || ""] || category;
+  // Title inline editing state
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
+  const [titleEditValue, setTitleEditValue] = useState("");
+
+  // Fetch menu item details if toolId is provided
+  const { data: menuItem } = useQuery({
+    queryKey: ["menu-item", toolId],
+    queryFn: async () => {
+      if (!toolId) return null;
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("id, name")
+        .eq("id", toolId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!toolId,
+  });
+
+  // Mutation to update menu item name
+  const updateMenuItemName = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase
+        .from("menu_items")
+        .update({ name })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-item", toolId] });
+      toast({ title: "Title updated successfully" });
+      setIsTitleEditing(false);
+    },
+    onError: (error) => {
+      toast({ title: "Failed to update title", description: error.message, variant: "destructive" });
+    },
+  });
+
+  // Use menu item name if available, otherwise fallback to category label
+  const displayTitle = menuItem?.name || categoryLabels[category || ""] || category;
 
   // Fetch active checklists
   const { data: checklists, isLoading: checklistsLoading, refetch: refetchChecklists } = useQuery({
@@ -404,17 +446,76 @@ const CategoryDocuments = () => {
 
         {/* Header with title and create button */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              {categoryLabel}
-            </h1>
+          <div className="flex-1 min-w-0">
+            {isTitleEditing && toolId ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  value={titleEditValue}
+                  onChange={(e) => setTitleEditValue(e.target.value)}
+                  className="text-2xl md:text-3xl font-bold h-auto py-1 px-2"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && titleEditValue.trim()) {
+                      updateMenuItemName.mutate({ id: toolId, name: titleEditValue.trim() });
+                    } else if (e.key === "Escape") {
+                      setIsTitleEditing(false);
+                      setTitleEditValue(displayTitle);
+                    }
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    if (titleEditValue.trim()) {
+                      updateMenuItemName.mutate({ id: toolId, name: titleEditValue.trim() });
+                    }
+                  }}
+                  disabled={updateMenuItemName.isPending}
+                >
+                  <Check className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    setIsTitleEditing(false);
+                    setTitleEditValue(displayTitle);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="group/title flex items-center gap-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {displayTitle}
+                </h1>
+                {isAdmin && toolId && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover/title:opacity-100 transition-opacity"
+                    onClick={() => {
+                      setTitleEditValue(displayTitle);
+                      setIsTitleEditing(true);
+                    }}
+                    title="Edit title"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            )}
             <p className="text-muted-foreground mt-1">
-              Manage checklists and documentation for {categoryLabel.toLowerCase()}.
+              Manage checklists and documentation for {displayTitle.toLowerCase()}.
             </p>
           </div>
           
           {isAdmin && (
-            <Button onClick={() => setDocumentTypeDialogOpen(true)} className="gap-2">
+            <Button onClick={() => setDocumentTypeDialogOpen(true)} className="gap-2 flex-shrink-0">
               <Plus className="h-4 w-4" />
               Create
             </Button>
