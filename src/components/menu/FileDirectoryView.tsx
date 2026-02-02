@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo } from "react";
-import { Search, Upload, FileText, Image, FileVideo, FileAudio, File, Trash2, Download, Filter, X, ChevronDown } from "lucide-react";
+import { Search, Upload, FileText, Image, FileVideo, FileAudio, File, Trash2, Download, Filter, X, ChevronDown, Pencil, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 interface FileDirectoryViewProps {
   menuItemId: string;
   title?: string;
+  onTitleChange?: (newTitle: string) => void;
 }
 
 type FileTypeFilter = "all" | "documents" | "images" | "videos" | "audio" | "other";
@@ -76,16 +77,41 @@ function matchesFileType(fileType: string | null, filter: FileTypeFilter): boole
   return types.some(t => fileType.includes(t) || fileType.startsWith(t.split("/")[0]));
 }
 
-export function FileDirectoryView({ menuItemId, title }: FileDirectoryViewProps) {
+export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDirectoryViewProps) {
   const { isAdmin } = useAuth();
   const { files, isLoading, uploadFile, deleteFile } = useFileDirectory(menuItemId);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<FileTypeFilter>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [fileToDelete, setFileToDelete] = useState<FileDirectoryFile | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(title || "");
+
+  const handleTitleSave = () => {
+    if (editedTitle.trim() && onTitleChange) {
+      onTitleChange(editedTitle.trim());
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleTitleSave();
+    } else if (e.key === "Escape") {
+      setEditedTitle(title || "");
+      setIsEditingTitle(false);
+    }
+  };
+
+  const startEditingTitle = () => {
+    setEditedTitle(title || "");
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.focus(), 0);
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -156,9 +182,45 @@ export function FileDirectoryView({ menuItemId, title }: FileDirectoryViewProps)
 
   return (
     <div className="space-y-4">
-      {/* Header with title */}
+      {/* Header with editable title */}
       {title && (
-        <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+        <div className="flex items-center gap-2">
+          {isEditingTitle ? (
+            <div className="flex items-center gap-2 flex-1">
+              <Input
+                ref={titleInputRef}
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                onBlur={handleTitleSave}
+                className="text-lg font-semibold h-9 max-w-xs"
+                autoFocus
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={handleTitleSave}
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="group/title flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+              {isAdmin && onTitleChange && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 opacity-0 group-hover/title:opacity-100 transition-opacity"
+                  onClick={startEditingTitle}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Search and Controls Bar */}

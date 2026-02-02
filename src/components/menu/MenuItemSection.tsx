@@ -135,6 +135,7 @@ export function MenuItemSection({
                 onMoveUp={() => onMoveItemUp(item.id, section.id)}
                 onMoveDown={() => onMoveItemDown(item.id, section.id)}
                 onDelete={() => onDeleteItem(item.id)}
+                onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
               />
             ) : (
               <MenuItemCard
