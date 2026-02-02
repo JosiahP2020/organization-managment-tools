@@ -17,6 +17,9 @@ export interface MenuItem {
   created_at: string;
   updated_at: string;
   target_category_id: string | null;
+  tool_type?: string | null;
+  tool_mode?: string;
+  tool_is_searchable?: boolean;
 }
 
 export interface MenuItemSection {
@@ -246,6 +249,157 @@ export function useMenuItems(categoryId: string | undefined) {
     onError: (error) => {
       console.error("Failed to create file directory:", error);
       toast.error("Failed to create file directory");
+    },
+  });
+
+  // Create a new tool item (creates the document and links it)
+  const createTool = useMutation({
+    mutationFn: async ({ 
+      name, 
+      description, 
+      toolType,
+      toolMode,
+      sectionId 
+    }: { 
+      name: string; 
+      description?: string;
+      toolType: "checklist" | "sop_guide" | "follow_up_list";
+      toolMode: "unlimited" | "single";
+      sectionId?: string | null;
+    }) => {
+      if (!organization?.id || !user?.id || !categoryId) {
+        throw new Error("Not authenticated");
+      }
+
+      // Map tool types to document categories
+      const categoryMap: Record<string, string> = {
+        checklist: "machine_operation",
+        sop_guide: "machine_operation",
+        follow_up_list: "follow_up_list",
+      };
+
+      // Icon mapping
+      const iconMap: Record<string, string> = {
+        checklist: "check-square",
+        sop_guide: "grid-3x3",
+        follow_up_list: "list-checks",
+      };
+
+      let documentId: string | null = null;
+      let documentType: string = "";
+
+      // Create the underlying document based on tool type
+      if (toolType === "checklist" || toolType === "follow_up_list") {
+        const { data: checklist, error: checklistError } = await supabase
+          .from("checklists")
+          .insert({
+            title: name.trim(),
+            description: description?.trim() || null,
+            category: categoryMap[toolType] as any,
+            organization_id: organization.id,
+            created_by: user.id,
+          })
+          .select()
+          .single();
+
+        if (checklistError) throw checklistError;
+        documentId = checklist.id;
+        documentType = "checklist";
+      } else if (toolType === "sop_guide") {
+        const { data: gembaDoc, error: gembaError } = await supabase
+          .from("gemba_docs")
+          .insert({
+            title: name.trim(),
+            description: description?.trim() || null,
+            category: categoryMap[toolType] as any,
+            organization_id: organization.id,
+            created_by: user.id,
+          })
+          .select()
+          .single();
+
+        if (gembaError) throw gembaError;
+        documentId = gembaDoc.id;
+        documentType = "sop_guide";
+
+        // Create the first page for the gemba doc
+        await supabase
+          .from("gemba_doc_pages")
+          .insert({
+            gemba_doc_id: gembaDoc.id,
+            page_number: 1,
+          });
+      }
+
+      // Get max sort_order for items in this section
+      const sectionFilter = sectionId && sectionId !== "default" ? sectionId : null;
+      
+      let query = supabase
+        .from("menu_items")
+        .select("sort_order")
+        .eq("category_id", categoryId)
+        .neq("item_type", "section")
+        .order("sort_order", { ascending: false })
+        .limit(1);
+      
+      if (sectionFilter) {
+        query = query.eq("section_id", sectionFilter);
+      } else {
+        query = query.is("section_id", null);
+      }
+      
+      const { data: existingItems } = await query;
+
+      const nextSortOrder = existingItems?.[0]?.sort_order != null
+        ? existingItems[0].sort_order + 1 
+        : 0;
+
+      // Create the menu item
+      const { data: menuItem, error: menuItemError } = await supabase
+        .from("menu_items")
+        .insert({
+          name: name.trim(),
+          description: description?.trim() || null,
+          icon: iconMap[toolType] || "wrench",
+          item_type: "tool",
+          tool_type: toolType,
+          tool_mode: toolMode,
+          category_id: categoryId,
+          section_id: sectionId && sectionId !== "default" ? sectionId : null,
+          organization_id: organization.id,
+          created_by: user.id,
+          sort_order: nextSortOrder,
+        })
+        .select()
+        .single();
+
+      if (menuItemError) throw menuItemError;
+
+      // Create the linkage in menu_item_documents
+      if (documentId) {
+        const { error: linkError } = await supabase
+          .from("menu_item_documents")
+          .insert({
+            menu_item_id: menuItem.id,
+            document_id: documentId,
+            document_type: documentType,
+            title: name.trim(),
+            organization_id: organization.id,
+            created_by: user.id,
+          });
+
+        if (linkError) throw linkError;
+      }
+
+      return menuItem;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
+      toast.success("Tool created");
+    },
+    onError: (error) => {
+      console.error("Failed to create tool:", error);
+      toast.error("Failed to create tool");
     },
   });
 
@@ -628,6 +782,7 @@ export function useMenuItems(categoryId: string | undefined) {
     error,
     createSubmenu,
     createFileDirectory,
+    createTool,
     createSection,
     updateItemName,
     deleteItem,
