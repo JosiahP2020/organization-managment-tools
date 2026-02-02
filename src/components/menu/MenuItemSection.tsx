@@ -6,6 +6,7 @@ import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog"
 import { EditableSectionTitle } from "@/components/dashboard/EditableSectionTitle";
 import { AddMenuItemButton } from "./AddMenuItemButton";
 import { MenuItemCard } from "./MenuItemCard";
+import { FileDirectoryCard } from "./FileDirectoryCard";
 import type { MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItems";
 
 interface MenuItemSectionProps {
@@ -16,6 +17,7 @@ interface MenuItemSectionProps {
   totalSections: number;
   onTitleChange: (sectionId: string, newTitle: string) => void;
   onAddSubmenu: (sectionId: string) => void;
+  onAddFileDirectory: (sectionId: string) => void;
   onAddSection: () => void;
   onDeleteSection: (sectionId: string) => void;
   onDeleteItem: (itemId: string) => void;
@@ -35,6 +37,7 @@ export function MenuItemSection({
   totalSections,
   onTitleChange,
   onAddSubmenu,
+  onAddFileDirectory,
   onAddSection,
   onDeleteSection,
   onDeleteItem,
@@ -123,19 +126,31 @@ export function MenuItemSection({
           }`}
         >
           {section.items.map((item, index) => (
-            <MenuItemCard
-              key={item.id}
-              item={item}
-              sectionId={section.id}
-              isAdmin={isAdmin}
-              isFirst={index === 0}
-              isLast={index === section.items.length - 1}
-              onDelete={() => onDeleteItem(item.id)}
-              onEdit={(name) => onEditItem(item.id, name)}
-              onMoveUp={() => onMoveItemUp(item.id, section.id)}
-              onMoveDown={() => onMoveItemDown(item.id, section.id)}
-              onClick={() => onItemClick?.(item)}
-            />
+            item.item_type === "file_directory" ? (
+              <FileDirectoryCard
+                key={item.id}
+                item={item}
+                isFirst={index === 0}
+                isLast={index === section.items.length - 1}
+                onMoveUp={() => onMoveItemUp(item.id, section.id)}
+                onMoveDown={() => onMoveItemDown(item.id, section.id)}
+                onDelete={() => onDeleteItem(item.id)}
+              />
+            ) : (
+              <MenuItemCard
+                key={item.id}
+                item={item}
+                sectionId={section.id}
+                isAdmin={isAdmin}
+                isFirst={index === 0}
+                isLast={index === section.items.length - 1}
+                onDelete={() => onDeleteItem(item.id)}
+                onEdit={(name) => onEditItem(item.id, name)}
+                onMoveUp={() => onMoveItemUp(item.id, section.id)}
+                onMoveDown={() => onMoveItemDown(item.id, section.id)}
+                onClick={() => onItemClick?.(item)}
+              />
+            )
           ))}
 
           {/* Add button */}
@@ -143,6 +158,7 @@ export function MenuItemSection({
             <div className="flex justify-center py-2">
               <AddMenuItemButton
                 onAddSubmenu={() => onAddSubmenu(section.id)}
+                onAddFileDirectory={() => onAddFileDirectory(section.id)}
                 onAddSection={onAddSection}
               />
             </div>

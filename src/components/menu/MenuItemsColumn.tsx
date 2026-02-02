@@ -14,6 +14,7 @@ import {
 } from "@dnd-kit/sortable";
 import { MenuItemSection } from "./MenuItemSection";
 import { AddSubmenuDialog } from "./AddSubmenuDialog";
+import { AddFileDirectoryDialog } from "./AddFileDirectoryDialog";
 import { useMenuItems, type MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItems";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +31,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     sections,
     isLoading,
     createSubmenu,
+    createFileDirectory,
     createSection,
     updateItemName,
     deleteItem,
@@ -42,6 +44,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
   } = useMenuItems(categoryId);
 
   const [addSubmenuDialogOpen, setAddSubmenuDialogOpen] = useState(false);
+  const [addFileDirectoryDialogOpen, setAddFileDirectoryDialogOpen] = useState(false);
   const [currentSectionId, setCurrentSectionId] = useState<string | null>(null);
 
   const pointerSensor = useSensor(PointerSensor, {
@@ -118,8 +121,20 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
     setAddSubmenuDialogOpen(true);
   };
 
+  const handleAddFileDirectory = (sectionId: string) => {
+    setCurrentSectionId(sectionId);
+    setAddFileDirectoryDialogOpen(true);
+  };
+
   const handleCreateSubmenu = (data: { name: string; description?: string; icon: string }) => {
     createSubmenu.mutate({
+      ...data,
+      sectionId: currentSectionId,
+    });
+  };
+
+  const handleCreateFileDirectory = (data: { name: string; description?: string; icon: string }) => {
+    createFileDirectory.mutate({
       ...data,
       sectionId: currentSectionId,
     });
@@ -171,6 +186,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
                     updateItemName.mutate({ itemId: sectionId, name: newTitle })
                   }
                   onAddSubmenu={handleAddSubmenu}
+                  onAddFileDirectory={handleAddFileDirectory}
                   onAddSection={() => handleAddSection(section.id)}
                   onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
                   onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
@@ -204,6 +220,13 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
         onOpenChange={setAddSubmenuDialogOpen}
         onSubmit={handleCreateSubmenu}
         isPending={createSubmenu.isPending}
+      />
+
+      <AddFileDirectoryDialog
+        open={addFileDirectoryDialogOpen}
+        onOpenChange={setAddFileDirectoryDialogOpen}
+        onSubmit={handleCreateFileDirectory}
+        isPending={createFileDirectory.isPending}
       />
     </>
   );

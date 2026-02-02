@@ -1,4 +1,4 @@
-import { Plus, FolderOpen, Rows } from "lucide-react";
+import { Plus, FolderOpen, Rows, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -10,11 +10,12 @@ import {
 
 interface AddMenuItemButtonProps {
   onAddSubmenu: () => void;
+  onAddFileDirectory?: () => void;
   onAddSection?: () => void;
   className?: string;
 }
 
-export function AddMenuItemButton({ onAddSubmenu, onAddSection, className }: AddMenuItemButtonProps) {
+export function AddMenuItemButton({ onAddSubmenu, onAddFileDirectory, onAddSection, className }: AddMenuItemButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -37,6 +38,15 @@ export function AddMenuItemButton({ onAddSubmenu, onAddSection, className }: Add
           <FolderOpen className="mr-2 h-4 w-4" />
           Submenu
         </DropdownMenuItem>
+        {onAddFileDirectory && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={onAddFileDirectory} className="cursor-pointer">
+              <HardDrive className="mr-2 h-4 w-4" />
+              File Directory
+            </DropdownMenuItem>
+          </>
+        )}
         {onAddSection && (
           <>
             <DropdownMenuSeparator />
