@@ -31,13 +31,8 @@ export function TextDisplayCard({
 
   const subType = item.description; // "text", "address", or "lockbox"
 
-  // Build display text
-  let displayText = item.name;
-  if (subType === "address") {
-    displayText = `Address: ${item.name}`;
-  } else if (subType === "lockbox") {
-    displayText = `Lock Box Code: ${item.name}`;
-  }
+  // Build subtitle for address/lockbox types
+  const subtitle = subType === "address" ? "Address" : subType === "lockbox" ? "Lock Box Code" : null;
 
   const handleSaveEdit = () => {
     if (editName.trim() && editName !== item.name) {
@@ -74,7 +69,12 @@ export function TextDisplayCard({
               className="h-7 text-sm"
             />
           ) : (
-            <h3 className="font-medium text-foreground truncate">{displayText}</h3>
+            <>
+              <h3 className="font-medium text-foreground truncate">{item.name}</h3>
+              {subtitle && (
+                <p className="text-xs text-muted-foreground">{subtitle}</p>
+              )}
+            </>
           )}
         </div>
 
