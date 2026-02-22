@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Calendar, Key, Image, Save, Palette, LayoutGrid, CreditCard } from "lucide-react";
+import { GoogleDriveConnection } from "@/components/admin/GoogleDriveConnection";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { DualLogoUpload } from "@/components/DualLogoUpload";
@@ -322,6 +323,9 @@ const OrganizationSettings = () => {
               </LayoutPreviewCard>
             </div>
           </div>
+
+          {/* Google Drive Integration */}
+          <GoogleDriveConnection />
 
           {/* Organization Code */}
           <div className="bg-card border border-border rounded-xl p-6 mb-6">
