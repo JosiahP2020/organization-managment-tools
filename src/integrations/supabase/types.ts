@@ -697,6 +697,62 @@ export type Database = {
           },
         ]
       }
+      organization_integrations: {
+        Row: {
+          access_token: string | null
+          connected_at: string | null
+          connected_email: string | null
+          created_at: string
+          id: string
+          organization_id: string
+          provider: string
+          refresh_token: string | null
+          root_folder_id: string | null
+          root_folder_name: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected_at?: string | null
+          connected_email?: string | null
+          created_at?: string
+          id?: string
+          organization_id: string
+          provider?: string
+          refresh_token?: string | null
+          root_folder_id?: string | null
+          root_folder_name?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string | null
+          connected_at?: string | null
+          connected_email?: string | null
+          created_at?: string
+          id?: string
+          organization_id?: string
+          provider?: string
+          refresh_token?: string | null
+          root_folder_id?: string | null
+          root_folder_name?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_integrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           accent_color: string | null
