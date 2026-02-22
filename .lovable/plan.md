@@ -1,148 +1,64 @@
+## Add "Text" Item Type to Menu
 
-# Plan: Add Tools Option to Menu Add Button
+### Overview
 
-## Overview
+Add a new "Text" option to the menu's plus button. When clicked, it shows a sub-menu with three choices: **Text**, **Address**, and **Lock Box Code**. Each creates a non-clickable display-only card in the menu with an appropriate icon and text.
 
-This plan adds a "Tool" option to the plus button dropdown in the menu system. When clicked, it opens a dialog where admins can select from three tool types (Checklist, SOP Guide, Follow-up List) and configure the usage mode (Unlimited or Single-use). The tool will be created both as a document in the training system and linked as a menu item.
+### How It Works
 
----
+1. **Plus button gets a 5th option**: "Text" with a `Type` icon
+2. **Clicking "Text" opens a dialog** with three sub-options:
+  - **Text** -- default icon (customizable via icon picker), user enters any text
+  - **Address** -- icon auto-set to `map-pin`, user enters an address. Display always shows "Address: [address]"
+  - **Lock Box Code** -- icon auto-set to `lock`, user enters the code. Display always shows "Lock Box Code: [code]"
+3. **The created item appears as a non-clickable card** -- same visual style as a submenu card (icon + text) but no navigation on click
 
-## What Gets Built
+### Changes Required
 
-### User Experience Flow
-1. Admin clicks the "+" button in a menu section
-2. Dropdown now shows: **Submenu → File Directory → Tool → Section**
-3. Admin clicks "Tool"
-4. Dialog opens with:
-   - Tool type selection (Checklist, SOP Guide, Follow-up List)
-   - Title input field
-   - Description input (optional)
-   - Mode toggle: **Unlimited** (searchable list of documents) or **Single-use** (one specific document)
-5. On create:
-   - The underlying document is created (checklist or gemba_doc)
-   - A menu item is created with `item_type: "tool"` and proper `tool_type`/`tool_mode`
-   - The linkage is stored in `menu_item_documents` table
-6. The tool appears as a card in the section with appropriate icon
-7. Clicking the tool navigates to the appropriate editor
+#### 1. Database Migration
 
----
+- Update the `menu_items_item_type_check` constraint to allow `'text_display'` as a new `item_type` value
 
-## Files to Create
+#### 2. New Dialog: `AddTextDialog.tsx`
 
-### 1. `src/components/menu/AddToolDialog.tsx`
-A dialog for creating new tools with:
-- Radio/button group for tool type selection (Checklist, SOP Guide, Follow-up List)
-- Title and description inputs
-- Toggle for usage mode (Unlimited vs Single-use)
-- Creates both the document and the menu item linkage
+- Three radio/button options: Text, Address, Lock Box Code
+- Based on selection:
+  - **Text**: Shows icon picker (default icon: `type`) + text input for the display text
+  - **Address**: Icon locked to `map-pin` + text input for address
+  - **Lock Box Code**: Icon locked to `lock` + text input for the code
+- Submits with `item_type: "text_display"` and a `description` field storing the sub-type (`text`, `address`, `lockbox`)
 
-### 2. `src/components/menu/ToolCard.tsx`
-Card component for displaying tools inline (similar pattern to FileDirectoryCard):
-- Shows tool name with type-specific icon:
-  - Checklist: `CheckSquare`
-  - SOP Guide: `Grid3X3`
-  - Follow-up List: `ListChecks`
-- Admin controls (move up/down, delete, edit title)
-- Clicking navigates to the tool editor
+#### 3. New Component: `TextDisplayCard.tsx`
 
----
+- Renders like a `MenuItemCard` visually (icon + text) but **not clickable** (no cursor pointer, no navigation)
+- For Lock Box Code items, always displays as "Lock Box Code: [value]"
+- Admin controls (edit, delete, reorder) still work
 
-## Files to Modify
+#### 4. Update `AddMenuItemButton.tsx`
 
-### 1. `src/components/menu/AddMenuItemButton.tsx`
-- Add `Wrench` icon import
-- Add `onAddTool` prop
-- Add "Tool" dropdown item below "File Directory" with separator
+- Add 5th dropdown option: "Text" with `Type` icon
+- Add `onAddText` callback prop
 
-### 2. `src/components/menu/MenuItemSection.tsx`
-- Add `onAddTool` prop
-- Pass `onAddTool` to `AddMenuItemButton`
-- Render `ToolCard` for items with `item_type === "tool"`
+#### 5. Update `MenuItemSection.tsx`
 
-### 3. `src/components/menu/MenuItemsColumn.tsx`
-- Add state for tool dialog open/close
-- Add handler for opening tool dialog with section context
-- Add `createTool` mutation usage
-- Render `AddToolDialog` component
+- Render `TextDisplayCard` for items with `item_type === "text_display"`
+- Pass `onAddText` handler to `AddMenuItemButton`
 
-### 4. `src/hooks/useMenuItems.tsx`
-- Extend `MenuItem` interface to include `tool_type` and `tool_mode` fields
-- Add `createTool` mutation that:
-  1. Creates the document (checklist or gemba_doc) based on tool type
-  2. Creates the menu_item with proper tool fields
-  3. Creates the linkage in `menu_item_documents`
-  4. Handles proper sort_order within the section
+#### 6. Update `MenuItemsColumn.tsx`
 
-### 5. `src/pages/MenuDetail.tsx`
-- Add navigation logic for tool items
-- Route to appropriate editor based on tool_type
+- Add state for `addTextDialogOpen`
+- Add `handleAddText` and `handleCreateText` handlers
+- Wire up the new `AddTextDialog`
 
----
+#### 7. Update `useMenuItems.tsx`
 
-## Technical Details
+- Add `createTextDisplay` mutation that inserts a `menu_item` with `item_type: "text_display"`, the chosen icon, and for lock box items, prefixes the name with "Lock Box Code: "
 
-### Database Tables Used (Already Exist)
+### Technical Details
 
-**menu_items** (tool fields):
-- `tool_type`: "checklist" | "sop_guide" | "follow_up_list"
-- `tool_mode`: "unlimited" | "single"
-- `tool_is_searchable`: boolean (default true)
-
-**menu_item_documents** (linkage table):
-- `menu_item_id`: references the tool menu item
-- `document_id`: references the created checklist/gemba_doc
-- `document_type`: "checklist" | "sop_guide"
-
-### Icon Mapping
-
-```text
-Tool Type        Icon
------------      -----------
-Checklist        CheckSquare
-SOP Guide        Grid3X3
-Follow-up List   ListChecks
-```
-
-### Navigation Routes
-
-```text
-Tool Type        Route
------------      ----------------------------------------
-Checklist        /dashboard/{slug}/training/checklists/{id}
-SOP Guide        /dashboard/{slug}/training/gemba/{id}
-Follow-up List   /dashboard/{slug}/training/follow-up-list/{id}
-```
-
-### Tool Mode Behavior
-
-- **Unlimited**: Creates a tool that can manage multiple documents. When clicked, shows a list view of all linked documents with ability to add more.
-- **Single-use**: Creates a tool linked to exactly one document. When clicked, goes directly to that document's editor.
-
----
-
-## Component Structure
-
-```text
-MenuItemsColumn
-├── AddToolDialog (new)
-├── MenuItemSection
-│   ├── AddMenuItemButton (updated - adds Tool option)
-│   ├── MenuItemCard (for submenus)
-│   ├── FileDirectoryCard (for file directories)
-│   └── ToolCard (new - for tools)
-```
-
----
-
-## Changes Summary
-
-| File | Action | Description |
-|------|--------|-------------|
-| `AddToolDialog.tsx` | Create | Dialog for tool type, title, mode selection |
-| `ToolCard.tsx` | Create | Display card for tool items with navigation |
-| `AddMenuItemButton.tsx` | Update | Add "Tool" option to dropdown |
-| `MenuItemSection.tsx` | Update | Render ToolCard, pass onAddTool handler |
-| `MenuItemsColumn.tsx` | Update | Manage tool dialog state, handle creation |
-| `useMenuItems.tsx` | Update | Add createTool mutation, extend MenuItem type |
-| `MenuDetail.tsx` | Update | Add navigation handler for tool clicks |
-
+- New `item_type` value: `text_display`
+- The sub-type (text/address/lockbox) is stored in the `description` field for future reference
+- Lock box items store just the code in the name field but render as "Lock Box Code: [code]"
+- No `target_category_id` needed (non-navigable)
+- The `TextDisplayCard` has `cursor-default` instead of `cursor-pointer` and no `onClick` handler for navigation
+- Theme-compatible using existing card/border/foreground tokens
