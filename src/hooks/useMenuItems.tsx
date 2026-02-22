@@ -403,6 +403,74 @@ export function useMenuItems(categoryId: string | undefined) {
     },
   });
 
+  // Create a text display item
+  const createTextDisplay = useMutation({
+    mutationFn: async ({
+      name,
+      icon = "type",
+      subType = "text",
+      sectionId,
+    }: {
+      name: string;
+      icon?: string;
+      subType?: string;
+      sectionId?: string | null;
+    }) => {
+      if (!organization?.id || !user?.id || !categoryId) {
+        throw new Error("Not authenticated");
+      }
+
+      const sectionFilter = sectionId && sectionId !== "default" ? sectionId : null;
+
+      let query = supabase
+        .from("menu_items")
+        .select("sort_order")
+        .eq("category_id", categoryId)
+        .neq("item_type", "section")
+        .order("sort_order", { ascending: false })
+        .limit(1);
+
+      if (sectionFilter) {
+        query = query.eq("section_id", sectionFilter);
+      } else {
+        query = query.is("section_id", null);
+      }
+
+      const { data: existingItems } = await query;
+
+      const nextSortOrder = existingItems?.[0]?.sort_order != null
+        ? existingItems[0].sort_order + 1
+        : 0;
+
+      const { data, error } = await supabase
+        .from("menu_items")
+        .insert({
+          name: name.trim(),
+          description: subType,
+          icon,
+          item_type: "text_display",
+          category_id: categoryId,
+          section_id: sectionFilter,
+          organization_id: organization.id,
+          created_by: user.id,
+          sort_order: nextSortOrder,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
+      toast.success("Text item created");
+    },
+    onError: (error) => {
+      console.error("Failed to create text item:", error);
+      toast.error("Failed to create text item");
+    },
+  });
+
   const createSection = useMutation({
     mutationFn: async ({ title, afterSectionId }: { title: string; afterSectionId?: string }) => {
       if (!organization?.id || !user?.id || !categoryId) {
@@ -783,6 +851,7 @@ export function useMenuItems(categoryId: string | undefined) {
     createSubmenu,
     createFileDirectory,
     createTool,
+    createTextDisplay,
     createSection,
     updateItemName,
     deleteItem,

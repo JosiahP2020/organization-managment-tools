@@ -8,6 +8,7 @@ import { AddMenuItemButton } from "./AddMenuItemButton";
 import { MenuItemCard } from "./MenuItemCard";
 import { FileDirectoryCard } from "./FileDirectoryCard";
 import { ToolCard } from "./ToolCard";
+import { TextDisplayCard } from "./TextDisplayCard";
 import type { MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItems";
 
 interface MenuItemSectionProps {
@@ -20,6 +21,7 @@ interface MenuItemSectionProps {
   onAddSubmenu: (sectionId: string) => void;
   onAddFileDirectory: (sectionId: string) => void;
   onAddTool: (sectionId: string) => void;
+  onAddText: (sectionId: string) => void;
   onAddSection: () => void;
   onDeleteSection: (sectionId: string) => void;
   onDeleteItem: (itemId: string) => void;
@@ -41,6 +43,7 @@ export function MenuItemSection({
   onAddSubmenu,
   onAddFileDirectory,
   onAddTool,
+  onAddText,
   onAddSection,
   onDeleteSection,
   onDeleteItem,
@@ -159,6 +162,21 @@ export function MenuItemSection({
                 />
               );
             }
+
+            if (item.item_type === "text_display") {
+              return (
+                <TextDisplayCard
+                  key={item.id}
+                  item={item}
+                  isFirst={index === 0}
+                  isLast={index === section.items.length - 1}
+                  onMoveUp={() => onMoveItemUp(item.id, section.id)}
+                  onMoveDown={() => onMoveItemDown(item.id, section.id)}
+                  onDelete={() => onDeleteItem(item.id)}
+                  onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
+                />
+              );
+            }
             
             return (
               <MenuItemCard
@@ -184,6 +202,7 @@ export function MenuItemSection({
                 onAddSubmenu={() => onAddSubmenu(section.id)}
                 onAddFileDirectory={() => onAddFileDirectory(section.id)}
                 onAddTool={() => onAddTool(section.id)}
+                onAddText={() => onAddText(section.id)}
                 onAddSection={onAddSection}
               />
             </div>
