@@ -16,6 +16,7 @@ interface ToolCardProps {
   onDelete: () => void;
   onTitleChange: (newTitle: string) => void;
   onClick?: () => void;
+  driveButton?: React.ReactNode;
 }
 
 const toolIcons: Record<string, React.ElementType> = {
@@ -39,6 +40,7 @@ export function ToolCard({
   onDelete,
   onTitleChange,
   onClick,
+  driveButton,
 }: ToolCardProps) {
   const { isAdmin } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -112,6 +114,7 @@ export function ToolCard({
         {/* Admin Controls */}
         {isAdmin && !isEditing && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {driveButton}
             <Button
               variant="ghost"
               size="icon"

@@ -19,6 +19,7 @@ import { AddToolDialog, type ToolType, type ToolMode } from "./AddToolDialog";
 import { AddTextDialog } from "./AddTextDialog";
 import { useMenuItems, type MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItems";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDriveExport } from "@/hooks/useDriveExport";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface MenuItemsColumnProps {
@@ -28,6 +29,7 @@ interface MenuItemsColumnProps {
 
 export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProps) {
   const { isAdmin } = useAuth();
+  const driveExport = useDriveExport();
 
   const {
     sections,
@@ -229,6 +231,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
                   onMoveItemUp={(itemId, sectionId) => moveItemUp.mutate({ itemId, sectionId })}
                   onMoveItemDown={(itemId, sectionId) => moveItemDown.mutate({ itemId, sectionId })}
                   onItemClick={onItemClick}
+                  driveExport={driveExport}
                 />
               );
             })}
