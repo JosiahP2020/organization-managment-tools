@@ -11,7 +11,11 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
   const navigate = useNavigate();
 
   const handleBack = () => {
-    navigate(-1);
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(fallbackPath);
+    }
   };
 
   return (
