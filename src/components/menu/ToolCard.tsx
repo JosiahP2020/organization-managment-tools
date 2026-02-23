@@ -107,7 +107,7 @@ export function ToolCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground truncate">{item.name}</h3>
+              <h3 className="font-medium text-foreground">{item.name}</h3>
               <p className="text-xs text-muted-foreground">{toolLabel}</p>
             </>
           )}
@@ -115,59 +115,59 @@ export function ToolCard({
 
         {/* Admin Controls */}
         {isAdmin && !isEditing && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             {driveButton}
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 group-hover:bg-accent"
+              className="h-6 w-6 group-hover:bg-accent"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditing(true);
               }}
               title="Edit title"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil className="h-3 w-3" />
             </Button>
             {!isFirst && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 group-hover:bg-accent"
+                className="h-6 w-6 group-hover:bg-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onMoveUp();
                 }}
                 title="Move up"
               >
-                <ChevronUp className="h-3.5 w-3.5" />
+                <ChevronUp className="h-3 w-3" />
               </Button>
             )}
             {!isLast && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 group-hover:bg-accent"
+                className="h-6 w-6 group-hover:bg-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onMoveDown();
                 }}
                 title="Move down"
               >
-                <ChevronDown className="h-3.5 w-3.5" />
+                <ChevronDown className="h-3 w-3" />
               </Button>
             )}
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-destructive hover:text-destructive group-hover:bg-accent"
+              className="h-6 w-6 text-destructive hover:text-destructive group-hover:bg-accent"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowDeleteDialog(true);
               }}
               title="Delete tool"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="h-3 w-3" />
             </Button>
           </div>
         )}

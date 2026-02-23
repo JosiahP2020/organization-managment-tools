@@ -47,6 +47,7 @@ export function DriveFolderPickerDialog({
   const currentFolderId = breadcrumbs[breadcrumbs.length - 1].id;
 
   const fetchFolders = useCallback(async (parentId: string) => {
+    setFolders([]);
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();

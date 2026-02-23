@@ -44,7 +44,7 @@ export function ExportToDriveButton({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 group-hover:bg-accent shrink-0"
+              className="h-6 w-6 group-hover:bg-accent shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 setPickerOpen(true);
@@ -53,11 +53,11 @@ export function ExportToDriveButton({
               title={label}
             >
               {isExporting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-3 w-3 animate-spin" />
               ) : lastSynced ? (
-                <CloudUpload className="h-3.5 w-3.5" />
+                <CloudUpload className="h-3 w-3" />
               ) : (
-                <Upload className="h-3.5 w-3.5" />
+                <Upload className="h-3 w-3" />
               )}
             </Button>
           </TooltipTrigger>
