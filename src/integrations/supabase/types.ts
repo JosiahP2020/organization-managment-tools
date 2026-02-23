@@ -295,6 +295,47 @@ export type Database = {
           },
         ]
       }
+      drive_file_references: {
+        Row: {
+          created_at: string
+          drive_file_id: string
+          drive_folder_id: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          last_synced_at: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          drive_file_id: string
+          drive_folder_id?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          last_synced_at?: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          drive_file_id?: string
+          drive_folder_id?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          last_synced_at?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drive_file_references_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       file_directory_files: {
         Row: {
           created_at: string
