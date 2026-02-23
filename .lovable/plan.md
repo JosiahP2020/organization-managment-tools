@@ -1,25 +1,41 @@
 
-# Fix Back Button Timeout / History Loss
+# Phase 2: Google Drive Export (App → Drive)
 
-## Problem
-The Back button uses `navigate(-1)` (browser history), which stops working when the preview iframe refreshes or the user stays on a page too long and history is lost. When this happens, clicking Back does nothing.
+## Overview
+Allow admins to manually export app content to the connected Google Drive account. Content is saved to an `_app_storage` folder on Drive. Future: add auto-sync toggle in org settings.
 
-## Solution
-Update the `BackButton` component to detect when browser history is unavailable and fall back to navigating to the dashboard. The `fallbackPath` prop already exists but is never used -- we'll wire it up.
+## Steps
 
-## Technical Details
+### Step 1: Create `google-drive-export` Edge Function
+- Accepts: `{ type, id, organizationId }` where type is "checklist", "gemba_doc", "file_directory", or "text_display"
+- Retrieves the org's Google Drive tokens from `organization_integrations`
+- Refreshes the access token if expired (using refresh_token + Google token endpoint)
+- Creates `_app_storage` root folder on Drive if it doesn't exist (stores folder ID in `organization_integrations.root_folder_id`)
+- Creates sub-folders by type (e.g., `_app_storage/Checklists/`, `_app_storage/SOPs/`)
+- For document types (checklists, SOPs): creates a Google Doc with the content
+- For file directory items: uploads the actual files from Supabase storage
+- For text display items: creates a Google Doc with the text content
+- Updates in-place if the file already exists (tracked via a new `drive_file_references` table)
 
-### File: `src/components/BackButton.tsx`
-- Check `window.history.length` to determine if there's meaningful history to go back to
-- If history length is 1 or less (no previous page), navigate to the `fallbackPath` (which is already set to the dashboard path by `DashboardHeader`)
-- This ensures the button always takes the user somewhere useful, even after a session timeout or iframe reload
+### Step 2: Create `drive_file_references` Table
+- Columns: `id`, `organization_id`, `entity_type`, `entity_id`, `drive_file_id`, `drive_folder_id`, `last_synced_at`, `created_at`
+- Tracks which app items have been exported to Drive and their Drive file IDs
+- Enables in-place updates instead of creating duplicates
 
-### Logic:
-```
-If browser history exists (length > 1):
-  -> navigate(-1) as before
-Else:
-  -> navigate(fallbackPath) to go to dashboard
-```
+### Step 3: Add Export UI
+- Add "Export to Drive" button on menu item cards (checklists, SOPs, file directories, text displays)
+- Show a Drive badge (↑) on items that have been exported
+- Add a "Sync All to Drive" button on the menu detail page header
+- Show sync status (last synced timestamp) on exported items
+- Toast notifications for success/failure
 
-No other files need changes -- `DashboardHeader` already passes the correct fallback path (`/dashboard/{slug}`).
+### Step 4: Add Auto-Sync Toggle (Future)
+- Add toggle in Organization Settings under Google Drive section
+- When enabled, automatically export on content create/update
+- Store setting in `organizations` table (new `auto_sync_drive` column)
+
+## Implementation Order
+1. Step 2 (database table) — need this first
+2. Step 1 (edge function) — core logic
+3. Step 3 (UI) — wire it all together
+4. Step 4 (auto-sync) — future enhancement
