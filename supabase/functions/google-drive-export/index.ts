@@ -371,141 +371,149 @@ async function uploadFileToDrive(
 }
 
 // Build HTML content for a checklist matching ChecklistPrintView format
+// IMPORTANT: Uses inline styles only — Google Docs strips <style> blocks
 function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoUrl: string | null, accentColor: string): string {
   const accent = accentColor || "22, 90%, 54%";
-  let html = `<!DOCTYPE html><html><head><style>
-    body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 0.5in; margin: 0; }
-    .header { display: flex; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid black; }
-    .header-logo { height: 64px; width: auto; flex-shrink: 0; }
-    .header-title { flex: 1; text-align: center; font-size: 24px; font-weight: bold; }
-    .header-spacer { width: 64px; flex-shrink: 0; }
-    .section { margin-bottom: 24px; break-inside: avoid; }
-    .section-title { font-weight: 600; font-size: 16px; padding: 8px 12px; margin-bottom: 8px; background: #f5f5f5; border-left: 4px solid hsl(${accent}); }
-    .section-items { padding-left: 8px; }
-    .item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
-    .checkbox { width: 20px; height: 20px; min-width: 20px; min-height: 20px; border: 2px solid black; border-radius: 4px; flex-shrink: 0; margin-top: 2px; background: white; }
-    .number { min-width: 24px; font-weight: 500; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
-    .item-text { font-size: 14px; flex: 1; }
-    .section-image { max-height: 192px; border: 1px solid #e5e7eb; margin-bottom: 12px; margin-left: 8px; }
-  </style></head><body>`;
+  let html = `<!DOCTYPE html><html><head></head><body style="font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; padding: 36pt; margin: 0;">`;
 
-  // Header with logo and title
-  html += `<div class="header">`;
+  // Header: logo left, title center, spacer right
+  html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border-bottom: 2px solid black; padding-bottom: 16px;">
+    <tr>
+      <td style="width: 80px; vertical-align: top; padding-bottom: 16px;">`;
   if (logoUrl) {
-    html += `<img src="${logoUrl}" class="header-logo" />`;
-  } else {
-    html += `<div class="header-spacer"></div>`;
+    html += `<img src="${logoUrl}" style="height: 64px; width: auto;" />`;
   }
-  html += `<div class="header-title">${checklist.title}</div>`;
-  html += `<div class="header-spacer"></div>`;
-  html += `</div>`;
+  html += `</td>
+      <td style="text-align: center; vertical-align: top; padding-bottom: 16px;">
+        <span style="font-size: 24px; font-weight: bold;">${checklist.title}</span>
+      </td>
+      <td style="width: 80px; padding-bottom: 16px;"></td>
+    </tr>
+  </table>`;
 
   for (const section of sections.sort((a: any, b: any) => a.sort_order - b.sort_order)) {
     const isNumbered = section.display_mode === 'numbered';
-    html += `<div class="section">`;
-    html += `<div class="section-title">${section.title}</div>`;
+    
+    // Section title with orange left border and gray background
+    html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
+      <tr>
+        <td style="width: 4px; background-color: hsl(${accent}); padding: 0;"></td>
+        <td style="background-color: #f5f5f5; padding: 8px 12px; font-weight: 600; font-size: 16px;">${section.title}</td>
+      </tr>
+    </table>`;
 
     if (section.image_url) {
-      html += `<img src="${section.image_url}" class="section-image" />`;
+      html += `<div style="margin-bottom: 12px; padding-left: 8px;"><img src="${section.image_url}" style="max-height: 192px; border: 1px solid #e5e7eb;" /></div>`;
     }
 
-    html += `<div class="section-items">`;
+    // Items
     const topItems = items
       .filter((i: any) => i.section_id === section.id && !i.parent_item_id)
       .sort((a: any, b: any) => a.sort_order - b.sort_order);
 
+    html += `<div style="padding-left: 8px; margin-bottom: 24px;">`;
     for (let idx = 0; idx < topItems.length; idx++) {
       const item = topItems[idx];
-      html += `<div class="item">`;
+      html += `<table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #e5e7eb;">
+        <tr>
+          <td style="width: 28px; vertical-align: top; padding: 8px 0;">`;
       if (isNumbered) {
-        html += `<span class="number">${idx + 1}.</span>`;
+        html += `<span style="font-weight: 500; font-size: 14px;">${idx + 1}.</span>`;
       } else {
-        html += `<div class="checkbox"></div>`;
+        html += `<div style="width: 20px; height: 20px; border: 2px solid black; border-radius: 4px; background: white;"></div>`;
       }
-      html += `<span class="item-text">${item.text}</span>`;
-      html += `</div>`;
+      html += `</td>
+          <td style="vertical-align: top; padding: 8px 0; font-size: 14px;">${item.text}</td>
+        </tr>
+      </table>`;
 
+      // Sub-items
       const children = items
         .filter((i: any) => i.parent_item_id === item.id)
         .sort((a: any, b: any) => a.sort_order - b.sort_order);
       for (let ci = 0; ci < children.length; ci++) {
-        html += `<div class="item" style="margin-left: 24px;">`;
+        html += `<table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #e5e7eb; margin-left: 24px;">
+          <tr>
+            <td style="width: 28px; vertical-align: top; padding: 8px 0;">`;
         if (isNumbered) {
-          html += `<span class="number">${String.fromCharCode(65 + ci)}.</span>`;
+          html += `<span style="font-weight: 500; font-size: 14px;">${String.fromCharCode(65 + ci)}.</span>`;
         } else {
-          html += `<div class="checkbox"></div>`;
+          html += `<div style="width: 20px; height: 20px; border: 2px solid black; border-radius: 4px; background: white;"></div>`;
         }
-        html += `<span class="item-text">${children[ci].text}</span>`;
-        html += `</div>`;
+        html += `</td>
+            <td style="vertical-align: top; padding: 8px 0; font-size: 14px;">${children[ci].text}</td>
+          </tr>
+        </table>`;
       }
     }
-    html += `</div></div>`;
+    html += `</div>`;
   }
   html += `</body></html>`;
   return html;
 }
 
 // Build HTML content for a gemba doc (SOP) matching GembaDocPrintView format
+// IMPORTANT: Uses inline styles only — Google Docs strips <style> blocks
 function buildGembaDocHtml(doc: any, pages: any[], cells: any[], logoUrl: string | null, accentColor: string): string {
   const accent = accentColor || "22, 90%, 54%";
-  const orientation = doc.orientation || "landscape";
-  let html = `<!DOCTYPE html><html><head><style>
-    @page { size: ${orientation}; margin: 0.4in; }
-    body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; margin: 0; padding: 0; }
-    .page { padding: 0.375rem; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; page-break-after: always; }
-    .page:last-child { page-break-after: auto; }
-    .header { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; padding-bottom: 0.25rem; min-height: 64px; }
-    .logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 64px; width: auto; }
-    .page-number { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem; font-weight: 700; color: hsl(${accent}); background: hsla(${accent}, 0.15); border-radius: 0.5rem; padding: 0.25rem 0.5rem; min-width: 2rem; text-align: center; }
-    .header-text { text-align: center; }
-    .title { font-size: 2rem; font-weight: 700; margin: 0; color: #111; }
-    .description { font-size: 1rem; color: #666; margin: 0.375rem 0 0; }
-    .grid { display: grid; gap: 0.375rem; flex: 1; min-height: 0; }
-    .cell { position: relative; overflow: hidden; break-inside: avoid; display: flex; flex-direction: column; border-radius: 0.5rem; }
-    .cell-empty { background: transparent; }
-    .image-container { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 0.5rem; }
-    .step-badge { position: absolute; top: 0.5rem; left: 0.5rem; background: hsl(${accent}); color: #fff; min-width: 2rem; height: 2rem; padding: 0 0.5rem; font-weight: 700; font-size: 0.875rem; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; z-index: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
-    .cell-image { width: 100%; height: 100%; object-fit: cover; border-radius: 0.5rem; }
-    .step-text { font-family: Inter, system-ui, sans-serif; font-size: 0.8rem; font-weight: 600; line-height: 1.3; color: #333; margin: 0; padding: 0.25rem 0.375rem; min-height: 1.5rem; }
-  </style></head><body>`;
+  let html = `<!DOCTYPE html><html><head></head><body style="font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 0; padding: 0;">`;
 
   const sortedPages = pages.sort((a: any, b: any) => a.page_number - b.page_number);
   for (let pi = 0; pi < sortedPages.length; pi++) {
     const page = sortedPages[pi];
-    html += `<div class="page">`;
-    html += `<div class="header">`;
-    if (logoUrl) {
-      html += `<img src="${logoUrl}" class="logo" />`;
-    }
-    if (pi === 0) {
-      html += `<div class="header-text"><h1 class="title">${doc.title}</h1>`;
-      if (doc.description) html += `<p class="description">${doc.description}</p>`;
-      html += `</div>`;
-    }
-    html += `<span class="page-number">${page.page_number}</span>`;
-    html += `</div>`;
+    
+    // Page wrapper
+    html += `<div style="padding: 6px; ${pi > 0 ? 'page-break-before: always;' : ''}">`;
 
+    // Header: logo left, title center, page number right
+    html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; min-height: 64px;">
+      <tr>
+        <td style="width: 80px; vertical-align: middle;">`;
+    if (logoUrl) {
+      html += `<img src="${logoUrl}" style="height: 64px; width: auto;" />`;
+    }
+    html += `</td>
+        <td style="text-align: center; vertical-align: middle;">`;
+    if (pi === 0) {
+      html += `<span style="font-size: 32px; font-weight: 700; color: #111;">${doc.title}</span>`;
+      if (doc.description) html += `<br/><span style="font-size: 16px; color: #666;">${doc.description}</span>`;
+    }
+    html += `</td>
+        <td style="width: 60px; text-align: right; vertical-align: middle;">
+          <span style="font-size: 20px; font-weight: 700; color: hsl(${accent}); background-color: hsla(${accent}, 0.15); border-radius: 8px; padding: 4px 8px;">${page.page_number}</span>
+        </td>
+      </tr>
+    </table>`;
+
+    // Grid using table
     const gridCols = doc.grid_columns || 2;
     const gridRows = doc.grid_rows || 2;
-    html += `<div class="grid" style="grid-template-columns: repeat(${gridCols}, 1fr); grid-template-rows: repeat(${gridRows}, 1fr);">`;
-    
     const pageCells = cells.filter((c: any) => c.page_id === page.id);
-    for (let i = 0; i < gridRows * gridCols; i++) {
-      const cell = pageCells.find((c: any) => c.position === i);
-      const stepNumber = i + 1;
-      if (!cell?.image_url) {
-        html += `<div class="cell cell-empty"></div>`;
-      } else {
-        html += `<div class="cell">`;
-        html += `<div class="image-container">`;
-        html += `<div class="step-badge">${stepNumber}</div>`;
-        html += `<img src="${cell.image_url}" class="cell-image" />`;
-        html += `</div>`;
-        html += `<p class="step-text">${cell.step_text || ""}</p>`;
-        html += `</div>`;
+    
+    html += `<table style="width: 100%; border-collapse: collapse; table-layout: fixed;">`;
+    for (let row = 0; row < gridRows; row++) {
+      html += `<tr>`;
+      for (let col = 0; col < gridCols; col++) {
+        const i = row * gridCols + col;
+        const cell = pageCells.find((c: any) => c.position === i);
+        const stepNumber = i + 1;
+        
+        if (!cell?.image_url) {
+          html += `<td style="padding: 3px; vertical-align: top;"></td>`;
+        } else {
+          html += `<td style="padding: 3px; vertical-align: top;">
+            <div style="position: relative; border-radius: 8px; overflow: hidden;">
+              <div style="position: absolute; top: 8px; left: 8px; background: hsl(${accent}); color: white; min-width: 32px; height: 32px; padding: 0 8px; font-weight: 700; font-size: 14px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; z-index: 1;">${stepNumber}</div>
+              <img src="${cell.image_url}" style="width: 100%; height: auto; display: block; border-radius: 8px;" />
+            </div>
+            <p style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 600; line-height: 1.3; color: #333; margin: 0; padding: 4px 6px;">${cell.step_text || ""}</p>
+          </td>`;
+        }
       }
+      html += `</tr>`;
     }
-    html += `</div></div>`;
+    html += `</table>`;
+    html += `</div>`;
   }
   html += `</body></html>`;
   return html;
