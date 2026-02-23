@@ -75,8 +75,15 @@ Deno.serve(async (req) => {
       "https://www.googleapis.com/auth/userinfo.email",
     ].join(" ");
 
-    // State encodes org ID for the callback
-    const state = btoa(JSON.stringify({ org_id: orgId }));
+    // Get origin from request body
+    let appOrigin = "https://id-preview--b4ff9489-f27c-41e6-a539-69485bbbddba.lovable.app";
+    try {
+      const body = await req.json();
+      if (body?.origin) appOrigin = body.origin;
+    } catch { /* no body */ }
+
+    // State encodes org ID and origin for the callback
+    const state = btoa(JSON.stringify({ org_id: orgId, origin: appOrigin }));
 
     const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     authUrl.searchParams.set("client_id", clientId);

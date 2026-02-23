@@ -7,23 +7,25 @@ Deno.serve(async (req) => {
     const stateParam = url.searchParams.get("state");
     const error = url.searchParams.get("error");
 
-    // Determine the app origin for redirects
-    const appOrigin = Deno.env.get("APP_ORIGIN") || "https://id-preview--b4ff9489-f27c-41e6-a539-69485bbbddba.lovable.app";
+    // Default app origin fallback
+    const defaultOrigin = Deno.env.get("APP_ORIGIN") || "https://id-preview--b4ff9489-f27c-41e6-a539-69485bbbddba.lovable.app";
 
     if (error) {
-      return Response.redirect(`${appOrigin}/admin/organization?drive_error=${encodeURIComponent(error)}`, 302);
+      return Response.redirect(`${defaultOrigin}/admin/organization?drive_error=${encodeURIComponent(error)}`, 302);
     }
 
     if (!code || !stateParam) {
-      return Response.redirect(`${appOrigin}/admin/organization?drive_error=missing_params`, 302);
+      return Response.redirect(`${defaultOrigin}/admin/organization?drive_error=missing_params`, 302);
     }
 
     let orgId: string;
+    let appOrigin = defaultOrigin;
     try {
       const state = JSON.parse(atob(stateParam));
       orgId = state.org_id;
+      if (state.origin) appOrigin = state.origin;
     } catch {
-      return Response.redirect(`${appOrigin}/admin/organization?drive_error=invalid_state`, 302);
+      return Response.redirect(`${defaultOrigin}/admin/organization?drive_error=invalid_state`, 302);
     }
 
     // Exchange code for tokens

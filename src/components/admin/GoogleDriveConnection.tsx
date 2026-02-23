@@ -63,6 +63,7 @@ export function GoogleDriveConnection() {
 
       const { data, error } = await supabase.functions.invoke("google-drive-auth", {
         headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { origin: window.location.origin },
       });
 
       if (error) throw error;
