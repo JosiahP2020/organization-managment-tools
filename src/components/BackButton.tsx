@@ -11,11 +11,10 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
   const navigate = useNavigate();
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate(fallbackPath);
-    }
+    // Always navigate to the fallback (dashboard) path.
+    // Using navigate(-1) is unreliable in iframes where history
+    // can be lost on refresh or after sitting on a page too long.
+    navigate(fallbackPath);
   };
 
   return (
