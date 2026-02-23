@@ -488,12 +488,45 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { type, id, folderId: userFolderId } = await req.json();
-    if (!type || !id) {
+    const { type: rawType, id: rawId, folderId: userFolderId } = await req.json();
+    if (!rawType || !rawId) {
       return new Response(JSON.stringify({ error: "Missing type or id" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // If the type is a tool type (checklist/follow_up_list/sop_guide), resolve the actual document
+    // The rawId is a menu_item_id — we need to find the linked document
+    let type = rawType;
+    let id = rawId;
+
+    if (rawType === "checklist" || rawType === "gemba_doc") {
+      // Check if this ID is actually a menu_item rather than a document
+      const { data: directDoc } = rawType === "checklist"
+        ? await supabaseUser.from("checklists").select("id").eq("id", rawId).maybeSingle()
+        : await supabaseUser.from("gemba_docs").select("id").eq("id", rawId).maybeSingle();
+
+      if (!directDoc) {
+        // It's likely a menu_item_id — look up the linked document
+        const docType = rawType === "checklist" ? "checklist" : "gemba_doc";
+        const { data: menuItemDoc } = await supabaseUser
+          .from("menu_item_documents")
+          .select("document_id, document_type")
+          .eq("menu_item_id", rawId)
+          .eq("document_type", docType)
+          .is("archived_at", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (menuItemDoc?.document_id) {
+          id = menuItemDoc.document_id;
+          console.log(`Resolved menu_item ${rawId} -> ${docType} document ${id}`);
+        } else {
+          console.log(`No linked ${docType} document found for menu_item ${rawId}`);
+        }
+      }
     }
 
     // Service role client for reading tokens and writing refs
