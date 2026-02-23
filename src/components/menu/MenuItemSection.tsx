@@ -15,7 +15,7 @@ import type { MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItem
 interface DriveExportContext {
   isConnected: boolean;
   getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string } | null;
-  exportToDrive: (type: string, id: string) => Promise<void>;
+  exportToDrive: (type: string, id: string, folderId?: string) => Promise<void>;
   isExporting: (id: string) => boolean;
 }
 
@@ -142,18 +142,31 @@ export function MenuItemSection({
           }`}
         >
           {section.items.map((item, index) => {
-            // Drive export for text_display items (tools export at document level)
-            const driveType = item.item_type === "text_display" ? "text_display" : null;
-            const driveRef = driveExport?.isConnected && driveType ? driveExport.getRef(item.id) : null;
+            // Determine drive entity type for this item
+            let driveType: string | null = null;
+            let driveEntityId = item.id;
+
+            if (item.item_type === "text_display") {
+              driveType = "text_display";
+            } else if (item.item_type === "tool") {
+              const toolType = (item as any).tool_type;
+              if (toolType === "checklist" || toolType === "follow_up_list") {
+                driveType = "checklist";
+              } else if (toolType === "sop_guide") {
+                driveType = "gemba_doc";
+              }
+            }
+
+            const driveRef = driveExport?.isConnected && driveType ? driveExport.getRef(driveEntityId) : null;
             const showDriveExport = isAdmin && driveExport?.isConnected && driveType;
 
             const driveButton = showDriveExport ? (
               <ExportToDriveButton
-                entityId={item.id}
+                entityId={driveEntityId}
                 entityType={driveType!}
-                isExporting={driveExport!.isExporting(item.id)}
+                isExporting={driveExport!.isExporting(driveEntityId)}
                 lastSynced={driveRef?.last_synced_at || null}
-                onExport={() => driveExport!.exportToDrive(driveType!, item.id)}
+                onExport={(folderId) => driveExport!.exportToDrive(driveType!, driveEntityId, folderId)}
               />
             ) : null;
 

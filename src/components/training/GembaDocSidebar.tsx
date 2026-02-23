@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, LockOpen, Printer, RectangleVertical, RectangleHorizontal, Grid3X3, Upload, Loader2, CloudUpload } from "lucide-react";
+import { Lock, LockOpen, Printer, RectangleVertical, RectangleHorizontal, Grid3X3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,6 @@ interface GembaDocSidebarProps {
   onDoubleSidedChange: (doubleSided: boolean) => void;
   onPrint: () => void;
   isAdmin: boolean;
-  onExportToDrive?: () => void;
-  isExportingToDrive?: boolean;
-  lastDriveSyncAt?: string | null;
-  isDriveConnected?: boolean;
 }
 
 export function GembaDocSidebar({
@@ -36,15 +32,10 @@ export function GembaDocSidebar({
   onDoubleSidedChange,
   onPrint,
   isAdmin,
-  onExportToDrive,
-  isExportingToDrive,
-  lastDriveSyncAt,
-  isDriveConnected,
 }: GembaDocSidebarProps) {
   const [rowsInput, setRowsInput] = useState(String(gridRows));
   const [colsInput, setColsInput] = useState(String(gridCols));
 
-  // Sync local state when props change
   useEffect(() => {
     setRowsInput(String(gridRows));
   }, [gridRows]);
@@ -172,26 +163,6 @@ export function GembaDocSidebar({
             <Printer className="h-4 w-4" />
             Print
           </Button>
-
-          {/* Export to Drive */}
-          {isDriveConnected && isAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start gap-2"
-              onClick={onExportToDrive}
-              disabled={isExportingToDrive}
-            >
-              {isExportingToDrive ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : lastDriveSyncAt ? (
-                <CloudUpload className="h-4 w-4 text-primary" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              {lastDriveSyncAt ? "Sync to Drive" : "Export to Drive"}
-            </Button>
-          )}
         </div>
 
         {doubleSided && (

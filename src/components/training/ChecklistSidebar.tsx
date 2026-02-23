@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, LockOpen, RotateCcw, Printer, Image, ImageOff, Upload, Loader2, CloudUpload } from "lucide-react";
+import { Eye, EyeOff, Lock, LockOpen, RotateCcw, Printer, Image, ImageOff } from "lucide-react";
 
 interface ChecklistSidebarProps {
   isLocked: boolean;
@@ -15,10 +15,6 @@ interface ChecklistSidebarProps {
   onReset: () => void;
   onPrint: () => void;
   canEdit: boolean;
-  onExportToDrive?: () => void;
-  isExportingToDrive?: boolean;
-  lastDriveSyncAt?: string | null;
-  isDriveConnected?: boolean;
 }
 
 export function ChecklistSidebar({
@@ -32,10 +28,6 @@ export function ChecklistSidebar({
   onReset,
   onPrint,
   canEdit,
-  onExportToDrive,
-  isExportingToDrive,
-  lastDriveSyncAt,
-  isDriveConnected,
 }: ChecklistSidebarProps) {
   return (
     <Card className="w-64 shrink-0 h-fit">
@@ -129,26 +121,6 @@ export function ChecklistSidebar({
             <Printer className="h-4 w-4" />
             Print
           </Button>
-
-          {/* Export to Drive */}
-          {isDriveConnected && canEdit && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full justify-start gap-2"
-              onClick={onExportToDrive}
-              disabled={isExportingToDrive}
-            >
-              {isExportingToDrive ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : lastDriveSyncAt ? (
-                <CloudUpload className="h-4 w-4 text-primary" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              {lastDriveSyncAt ? "Sync to Drive" : "Export to Drive"}
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>
