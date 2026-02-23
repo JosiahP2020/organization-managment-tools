@@ -86,25 +86,26 @@ export function TextDisplayCard({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           {driveButton}
           {!isFirst && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
-              <ChevronUp className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
+              <ChevronUp className="h-3.5 w-3.5" />
             </Button>
           )}
           {!isLast && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
-              <ChevronDown className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-7 w-7 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
+              <ChevronDown className="h-3.5 w-3.5" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={() => setIsEditing(true)}>
-            <Pencil className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-7 w-7 group-hover:bg-accent" onClick={() => setIsEditing(true)} title="Edit">
+            <Pencil className="h-3.5 w-3.5" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 group-hover:bg-accent"
+            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10 group-hover:bg-accent"
             onClick={() => setShowDeleteDialog(true)}
+            title="Delete"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
 
