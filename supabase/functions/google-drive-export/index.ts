@@ -587,14 +587,24 @@ Deno.serve(async (req) => {
       targetFolderId = await getOrCreateSubFolder(accessToken, rootFolderId, subFolderName);
     }
 
-    // Check for existing drive reference
-    const { data: existingRef } = await supabase
+    // Check for existing drive reference (check both rawId and resolved id)
+    const { data: existingRefByRaw } = await supabase
+      .from("drive_file_references")
+      .select("*")
+      .eq("organization_id", orgId)
+      .eq("entity_type", type)
+      .eq("entity_id", rawId)
+      .maybeSingle();
+
+    const { data: existingRefByResolved } = id !== rawId ? await supabase
       .from("drive_file_references")
       .select("*")
       .eq("organization_id", orgId)
       .eq("entity_type", type)
       .eq("entity_id", id)
-      .single();
+      .maybeSingle() : { data: null };
+
+    const existingRef = existingRefByRaw || existingRefByResolved;
 
     const existingDriveFileId = existingRef?.drive_file_id || null;
 
@@ -727,13 +737,14 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Upsert drive_file_references
+    // Upsert drive_file_references — always store rawId (menu item ID) so UI can look it up
     if (existingRef) {
       await supabase
         .from("drive_file_references")
         .update({
           drive_file_id: driveFileId,
           drive_folder_id: targetFolderId,
+          entity_id: rawId, // Ensure it's stored by menu item ID
           last_synced_at: new Date().toISOString(),
         })
         .eq("id", existingRef.id);
@@ -741,7 +752,7 @@ Deno.serve(async (req) => {
       await supabase.from("drive_file_references").insert({
         organization_id: orgId,
         entity_type: type,
-        entity_id: id,
+        entity_id: rawId, // Store by menu item ID
         drive_file_id: driveFileId,
         drive_folder_id: targetFolderId,
       });
