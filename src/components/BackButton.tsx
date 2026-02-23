@@ -11,10 +11,14 @@ export function BackButton({ fallbackPath = "/", className = "" }: BackButtonPro
   const navigate = useNavigate();
 
   const handleBack = () => {
-    // Always navigate to the fallback (dashboard) path.
-    // Using navigate(-1) is unreliable in iframes where history
-    // can be lost on refresh or after sitting on a page too long.
-    navigate(fallbackPath);
+    // In production, navigate(-1) works reliably.
+    // In the Lovable preview iframe, history can be lost — but this
+    // is not an issue in published apps or PWA/APK builds.
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate(fallbackPath);
+    }
   };
 
   return (
