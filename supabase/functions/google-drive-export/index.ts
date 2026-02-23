@@ -388,127 +388,115 @@ async function uploadFileToDrive(
   return data.id;
 }
 
-// Build HTML content for a checklist matching ChecklistPrintView format
-// IMPORTANT: Uses inline styles only — Google Docs strips <style> blocks
-function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoUrl: string | null, accentColor: string): string {
-  const accent = accentColor || "22, 90%, 54%";
-  let html = `<!DOCTYPE html><html><head></head><body style="font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; padding: 36pt; margin: 0;">`;
-
-  // Header: logo left, title center, spacer right
-  html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; border-bottom: 2px solid black; padding-bottom: 16px;">
-    <tr>
-      <td style="width: 80px; vertical-align: top; padding-bottom: 16px;">`;
-  if (logoUrl) {
-    html += `<img src="${logoUrl}" style="height: 64px; width: auto;" />`;
+// Convert HSL string like "22, 90%, 54%" to hex color
+function hslToHex(hslStr: string): string {
+  try {
+    const parts = hslStr.replace(/%/g, '').split(',').map(s => s.trim());
+    const h = parseFloat(parts[0]) / 360;
+    const s = parseFloat(parts[1]) / 100;
+    const l = parseFloat(parts[2]) / 100;
+    const hue2rgb = (p: number, q: number, t: number) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+    const g = Math.round(hue2rgb(p, q, h) * 255);
+    const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  } catch {
+    return "#f05d21";
   }
-  html += `</td>
-      <td style="text-align: center; vertical-align: top; padding-bottom: 16px;">
-        <span style="font-size: 24px; font-weight: bold;">${checklist.title}</span>
-      </td>
-      <td style="width: 80px; padding-bottom: 16px;"></td>
-    </tr>
-  </table>`;
+}
+
+// Build HTML for checklist — designed for Google Docs HTML import compatibility
+// Uses border="0" on tables, hex colors, simple <p> tags for items
+function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoUrl: string | null, accentColor: string): string {
+  const accentHex = hslToHex(accentColor || "22, 90%, 54%");
+  let html = `<!DOCTYPE html><html><head></head><body style="font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;margin:0;padding:36pt;">`;
+
+  // Header: logo left, title center
+  html += `<table border="0" cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:8px;"><tr>`;
+  html += `<td style="width:80px;vertical-align:middle;">`;
+  if (logoUrl) {
+    html += `<img src="${logoUrl}" height="64" style="height:64px;width:auto;" />`;
+  }
+  html += `</td><td style="text-align:center;vertical-align:middle;"><b style="font-size:24px;">${checklist.title}</b></td>`;
+  html += `<td style="width:80px;"></td></tr></table>`;
+
+  // Thick black line
+  html += `<hr style="border:none;border-top:2px solid #000000;margin:0 0 16px 0;" />`;
 
   for (const section of sections.sort((a: any, b: any) => a.sort_order - b.sort_order)) {
     const isNumbered = section.display_mode === 'numbered';
     
-    // Section title with orange left border and gray background
-    html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
-      <tr>
-        <td style="width: 4px; background-color: hsl(${accent}); padding: 0;"></td>
-        <td style="background-color: #f5f5f5; padding: 8px 12px; font-weight: 600; font-size: 16px;">${section.title}</td>
-      </tr>
-    </table>`;
+    // Section header: orange left border + gray bg
+    html += `<table border="0" cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:4px;"><tr>`;
+    html += `<td style="width:4px;background-color:${accentHex};"></td>`;
+    html += `<td style="background-color:#f5f5f5;padding:8px 12px;"><b style="font-size:14px;">${section.title}</b></td>`;
+    html += `</tr></table>`;
 
-    if (section.image_url) {
-      html += `<div style="margin-bottom: 12px; padding-left: 8px;"><img src="${section.image_url}" style="max-height: 192px; border: 1px solid #e5e7eb;" /></div>`;
-    }
-
-    // Items
     const topItems = items
       .filter((i: any) => i.section_id === section.id && !i.parent_item_id)
       .sort((a: any, b: any) => a.sort_order - b.sort_order);
 
-    html += `<div style="padding-left: 8px; margin-bottom: 24px;">`;
     for (let idx = 0; idx < topItems.length; idx++) {
       const item = topItems[idx];
-      html += `<table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #e5e7eb;">
-        <tr>
-          <td style="width: 28px; vertical-align: top; padding: 8px 0;">`;
-      if (isNumbered) {
-        html += `<span style="font-weight: 500; font-size: 14px;">${idx + 1}.</span>`;
-      } else {
-        html += `<div style="width: 20px; height: 20px; border: 2px solid black; border-radius: 4px; background: white;"></div>`;
-      }
-      html += `</td>
-          <td style="vertical-align: top; padding: 8px 0; font-size: 14px;">${item.text}</td>
-        </tr>
-      </table>`;
+      const prefix = isNumbered ? `${idx + 1}.` : `☐`;
+      html += `<p style="margin:4px 0 4px 8px;padding:6px 0;border-bottom:1px solid #e5e7eb;font-size:14px;">${prefix}&nbsp;&nbsp;${item.text}</p>`;
 
-      // Sub-items
       const children = items
         .filter((i: any) => i.parent_item_id === item.id)
         .sort((a: any, b: any) => a.sort_order - b.sort_order);
       for (let ci = 0; ci < children.length; ci++) {
-        html += `<table style="width: 100%; border-collapse: collapse; border-bottom: 1px solid #e5e7eb; margin-left: 24px;">
-          <tr>
-            <td style="width: 28px; vertical-align: top; padding: 8px 0;">`;
-        if (isNumbered) {
-          html += `<span style="font-weight: 500; font-size: 14px;">${String.fromCharCode(65 + ci)}.</span>`;
-        } else {
-          html += `<div style="width: 20px; height: 20px; border: 2px solid black; border-radius: 4px; background: white;"></div>`;
-        }
-        html += `</td>
-            <td style="vertical-align: top; padding: 8px 0; font-size: 14px;">${children[ci].text}</td>
-          </tr>
-        </table>`;
+        const childPrefix = isNumbered ? `${String.fromCharCode(65 + ci)}.` : `☐`;
+        html += `<p style="margin:4px 0 4px 32px;padding:6px 0;border-bottom:1px solid #e5e7eb;font-size:14px;">${childPrefix}&nbsp;&nbsp;${children[ci].text}</p>`;
       }
     }
-    html += `</div>`;
+    html += `<br/>`;
   }
   html += `</body></html>`;
   return html;
 }
 
-// Build HTML content for a gemba doc (SOP) matching GembaDocPrintView format
-// IMPORTANT: Uses inline styles only — Google Docs strips <style> blocks
+// Build HTML for gemba doc (SOP) — designed for Google Docs HTML import
 function buildGembaDocHtml(doc: any, pages: any[], cells: any[], logoUrl: string | null, accentColor: string): string {
-  const accent = accentColor || "22, 90%, 54%";
-  let html = `<!DOCTYPE html><html><head></head><body style="font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; margin: 0; padding: 0;">`;
+  const accentHex = hslToHex(accentColor || "22, 90%, 54%");
+  let html = `<!DOCTYPE html><html><head></head><body style="font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;margin:0;padding:0;">`;
 
   const sortedPages = pages.sort((a: any, b: any) => a.page_number - b.page_number);
   for (let pi = 0; pi < sortedPages.length; pi++) {
     const page = sortedPages[pi];
     
-    // Page wrapper
-    html += `<div style="padding: 6px; ${pi > 0 ? 'page-break-before: always;' : ''}">`;
+    if (pi > 0) html += `<div style="page-break-before:always;"></div>`;
+    html += `<div style="padding:6px;">`;
 
-    // Header: logo left, title center, page number right
-    html += `<table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; min-height: 64px;">
-      <tr>
-        <td style="width: 80px; vertical-align: middle;">`;
+    // Header
+    html += `<table border="0" cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:8px;"><tr>`;
+    html += `<td style="width:80px;vertical-align:middle;">`;
     if (logoUrl) {
-      html += `<img src="${logoUrl}" style="height: 64px; width: auto;" />`;
+      html += `<img src="${logoUrl}" height="64" style="height:64px;width:auto;" />`;
     }
-    html += `</td>
-        <td style="text-align: center; vertical-align: middle;">`;
+    html += `</td><td style="text-align:center;vertical-align:middle;">`;
     if (pi === 0) {
-      html += `<span style="font-size: 32px; font-weight: 700; color: #111;">${doc.title}</span>`;
-      if (doc.description) html += `<br/><span style="font-size: 16px; color: #666;">${doc.description}</span>`;
+      html += `<b style="font-size:28px;">${doc.title}</b>`;
+      if (doc.description) html += `<br/><span style="font-size:14px;color:#666666;">${doc.description}</span>`;
     }
-    html += `</td>
-        <td style="width: 60px; text-align: right; vertical-align: middle;">
-          <span style="font-size: 20px; font-weight: 700; color: hsl(${accent}); background-color: hsla(${accent}, 0.15); border-radius: 8px; padding: 4px 8px;">${page.page_number}</span>
-        </td>
-      </tr>
-    </table>`;
+    html += `</td><td style="width:60px;text-align:right;vertical-align:middle;">`;
+    html += `<b style="font-size:20px;color:${accentHex};">${page.page_number}</b>`;
+    html += `</td></tr></table>`;
 
-    // Grid using table
+    // Grid
     const gridCols = doc.grid_columns || 2;
     const gridRows = doc.grid_rows || 2;
     const pageCells = cells.filter((c: any) => c.page_id === page.id);
     
-    html += `<table style="width: 100%; border-collapse: collapse; table-layout: fixed;">`;
+    html += `<table border="0" cellpadding="3" cellspacing="0" style="width:100%;">`;
     for (let row = 0; row < gridRows; row++) {
       html += `<tr>`;
       for (let col = 0; col < gridCols; col++) {
@@ -517,21 +505,18 @@ function buildGembaDocHtml(doc: any, pages: any[], cells: any[], logoUrl: string
         const stepNumber = i + 1;
         
         if (!cell?.image_url) {
-          html += `<td style="padding: 3px; vertical-align: top;"></td>`;
+          html += `<td style="vertical-align:top;"></td>`;
         } else {
-          html += `<td style="padding: 3px; vertical-align: top;">
-            <div style="position: relative; border-radius: 8px; overflow: hidden;">
-              <div style="position: absolute; top: 8px; left: 8px; background: hsl(${accent}); color: white; min-width: 32px; height: 32px; padding: 0 8px; font-weight: 700; font-size: 14px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; z-index: 1;">${stepNumber}</div>
-              <img src="${cell.image_url}" style="width: 100%; height: auto; display: block; border-radius: 8px;" />
-            </div>
-            <p style="font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 600; line-height: 1.3; color: #333; margin: 0; padding: 4px 6px;">${cell.step_text || ""}</p>
-          </td>`;
+          html += `<td style="vertical-align:top;">`;
+          html += `<p style="margin:0 0 2px 0;"><b style="color:#ffffff;background-color:${accentHex};padding:2px 8px;font-size:12px;">${stepNumber}</b></p>`;
+          html += `<img src="${cell.image_url}" style="width:100%;height:auto;" />`;
+          html += `<p style="font-size:12px;font-weight:600;color:#333333;margin:2px 0 0 0;">${cell.step_text || ""}</p>`;
+          html += `</td>`;
         }
       }
       html += `</tr>`;
     }
-    html += `</table>`;
-    html += `</div>`;
+    html += `</table></div>`;
   }
   html += `</body></html>`;
   return html;
