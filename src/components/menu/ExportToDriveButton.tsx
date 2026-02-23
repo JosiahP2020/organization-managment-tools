@@ -53,11 +53,11 @@ export function ExportToDriveButton({
               title={label}
             >
               {isExporting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : lastSynced ? (
-                <CloudUpload className="h-3.5 w-3.5 text-primary" />
+                <CloudUpload className="h-3.5 w-3.5" />
               ) : (
-                <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+                <Upload className="h-3.5 w-3.5" />
               )}
             </Button>
           </TooltipTrigger>
