@@ -146,8 +146,9 @@ async function createPdfFromHtml(
     }
   );
   const tempDoc = await createRes.json();
+  console.log("Temp doc creation response:", JSON.stringify(tempDoc));
   if (!tempDoc.id) {
-    throw new Error("Failed to create temporary document for PDF conversion");
+    throw new Error(`Failed to create temporary document: ${JSON.stringify(tempDoc)}`);
   }
 
   try {
@@ -158,14 +159,15 @@ async function createPdfFromHtml(
     );
     if (!pdfRes.ok) {
       const errText = await pdfRes.text();
-      throw new Error(`PDF export failed: ${errText}`);
+      throw new Error(`PDF export failed (${pdfRes.status}): ${errText}`);
     }
     const pdfBlob = await pdfRes.blob();
+    console.log(`PDF blob size: ${pdfBlob.size} bytes`);
 
     let driveFileId: string;
 
     if (existingFileId) {
-      // Update existing PDF file
+      // Update existing PDF file content
       const updateRes = await fetch(
         `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=media`,
         {
@@ -178,6 +180,10 @@ async function createPdfFromHtml(
         }
       );
       const updateData = await updateRes.json();
+      console.log("Update existing PDF response:", JSON.stringify(updateData));
+      if (!updateData.id) {
+        throw new Error(`Failed to update PDF: ${JSON.stringify(updateData)}`);
+      }
       driveFileId = updateData.id;
 
       // Also update the name
@@ -225,6 +231,10 @@ async function createPdfFromHtml(
         }
       );
       const uploadData = await uploadRes.json();
+      console.log("Upload new PDF response:", JSON.stringify(uploadData));
+      if (!uploadData.id) {
+        throw new Error(`Failed to upload PDF: ${JSON.stringify(uploadData)}`);
+      }
       driveFileId = uploadData.id;
     }
 
@@ -360,59 +370,138 @@ async function uploadFileToDrive(
   return data.id;
 }
 
-// Build HTML content for a checklist
-function buildChecklistHtml(checklist: any, sections: any[], items: any[]): string {
-  let html = `<h1>${checklist.title}</h1>`;
-  if (checklist.description) html += `<p>${checklist.description}</p>`;
+// Build HTML content for a checklist matching ChecklistPrintView format
+function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoUrl: string | null, accentColor: string): string {
+  const accent = accentColor || "22, 90%, 54%";
+  let html = `<!DOCTYPE html><html><head><style>
+    body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 0.5in; margin: 0; }
+    .header { display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid black; }
+    .header-logo { height: 64px; width: auto; flex-shrink: 0; }
+    .header-title { flex: 1; text-align: center; font-size: 24px; font-weight: bold; }
+    .header-spacer { width: 64px; flex-shrink: 0; }
+    .section { margin-bottom: 24px; }
+    .section-title { font-weight: 600; font-size: 16px; padding: 8px 12px; margin-bottom: 8px; background: #f5f5f5; border-left: 4px solid hsl(${accent}); }
+    .item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e5e5e5; }
+    .item-indent { margin-left: 24px; }
+    .checkbox { width: 18px; height: 18px; min-width: 18px; border: 2px solid black; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+    .number { min-width: 24px; font-weight: 500; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+    .item-text { font-size: 14px; flex: 1; }
+    .section-image { max-height: 192px; border: 1px solid #e5e5e5; margin-bottom: 12px; margin-left: 8px; }
+  </style></head><body>`;
+
+  // Header with logo and title
+  html += `<div class="header">`;
+  if (logoUrl) {
+    html += `<img src="${logoUrl}" class="header-logo" />`;
+  } else {
+    html += `<div class="header-spacer"></div>`;
+  }
+  html += `<div class="header-title">${checklist.title}</div>`;
+  html += `<div class="header-spacer"></div>`;
+  html += `</div>`;
 
   for (const section of sections.sort((a: any, b: any) => a.sort_order - b.sort_order)) {
-    html += `<h2>${section.title}</h2>`;
-    const sectionItems = items
+    const isNumbered = section.display_mode === 'numbered';
+    html += `<div class="section">`;
+    html += `<div class="section-title">${section.title}</div>`;
+
+    if (section.image_url) {
+      html += `<img src="${section.image_url}" class="section-image" />`;
+    }
+
+    const topItems = items
       .filter((i: any) => i.section_id === section.id && !i.parent_item_id)
       .sort((a: any, b: any) => a.sort_order - b.sort_order);
 
-    html += "<ul>";
-    for (const item of sectionItems) {
-      html += `<li>${item.text}${item.notes ? ` — <em>${item.notes}</em>` : ""}</li>`;
-      const subItems = items
+    for (let idx = 0; idx < topItems.length; idx++) {
+      const item = topItems[idx];
+      html += `<div class="item">`;
+      if (isNumbered) {
+        html += `<span class="number">${idx + 1}.</span>`;
+      } else {
+        html += `<div class="checkbox"></div>`;
+      }
+      html += `<span class="item-text">${item.text}</span>`;
+      html += `</div>`;
+
+      const children = items
         .filter((i: any) => i.parent_item_id === item.id)
         .sort((a: any, b: any) => a.sort_order - b.sort_order);
-      if (subItems.length > 0) {
-        html += "<ul>";
-        for (const sub of subItems) {
-          html += `<li>${sub.text}${sub.notes ? ` — <em>${sub.notes}</em>` : ""}</li>`;
+      for (let ci = 0; ci < children.length; ci++) {
+        html += `<div class="item item-indent">`;
+        if (isNumbered) {
+          html += `<span class="number">${String.fromCharCode(65 + ci)}.</span>`;
+        } else {
+          html += `<div class="checkbox"></div>`;
         }
-        html += "</ul>";
+        html += `<span class="item-text">${children[ci].text}</span>`;
+        html += `</div>`;
       }
     }
-    html += "</ul>";
+    html += `</div>`;
   }
+  html += `</body></html>`;
   return html;
 }
 
-// Build HTML content for a gemba doc (SOP)
-function buildGembaDocHtml(doc: any, pages: any[], cells: any[]): string {
-  let html = `<h1>${doc.title}</h1>`;
-  if (doc.description) html += `<p>${doc.description}</p>`;
+// Build HTML content for a gemba doc (SOP) matching GembaDocPrintView format
+function buildGembaDocHtml(doc: any, pages: any[], cells: any[], logoUrl: string | null, accentColor: string): string {
+  const accent = accentColor || "22, 90%, 54%";
+  let html = `<!DOCTYPE html><html><head><style>
+    body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; margin: 0; padding: 0.4in; }
+    .page { margin-bottom: 24px; }
+    .header { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; padding-bottom: 8px; min-height: 64px; }
+    .logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 64px; width: auto; }
+    .page-number { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 20px; font-weight: 700; color: hsl(${accent}); background: hsla(${accent}, 0.15); border-radius: 8px; padding: 4px 8px; min-width: 32px; text-align: center; }
+    .title { font-size: 32px; font-weight: 700; margin: 0; text-align: center; }
+    .description { font-size: 16px; color: #666; margin: 6px 0 0; text-align: center; }
+    .grid { display: grid; gap: 6px; }
+    .cell { position: relative; overflow: hidden; border-radius: 8px; }
+    .cell-empty { background: transparent; }
+    .step-badge { position: absolute; top: 8px; left: 8px; background: hsl(${accent}); color: white; min-width: 32px; height: 32px; padding: 0 8px; font-weight: 700; font-size: 14px; border-radius: 6px; display: flex; align-items: center; justify-content: center; z-index: 1; }
+    .cell-image { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; }
+    .step-text { font-size: 13px; font-weight: 600; line-height: 1.3; color: #333; margin: 0; padding: 4px 6px; }
+  </style></head><body>`;
 
-  for (const page of pages.sort((a: any, b: any) => a.page_number - b.page_number)) {
-    if (pages.length > 1) html += `<h2>Page ${page.page_number}</h2>`;
-    const pageCells = cells
-      .filter((c: any) => c.page_id === page.id)
-      .sort((a: any, b: any) => a.position - b.position);
-
-    html += "<table border='1' cellpadding='8' cellspacing='0'>";
-    for (const cell of pageCells) {
-      html += "<tr>";
-      html += `<td><strong>${cell.step_number || ""}</strong></td>`;
-      html += `<td>${cell.step_text || ""}</td>`;
-      if (cell.image_url) {
-        html += `<td><img src="${cell.image_url}" width="200" /></td>`;
-      }
-      html += "</tr>";
+  const sortedPages = pages.sort((a: any, b: any) => a.page_number - b.page_number);
+  for (let pi = 0; pi < sortedPages.length; pi++) {
+    const page = sortedPages[pi];
+    html += `<div class="page">`;
+    html += `<div class="header">`;
+    if (logoUrl) {
+      html += `<img src="${logoUrl}" class="logo" />`;
     }
-    html += "</table>";
+    if (pi === 0) {
+      html += `<div><h1 class="title">${doc.title}</h1>`;
+      if (doc.description) html += `<p class="description">${doc.description}</p>`;
+      html += `</div>`;
+    }
+    html += `<span class="page-number">${page.page_number}</span>`;
+    html += `</div>`;
+
+    const gridCols = doc.grid_columns || 2;
+    const gridRows = doc.grid_rows || 2;
+    html += `<div class="grid" style="grid-template-columns: repeat(${gridCols}, 1fr); grid-template-rows: repeat(${gridRows}, 200px);">`;
+    
+    const pageCells = cells.filter((c: any) => c.page_id === page.id);
+    for (let i = 0; i < gridRows * gridCols; i++) {
+      const cell = pageCells.find((c: any) => c.position === i);
+      const stepNumber = i + 1;
+      if (!cell?.image_url) {
+        html += `<div class="cell cell-empty"></div>`;
+      } else {
+        html += `<div class="cell">`;
+        html += `<div style="position:relative;">`;
+        html += `<div class="step-badge">${stepNumber}</div>`;
+        html += `<img src="${cell.image_url}" class="cell-image" />`;
+        html += `</div>`;
+        html += `<p class="step-text">${cell.step_text || ""}</p>`;
+        html += `</div>`;
+      }
+    }
+    html += `</div></div>`;
   }
+  html += `</body></html>`;
   return html;
 }
 
@@ -610,6 +699,15 @@ Deno.serve(async (req) => {
 
     let driveFileId: string;
 
+    // Fetch organization logo and accent color for PDF formatting
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("main_logo_url, accent_color")
+      .eq("id", orgId)
+      .single();
+    const logoUrl = orgData?.main_logo_url || null;
+    const accentColor = orgData?.accent_color || "22, 90%, 54%";
+
     // Export based on type
     if (type === "checklist") {
       const { data: checklist } = await supabaseUser
@@ -640,7 +738,8 @@ Deno.serve(async (req) => {
         items = itemsData || [];
       }
 
-      const html = buildChecklistHtml(checklist, sections || [], items);
+      const html = buildChecklistHtml(checklist, sections || [], items, logoUrl, accentColor);
+      console.log(`Generated checklist HTML (${html.length} chars) for "${checklist.title}"`);
       // Export as PDF
       driveFileId = await createPdfFromHtml(
         accessToken,
@@ -678,7 +777,8 @@ Deno.serve(async (req) => {
         cells = cellsData || [];
       }
 
-      const html = buildGembaDocHtml(doc, pages || [], cells);
+      const html = buildGembaDocHtml(doc, pages || [], cells, logoUrl, accentColor);
+      console.log(`Generated gemba doc HTML (${html.length} chars) for "${doc.title}"`);
       // Export as PDF
       driveFileId = await createPdfFromHtml(
         accessToken,
