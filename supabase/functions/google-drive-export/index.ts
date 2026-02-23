@@ -115,6 +115,46 @@ async function getOrCreateSubFolder(
   return created.id;
 }
 
+// Helper to upload a new PDF to Drive
+async function uploadNewPdf(accessToken: string, folderId: string, title: string, pdfBlob: Blob): Promise<string> {
+  const pdfBoundary = "pdf_boundary";
+  const pdfMetadata = JSON.stringify({
+    name: `${title}.pdf`,
+    parents: [folderId],
+  });
+
+  const metaPart = `--${pdfBoundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${pdfMetadata}\r\n`;
+  const filePart = `--${pdfBoundary}\r\nContent-Type: application/pdf\r\n\r\n`;
+  const endPart = `\r\n--${pdfBoundary}--`;
+
+  const metaBytes = new TextEncoder().encode(metaPart + filePart);
+  const fileBytes = new Uint8Array(await pdfBlob.arrayBuffer());
+  const endBytes = new TextEncoder().encode(endPart);
+
+  const combined = new Uint8Array(metaBytes.length + fileBytes.length + endBytes.length);
+  combined.set(metaBytes, 0);
+  combined.set(fileBytes, metaBytes.length);
+  combined.set(endBytes, metaBytes.length + fileBytes.length);
+
+  const uploadRes = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": `multipart/related; boundary=${pdfBoundary}`,
+      },
+      body: combined,
+    }
+  );
+  const uploadData = await uploadRes.json();
+  console.log("Upload new PDF response:", JSON.stringify(uploadData));
+  if (!uploadData.id) {
+    throw new Error(`Failed to upload PDF: ${JSON.stringify(uploadData)}`);
+  }
+  return uploadData.id;
+}
+
 // Create a Google Doc from HTML, export as PDF, upload PDF, delete temp doc
 async function createPdfFromHtml(
   accessToken: string,
@@ -167,75 +207,53 @@ async function createPdfFromHtml(
     let driveFileId: string;
 
     if (existingFileId) {
-      // Update existing PDF file content
-      const updateRes = await fetch(
-        `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=media`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/pdf",
-          },
-          body: pdfBlob,
-        }
+      // First verify the file still exists on Drive
+      const checkRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${existingFileId}?fields=id,trashed`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
-      const updateData = await updateRes.json();
-      console.log("Update existing PDF response:", JSON.stringify(updateData));
-      if (!updateData.id) {
-        throw new Error(`Failed to update PDF: ${JSON.stringify(updateData)}`);
-      }
-      driveFileId = updateData.id;
+      const fileStillExists = checkRes.ok && !(await checkRes.json()).trashed;
+      if (!checkRes.ok) await checkRes.text(); // consume body
 
-      // Also update the name
-      await fetch(
-        `https://www.googleapis.com/drive/v3/files/${existingFileId}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: `${title}.pdf` }),
+      if (fileStillExists) {
+        // Update existing PDF file content
+        const updateRes = await fetch(
+          `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=media`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/pdf",
+            },
+            body: pdfBlob,
+          }
+        );
+        const updateData = await updateRes.json();
+        console.log("Update existing PDF response:", JSON.stringify(updateData));
+        if (!updateData.id) {
+          throw new Error(`Failed to update PDF: ${JSON.stringify(updateData)}`);
         }
-      );
+        driveFileId = updateData.id;
+
+        // Also update the name
+        const nameRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${existingFileId}`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name: `${title}.pdf` }),
+          }
+        );
+        await nameRes.text(); // consume
+      } else {
+        console.log(`Existing file ${existingFileId} was deleted from Drive, uploading fresh`);
+        driveFileId = await uploadNewPdf(accessToken, folderId, title, pdfBlob);
+      }
     } else {
-      // Upload new PDF file
-      const pdfBoundary = "pdf_boundary";
-      const pdfMetadata = JSON.stringify({
-        name: `${title}.pdf`,
-        parents: [folderId],
-      });
-
-      const metaPart = `--${pdfBoundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${pdfMetadata}\r\n`;
-      const filePart = `--${pdfBoundary}\r\nContent-Type: application/pdf\r\n\r\n`;
-      const endPart = `\r\n--${pdfBoundary}--`;
-
-      const metaBytes = new TextEncoder().encode(metaPart + filePart);
-      const fileBytes = new Uint8Array(await pdfBlob.arrayBuffer());
-      const endBytes = new TextEncoder().encode(endPart);
-
-      const combined = new Uint8Array(metaBytes.length + fileBytes.length + endBytes.length);
-      combined.set(metaBytes, 0);
-      combined.set(fileBytes, metaBytes.length);
-      combined.set(endBytes, metaBytes.length + fileBytes.length);
-
-      const uploadRes = await fetch(
-        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": `multipart/related; boundary=${pdfBoundary}`,
-          },
-          body: combined,
-        }
-      );
-      const uploadData = await uploadRes.json();
-      console.log("Upload new PDF response:", JSON.stringify(uploadData));
-      if (!uploadData.id) {
-        throw new Error(`Failed to upload PDF: ${JSON.stringify(uploadData)}`);
-      }
-      driveFileId = uploadData.id;
+      driveFileId = await uploadNewPdf(accessToken, folderId, title, pdfBlob);
     }
 
     return driveFileId;
