@@ -53,37 +53,50 @@ export function TextDisplayCard({
     }
   };
 
+  const handleAddressClick = () => {
+    if (subType === "address" && item.name) {
+      const encoded = encodeURIComponent(item.name);
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
+    }
+  };
+
+  const isAddress = subType === "address";
+
   return (
     <>
-      <div className="group relative flex items-center gap-2 sm:gap-3 p-3 rounded-lg bg-card border border-border transition-colors cursor-default">
+      <div
+        className={`group relative flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-lg bg-card border border-border transition-colors ${isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"}`}
+        onClick={!isEditing && isAddress ? handleAddressClick : undefined}
+      >
         {/* Icon */}
-        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0">
-          <DynamicIcon name={item.icon} className="h-4 w-4 text-primary" />
+        <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-primary/10 shrink-0">
+          <DynamicIcon name={item.icon} className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 mr-0 sm:mr-1">
           {isEditing ? (
             <Input
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               onBlur={handleSaveEdit}
               onKeyDown={handleKeyDown}
+              onClick={(e) => e.stopPropagation()}
               autoFocus
               className="h-7 text-sm"
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground text-xs sm:text-sm line-clamp-2 break-words">{item.name}</h3>
+              <h3 className="font-medium text-foreground text-[11px] sm:text-sm leading-tight break-words">{item.name}</h3>
               {subtitle && (
-                <p className="text-xs text-muted-foreground">{subtitle}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{subtitle}</p>
               )}
             </>
           )}
         </div>
 
         {/* Admin controls */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={(e) => e.stopPropagation()}>
           {driveButton}
           {!isFirst && (
             <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
