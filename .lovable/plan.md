@@ -1,82 +1,91 @@
 
 
-# Export to Drive with Folder Picker
+# Fix Drive Export Bugs + Add Sync Badges, File Export Buttons, and Solid Hover Buttons
 
-## Overview
+## Summary
 
-When an admin clicks the Export to Drive button on a menu item card, instead of silently exporting to a fixed `_app_storage` folder, a **folder picker dialog** will open showing the user's Google Drive folder structure. The user selects the destination folder, confirms, and the file is exported there.
+This plan addresses 7 issues and feature requests:
 
-## How It Works
+1. **Folder list not loading on open** -- Add a refresh button to the folder picker dialog
+2. **Clicking empty space opens document** -- Stop click propagation from the dialog/export button
+3. **Export button click also opens document** -- Fix event propagation on the ExportToDriveButton
+4. **Folder icon misaligned** -- Center the folder icon and "No subfolders" text vertically in the empty state
+5. **Add sync badge to item cards** -- Show a small Drive icon indicator permanently on cards that have been exported
+6. **Add export buttons to file directory files** -- Show an export-to-Drive button on each file card inside FileDirectoryView
+7. **Make hover buttons solid on card hover** -- Change button styling so they have a solid background when the parent card is hovered (not just when the button itself is hovered)
 
-1. Admin clicks the Export to Drive button on a card (tool, text display, or file directory).
-2. A **Drive Folder Picker dialog** opens, showing the user's Google Drive folders in a tree/breadcrumb navigation.
-3. The user browses into subfolders and clicks "Export Here" to confirm.
-4. The file is exported as a PDF (for checklists/SOPs) or as a file to the chosen folder.
-5. The `drive_file_references` table records the chosen folder ID so future re-exports update in place.
+---
 
 ## Technical Details
 
-### 1. New Edge Function: `google-drive-list-folders`
+### 1. Refresh Button in DriveFolderPickerDialog
 
-A new backend function that lists folders in a given Google Drive parent folder. It:
-- Authenticates the user and refreshes the Google OAuth token (same pattern as `google-drive-export`).
-- Accepts an optional `parentId` parameter (defaults to `"root"` for top-level).
-- Calls the Drive API: `GET /drive/v3/files?q=mimeType='application/vnd.google-apps.folder' and '{parentId}' in parents and trashed=false`.
-- Returns an array of `{ id, name }` folder objects.
+**File:** `src/components/menu/DriveFolderPickerDialog.tsx`
 
-### 2. New Component: `DriveFolderPickerDialog`
+Add a `RefreshCw` icon button next to the breadcrumbs. Clicking it calls `fetchFolders(currentFolderId)` to reload the folder list.
 
-A modal dialog with:
-- **Breadcrumb navigation** at the top (e.g., "My Drive > Projects > SOPs") so users can go back to parent folders.
-- **Folder list** showing subfolders of the current location, each clickable to navigate deeper.
-- **"Create Folder" button** to create a new folder inside the current location (calls the existing folder creation logic in the edge function).
-- **"Export Here" button** to confirm the current folder as the destination.
-- Loading and empty states.
+### 2 & 3. Fix Click Propagation (ExportToDriveButton + DriveFolderPickerDialog)
 
-### 3. Updated Export Flow
+**File:** `src/components/menu/ExportToDriveButton.tsx`
 
-- The `useDriveExport` hook's `exportToDrive` function will accept an optional `folderId` parameter.
-- The `google-drive-export` edge function will accept an optional `folderId` in the request body. When provided, it skips the automatic `_app_storage` subfolder creation and places the file directly in the specified folder.
-- If `folderId` is not provided (backward compatibility), it falls back to the current `_app_storage` behavior.
+The button already calls `e.stopPropagation()`, but the `DriveFolderPickerDialog` is rendered inside the card's clickable area. When the dialog closes (via X or Cancel), the click event bubbles up to the card's `onClick` handler which navigates to the document.
 
-### 4. PDF Export (from approved plan)
+**Fix:**
+- Wrap the `DriveFolderPickerDialog` render with a `<div onClick={e => e.stopPropagation()}>` to prevent any dialog interaction from bubbling to the card.
+- Also add `onPointerDownOutside` handler on DialogContent to stop propagation.
 
-Checklists and SOPs will be exported as PDFs instead of Google Docs:
-- Create a temporary Google Doc from HTML content.
-- Export it as PDF via the Drive API.
-- Upload the PDF to the chosen folder.
-- Delete the temporary Google Doc.
+### 4. Center Folder Icon in Empty State
 
-### 5. UI Button Placement (from approved plan)
+**File:** `src/components/menu/DriveFolderPickerDialog.tsx`
 
-- Remove Export to Drive buttons from `ChecklistSidebar` and `GembaDocSidebar`.
-- Show export buttons on `ToolCard`, `TextDisplayCard`, and `FileDirectoryCard` alongside edit/move/delete controls.
-- Add "Import from Drive" option to the `AddMenuItemButton` dropdown (placeholder for now).
+The empty state container uses `h-full` but the ScrollArea needs explicit height handling. Add `items-center justify-center` and ensure the parent div fills the scroll area height properly. The fix is to make the empty-state wrapper a flex column with full height centering.
 
-### 6. Drive export for tool items
+### 5. Sync Badge on Item Cards
 
-Currently only `text_display` items get the drive button in `MenuItemSection`. This will be extended so `tool` items also show the button. The entity type mapping:
-- `tool_type === "checklist"` or `"follow_up_list"` maps to entity type `"checklist"`
-- `tool_type === "sop_guide"` maps to entity type `"gemba_doc"`
+**Files:** `src/components/menu/ToolCard.tsx`, `src/components/menu/TextDisplayCard.tsx`, `src/components/menu/FileDirectoryCard.tsx`
 
-For single-use tools, the document ID comes from the `menu_item_documents` join table. This will require a query to look up linked documents when rendering the menu.
+Add a new optional `isSynced` prop (boolean). When true, show a small `CloudUpload` icon (from lucide) in `text-primary` right after the delete button (far right of the card). This icon is always visible (not hover-dependent), acting as a permanent indicator.
 
-## Files to Create/Change
+**File:** `src/components/menu/MenuItemSection.tsx`
 
-| File | Action | Description |
-|------|--------|-------------|
-| `supabase/functions/google-drive-list-folders/index.ts` | Create | New edge function to list Drive folders |
-| `src/components/menu/DriveFolderPickerDialog.tsx` | Create | Folder browser dialog with breadcrumbs |
-| `supabase/functions/google-drive-export/index.ts` | Modify | Accept optional `folderId`, add PDF export logic |
-| `src/hooks/useDriveExport.tsx` | Modify | Accept `folderId`, open picker dialog flow |
-| `src/components/menu/ExportToDriveButton.tsx` | Modify | Trigger folder picker instead of direct export |
-| `src/components/menu/MenuItemSection.tsx` | Modify | Show drive button on tool items, map tool types |
-| `src/components/menu/ToolCard.tsx` | No change | Already accepts `driveButton` prop |
-| `src/components/menu/FileDirectoryCard.tsx` | Modify | Add `driveButton` prop |
-| `src/components/menu/AddMenuItemButton.tsx` | Modify | Add "Import from Drive" placeholder option |
-| `src/components/training/ChecklistSidebar.tsx` | Modify | Remove export button |
-| `src/components/training/GembaDocSidebar.tsx` | Modify | Remove export button |
-| `src/pages/training/ChecklistEditor.tsx` | Modify | Remove drive export props |
-| `src/pages/training/GembaDocEditor.tsx` | Modify | Remove drive export props |
-| `supabase/config.toml` | Modify | Register new `google-drive-list-folders` function |
+Pass `isSynced={!!driveRef}` to each card component. For FileDirectoryCard, also pass the prop based on the drive ref lookup.
+
+### 6. Export Buttons on File Directory Files
+
+**File:** `src/components/menu/FileDirectoryView.tsx`
+
+Accept new optional props: `driveExport` context (same shape as MenuItemSection's DriveExportContext). For each file card, show an `ExportToDriveButton` in the action buttons area (next to Download and Delete). The entity type will be `"file"` and the entity ID will be the file's ID.
+
+**File:** `src/components/menu/FileDirectoryCard.tsx`
+
+Pass `driveExport` through to `FileDirectoryView`.
+
+**File:** `src/components/menu/MenuItemSection.tsx`
+
+Pass the `driveExport` context to `FileDirectoryCard` so it can thread it to FileDirectoryView.
+
+### 7. Solid Hover Buttons
+
+**Files:** `src/components/menu/ToolCard.tsx`, `src/components/menu/TextDisplayCard.tsx`, `src/components/menu/FileDirectoryView.tsx`
+
+Currently buttons use `variant="ghost"` which has a transparent background until directly hovered. Change the button classes so that when the parent card is hovered (`group-hover`), buttons get a solid background:
+
+- Add `group-hover/card:bg-secondary` (or similar) to each action button's className so they appear solid when the card is hovered, not just when the individual button is hovered.
+- Alternatively, wrap the button group in a container that gets `bg-secondary` on group hover and apply it uniformly.
+
+The simplest approach: on each Button inside the hover controls, add `group-hover:bg-accent` so they look solid as soon as the card is hovered.
+
+---
+
+## Files to Change
+
+| File | Change |
+|------|--------|
+| `src/components/menu/DriveFolderPickerDialog.tsx` | Add refresh button; fix empty state centering |
+| `src/components/menu/ExportToDriveButton.tsx` | Wrap dialog in stopPropagation div |
+| `src/components/menu/ToolCard.tsx` | Add `isSynced` badge; solid hover buttons |
+| `src/components/menu/TextDisplayCard.tsx` | Add `isSynced` badge; solid hover buttons |
+| `src/components/menu/FileDirectoryCard.tsx` | Add `isSynced` badge; pass driveExport to FileDirectoryView |
+| `src/components/menu/FileDirectoryView.tsx` | Add export buttons on individual file cards; solid hover buttons |
+| `src/components/menu/MenuItemSection.tsx` | Pass `isSynced` and `driveExport` to FileDirectoryCard |
 
