@@ -1,41 +1,82 @@
 
-# Phase 2: Google Drive Export (App → Drive)
+
+# Export to Drive with Folder Picker
 
 ## Overview
-Allow admins to manually export app content to the connected Google Drive account. Content is saved to an `_app_storage` folder on Drive. Future: add auto-sync toggle in org settings.
 
-## Steps
+When an admin clicks the Export to Drive button on a menu item card, instead of silently exporting to a fixed `_app_storage` folder, a **folder picker dialog** will open showing the user's Google Drive folder structure. The user selects the destination folder, confirms, and the file is exported there.
 
-### Step 1: Create `google-drive-export` Edge Function
-- Accepts: `{ type, id, organizationId }` where type is "checklist", "gemba_doc", "file_directory", or "text_display"
-- Retrieves the org's Google Drive tokens from `organization_integrations`
-- Refreshes the access token if expired (using refresh_token + Google token endpoint)
-- Creates `_app_storage` root folder on Drive if it doesn't exist (stores folder ID in `organization_integrations.root_folder_id`)
-- Creates sub-folders by type (e.g., `_app_storage/Checklists/`, `_app_storage/SOPs/`)
-- For document types (checklists, SOPs): creates a Google Doc with the content
-- For file directory items: uploads the actual files from Supabase storage
-- For text display items: creates a Google Doc with the text content
-- Updates in-place if the file already exists (tracked via a new `drive_file_references` table)
+## How It Works
 
-### Step 2: Create `drive_file_references` Table
-- Columns: `id`, `organization_id`, `entity_type`, `entity_id`, `drive_file_id`, `drive_folder_id`, `last_synced_at`, `created_at`
-- Tracks which app items have been exported to Drive and their Drive file IDs
-- Enables in-place updates instead of creating duplicates
+1. Admin clicks the Export to Drive button on a card (tool, text display, or file directory).
+2. A **Drive Folder Picker dialog** opens, showing the user's Google Drive folders in a tree/breadcrumb navigation.
+3. The user browses into subfolders and clicks "Export Here" to confirm.
+4. The file is exported as a PDF (for checklists/SOPs) or as a file to the chosen folder.
+5. The `drive_file_references` table records the chosen folder ID so future re-exports update in place.
 
-### Step 3: Add Export UI
-- Add "Export to Drive" button on menu item cards (checklists, SOPs, file directories, text displays)
-- Show a Drive badge (↑) on items that have been exported
-- Add a "Sync All to Drive" button on the menu detail page header
-- Show sync status (last synced timestamp) on exported items
-- Toast notifications for success/failure
+## Technical Details
 
-### Step 4: Add Auto-Sync Toggle (Future)
-- Add toggle in Organization Settings under Google Drive section
-- When enabled, automatically export on content create/update
-- Store setting in `organizations` table (new `auto_sync_drive` column)
+### 1. New Edge Function: `google-drive-list-folders`
 
-## Implementation Order
-1. Step 2 (database table) — need this first
-2. Step 1 (edge function) — core logic
-3. Step 3 (UI) — wire it all together
-4. Step 4 (auto-sync) — future enhancement
+A new backend function that lists folders in a given Google Drive parent folder. It:
+- Authenticates the user and refreshes the Google OAuth token (same pattern as `google-drive-export`).
+- Accepts an optional `parentId` parameter (defaults to `"root"` for top-level).
+- Calls the Drive API: `GET /drive/v3/files?q=mimeType='application/vnd.google-apps.folder' and '{parentId}' in parents and trashed=false`.
+- Returns an array of `{ id, name }` folder objects.
+
+### 2. New Component: `DriveFolderPickerDialog`
+
+A modal dialog with:
+- **Breadcrumb navigation** at the top (e.g., "My Drive > Projects > SOPs") so users can go back to parent folders.
+- **Folder list** showing subfolders of the current location, each clickable to navigate deeper.
+- **"Create Folder" button** to create a new folder inside the current location (calls the existing folder creation logic in the edge function).
+- **"Export Here" button** to confirm the current folder as the destination.
+- Loading and empty states.
+
+### 3. Updated Export Flow
+
+- The `useDriveExport` hook's `exportToDrive` function will accept an optional `folderId` parameter.
+- The `google-drive-export` edge function will accept an optional `folderId` in the request body. When provided, it skips the automatic `_app_storage` subfolder creation and places the file directly in the specified folder.
+- If `folderId` is not provided (backward compatibility), it falls back to the current `_app_storage` behavior.
+
+### 4. PDF Export (from approved plan)
+
+Checklists and SOPs will be exported as PDFs instead of Google Docs:
+- Create a temporary Google Doc from HTML content.
+- Export it as PDF via the Drive API.
+- Upload the PDF to the chosen folder.
+- Delete the temporary Google Doc.
+
+### 5. UI Button Placement (from approved plan)
+
+- Remove Export to Drive buttons from `ChecklistSidebar` and `GembaDocSidebar`.
+- Show export buttons on `ToolCard`, `TextDisplayCard`, and `FileDirectoryCard` alongside edit/move/delete controls.
+- Add "Import from Drive" option to the `AddMenuItemButton` dropdown (placeholder for now).
+
+### 6. Drive export for tool items
+
+Currently only `text_display` items get the drive button in `MenuItemSection`. This will be extended so `tool` items also show the button. The entity type mapping:
+- `tool_type === "checklist"` or `"follow_up_list"` maps to entity type `"checklist"`
+- `tool_type === "sop_guide"` maps to entity type `"gemba_doc"`
+
+For single-use tools, the document ID comes from the `menu_item_documents` join table. This will require a query to look up linked documents when rendering the menu.
+
+## Files to Create/Change
+
+| File | Action | Description |
+|------|--------|-------------|
+| `supabase/functions/google-drive-list-folders/index.ts` | Create | New edge function to list Drive folders |
+| `src/components/menu/DriveFolderPickerDialog.tsx` | Create | Folder browser dialog with breadcrumbs |
+| `supabase/functions/google-drive-export/index.ts` | Modify | Accept optional `folderId`, add PDF export logic |
+| `src/hooks/useDriveExport.tsx` | Modify | Accept `folderId`, open picker dialog flow |
+| `src/components/menu/ExportToDriveButton.tsx` | Modify | Trigger folder picker instead of direct export |
+| `src/components/menu/MenuItemSection.tsx` | Modify | Show drive button on tool items, map tool types |
+| `src/components/menu/ToolCard.tsx` | No change | Already accepts `driveButton` prop |
+| `src/components/menu/FileDirectoryCard.tsx` | Modify | Add `driveButton` prop |
+| `src/components/menu/AddMenuItemButton.tsx` | Modify | Add "Import from Drive" placeholder option |
+| `src/components/training/ChecklistSidebar.tsx` | Modify | Remove export button |
+| `src/components/training/GembaDocSidebar.tsx` | Modify | Remove export button |
+| `src/pages/training/ChecklistEditor.tsx` | Modify | Remove drive export props |
+| `src/pages/training/GembaDocEditor.tsx` | Modify | Remove drive export props |
+| `supabase/config.toml` | Modify | Register new `google-drive-list-folders` function |
+
