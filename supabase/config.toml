@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.google-drive-callback]
 verify_jwt = false
+
+[functions.google-drive-export]
+verify_jwt = false
