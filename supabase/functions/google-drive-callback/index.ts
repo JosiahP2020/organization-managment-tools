@@ -11,11 +11,11 @@ Deno.serve(async (req) => {
     const appOrigin = Deno.env.get("APP_ORIGIN") || "https://id-preview--b4ff9489-f27c-41e6-a539-69485bbbddba.lovable.app";
 
     if (error) {
-      return Response.redirect(`${appOrigin}/admin/settings?drive_error=${encodeURIComponent(error)}`, 302);
+      return Response.redirect(`${appOrigin}/admin/organization?drive_error=${encodeURIComponent(error)}`, 302);
     }
 
     if (!code || !stateParam) {
-      return Response.redirect(`${appOrigin}/admin/settings?drive_error=missing_params`, 302);
+      return Response.redirect(`${appOrigin}/admin/organization?drive_error=missing_params`, 302);
     }
 
     let orgId: string;
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
       const state = JSON.parse(atob(stateParam));
       orgId = state.org_id;
     } catch {
-      return Response.redirect(`${appOrigin}/admin/settings?drive_error=invalid_state`, 302);
+      return Response.redirect(`${appOrigin}/admin/organization?drive_error=invalid_state`, 302);
     }
 
     // Exchange code for tokens
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     if (!tokenRes.ok || !tokenData.access_token) {
       console.error("Token exchange failed:", tokenData);
-      return Response.redirect(`${appOrigin}/admin/settings?drive_error=token_exchange_failed`, 302);
+      return Response.redirect(`${appOrigin}/admin/organization?drive_error=token_exchange_failed`, 302);
     }
 
     // Get user email from Google
@@ -99,10 +99,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    return Response.redirect(`${appOrigin}/admin/settings?drive_connected=true`, 302);
+    return Response.redirect(`${appOrigin}/admin/organization?drive_connected=true`, 302);
   } catch (err) {
     console.error("google-drive-callback error:", err);
     const appOrigin = Deno.env.get("APP_ORIGIN") || "https://id-preview--b4ff9489-f27c-41e6-a539-69485bbbddba.lovable.app";
-    return Response.redirect(`${appOrigin}/admin/settings?drive_error=server_error`, 302);
+    return Response.redirect(`${appOrigin}/admin/organization?drive_error=server_error`, 302);
   }
 });

@@ -67,7 +67,17 @@ export function GoogleDriveConnection() {
 
       if (error) throw error;
       if (data?.url) {
-        window.location.href = data.url;
+        // Open in new tab to avoid iframe restrictions (Google blocks OAuth in iframes)
+        const authWindow = window.open(data.url, "_blank");
+        if (!authWindow) {
+          // Fallback: try top-level navigation if popup blocked
+          if (window.top) {
+            window.top.location.href = data.url;
+          } else {
+            window.location.href = data.url;
+          }
+        }
+        setIsConnecting(false);
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to start connection", variant: "destructive" });
