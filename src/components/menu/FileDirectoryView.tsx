@@ -384,7 +384,7 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
                 </div>
 
                 {/* Action Buttons */}
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   {isAdmin && driveExport?.isConnected && (
                     <ExportToDriveButton
                       entityId={file.id}
@@ -397,21 +397,21 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 group-hover:bg-accent"
+                    className="h-6 w-6 group-hover:bg-accent"
                     onClick={() => handleDownload(file)}
                     title="Download"
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    <Download className="h-3 w-3" />
                   </Button>
                   {isAdmin && (
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive group-hover:bg-accent"
+                      className="h-6 w-6 text-destructive hover:text-destructive group-hover:bg-accent"
                       onClick={() => handleDeleteClick(file)}
                       title="Delete"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   )}
                 </div>
