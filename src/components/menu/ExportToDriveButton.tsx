@@ -44,7 +44,7 @@ export function ExportToDriveButton({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0"
+              className="h-7 w-7 group-hover:bg-accent shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 setPickerOpen(true);
