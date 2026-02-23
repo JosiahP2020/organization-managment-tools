@@ -87,16 +87,16 @@ export function TextDisplayCard({
           {driveButton}
           {!isFirst && (
             <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              <ChevronUp className="h-4 w-4" />
             </Button>
           )}
           {!isLast && (
             <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4" />
             </Button>
           )}
           <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={() => setIsEditing(true)}>
-            <Pencil className="h-4 w-4 text-muted-foreground" />
+            <Pencil className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
