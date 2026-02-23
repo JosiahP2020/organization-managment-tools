@@ -375,18 +375,18 @@ function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoU
   const accent = accentColor || "22, 90%, 54%";
   let html = `<!DOCTYPE html><html><head><style>
     body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; padding: 0.5in; margin: 0; }
-    .header { display: flex; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid black; }
+    .header { display: flex; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid black; }
     .header-logo { height: 64px; width: auto; flex-shrink: 0; }
     .header-title { flex: 1; text-align: center; font-size: 24px; font-weight: bold; }
     .header-spacer { width: 64px; flex-shrink: 0; }
-    .section { margin-bottom: 24px; }
+    .section { margin-bottom: 24px; break-inside: avoid; }
     .section-title { font-weight: 600; font-size: 16px; padding: 8px 12px; margin-bottom: 8px; background: #f5f5f5; border-left: 4px solid hsl(${accent}); }
-    .item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e5e5e5; }
-    .item-indent { margin-left: 24px; }
-    .checkbox { width: 18px; height: 18px; min-width: 18px; border: 2px solid black; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+    .section-items { padding-left: 8px; }
+    .item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+    .checkbox { width: 20px; height: 20px; min-width: 20px; min-height: 20px; border: 2px solid black; border-radius: 4px; flex-shrink: 0; margin-top: 2px; background: white; }
     .number { min-width: 24px; font-weight: 500; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
     .item-text { font-size: 14px; flex: 1; }
-    .section-image { max-height: 192px; border: 1px solid #e5e5e5; margin-bottom: 12px; margin-left: 8px; }
+    .section-image { max-height: 192px; border: 1px solid #e5e7eb; margin-bottom: 12px; margin-left: 8px; }
   </style></head><body>`;
 
   // Header with logo and title
@@ -409,6 +409,7 @@ function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoU
       html += `<img src="${section.image_url}" class="section-image" />`;
     }
 
+    html += `<div class="section-items">`;
     const topItems = items
       .filter((i: any) => i.section_id === section.id && !i.parent_item_id)
       .sort((a: any, b: any) => a.sort_order - b.sort_order);
@@ -428,7 +429,7 @@ function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoU
         .filter((i: any) => i.parent_item_id === item.id)
         .sort((a: any, b: any) => a.sort_order - b.sort_order);
       for (let ci = 0; ci < children.length; ci++) {
-        html += `<div class="item item-indent">`;
+        html += `<div class="item" style="margin-left: 24px;">`;
         if (isNumbered) {
           html += `<span class="number">${String.fromCharCode(65 + ci)}.</span>`;
         } else {
@@ -438,7 +439,7 @@ function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoU
         html += `</div>`;
       }
     }
-    html += `</div>`;
+    html += `</div></div>`;
   }
   html += `</body></html>`;
   return html;
@@ -447,20 +448,25 @@ function buildChecklistHtml(checklist: any, sections: any[], items: any[], logoU
 // Build HTML content for a gemba doc (SOP) matching GembaDocPrintView format
 function buildGembaDocHtml(doc: any, pages: any[], cells: any[], logoUrl: string | null, accentColor: string): string {
   const accent = accentColor || "22, 90%, 54%";
+  const orientation = doc.orientation || "landscape";
   let html = `<!DOCTYPE html><html><head><style>
-    body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; margin: 0; padding: 0.4in; }
-    .page { margin-bottom: 24px; }
-    .header { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; padding-bottom: 8px; min-height: 64px; }
+    @page { size: ${orientation}; margin: 0.4in; }
+    body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; margin: 0; padding: 0; }
+    .page { padding: 0.375rem; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+    .header { position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem; padding-bottom: 0.25rem; min-height: 64px; }
     .logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 64px; width: auto; }
-    .page-number { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 20px; font-weight: 700; color: hsl(${accent}); background: hsla(${accent}, 0.15); border-radius: 8px; padding: 4px 8px; min-width: 32px; text-align: center; }
-    .title { font-size: 32px; font-weight: 700; margin: 0; text-align: center; }
-    .description { font-size: 16px; color: #666; margin: 6px 0 0; text-align: center; }
-    .grid { display: grid; gap: 6px; }
-    .cell { position: relative; overflow: hidden; border-radius: 8px; }
+    .page-number { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem; font-weight: 700; color: hsl(${accent}); background: hsla(${accent}, 0.15); border-radius: 0.5rem; padding: 0.25rem 0.5rem; min-width: 2rem; text-align: center; }
+    .header-text { text-align: center; }
+    .title { font-size: 2rem; font-weight: 700; margin: 0; color: #111; }
+    .description { font-size: 1rem; color: #666; margin: 0.375rem 0 0; }
+    .grid { display: grid; gap: 0.375rem; flex: 1; min-height: 0; }
+    .cell { position: relative; overflow: hidden; break-inside: avoid; display: flex; flex-direction: column; border-radius: 0.5rem; }
     .cell-empty { background: transparent; }
-    .step-badge { position: absolute; top: 8px; left: 8px; background: hsl(${accent}); color: white; min-width: 32px; height: 32px; padding: 0 8px; font-weight: 700; font-size: 14px; border-radius: 6px; display: flex; align-items: center; justify-content: center; z-index: 1; }
-    .cell-image { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; }
-    .step-text { font-size: 13px; font-weight: 600; line-height: 1.3; color: #333; margin: 0; padding: 4px 6px; }
+    .image-container { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 0.5rem; }
+    .step-badge { position: absolute; top: 0.5rem; left: 0.5rem; background: hsl(${accent}); color: #fff; min-width: 2rem; height: 2rem; padding: 0 0.5rem; font-weight: 700; font-size: 0.875rem; border-radius: 0.375rem; display: flex; align-items: center; justify-content: center; z-index: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+    .cell-image { width: 100%; height: 100%; object-fit: cover; border-radius: 0.5rem; }
+    .step-text { font-family: Inter, system-ui, sans-serif; font-size: 0.8rem; font-weight: 600; line-height: 1.3; color: #333; margin: 0; padding: 0.25rem 0.375rem; min-height: 1.5rem; }
   </style></head><body>`;
 
   const sortedPages = pages.sort((a: any, b: any) => a.page_number - b.page_number);
@@ -472,7 +478,7 @@ function buildGembaDocHtml(doc: any, pages: any[], cells: any[], logoUrl: string
       html += `<img src="${logoUrl}" class="logo" />`;
     }
     if (pi === 0) {
-      html += `<div><h1 class="title">${doc.title}</h1>`;
+      html += `<div class="header-text"><h1 class="title">${doc.title}</h1>`;
       if (doc.description) html += `<p class="description">${doc.description}</p>`;
       html += `</div>`;
     }
@@ -481,7 +487,7 @@ function buildGembaDocHtml(doc: any, pages: any[], cells: any[], logoUrl: string
 
     const gridCols = doc.grid_columns || 2;
     const gridRows = doc.grid_rows || 2;
-    html += `<div class="grid" style="grid-template-columns: repeat(${gridCols}, 1fr); grid-template-rows: repeat(${gridRows}, 200px);">`;
+    html += `<div class="grid" style="grid-template-columns: repeat(${gridCols}, 1fr); grid-template-rows: repeat(${gridRows}, 1fr);">`;
     
     const pageCells = cells.filter((c: any) => c.page_id === page.id);
     for (let i = 0; i < gridRows * gridCols; i++) {
@@ -491,7 +497,7 @@ function buildGembaDocHtml(doc: any, pages: any[], cells: any[], logoUrl: string
         html += `<div class="cell cell-empty"></div>`;
       } else {
         html += `<div class="cell">`;
-        html += `<div style="position:relative;">`;
+        html += `<div class="image-container">`;
         html += `<div class="step-badge">${stepNumber}</div>`;
         html += `<img src="${cell.image_url}" class="cell-image" />`;
         html += `</div>`;
