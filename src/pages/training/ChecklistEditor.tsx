@@ -13,6 +13,7 @@ import { ChecklistPrintView } from "@/components/training/ChecklistPrintView";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus, Image } from "lucide-react";
+import { useDriveExport } from "@/hooks/useDriveExport";
 
 export interface ChecklistItem {
   id: string;
@@ -48,6 +49,7 @@ const ChecklistEditor = () => {
   const [hideAllImages, setHideAllImages] = useState(false);
   const [showAllImagesGallery, setShowAllImagesGallery] = useState(false);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
+  const driveExport = useDriveExport();
 
   // Fetch checklist
   const { data: checklist, isLoading: checklistLoading } = useQuery({
@@ -230,6 +232,10 @@ const ChecklistEditor = () => {
                 onReset={handleReset}
                 onPrint={handlePrint}
                 canEdit={isAdmin}
+                onExportToDrive={() => checklistId && driveExport.exportToDrive("checklist", checklistId)}
+                isExportingToDrive={checklistId ? driveExport.isExporting(checklistId) : false}
+                lastDriveSyncAt={checklistId ? driveExport.getRef(checklistId)?.last_synced_at || null : null}
+                isDriveConnected={driveExport.isConnected}
               />
             </div>
 

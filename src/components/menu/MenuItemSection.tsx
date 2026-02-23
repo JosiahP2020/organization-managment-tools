@@ -9,7 +9,15 @@ import { MenuItemCard } from "./MenuItemCard";
 import { FileDirectoryCard } from "./FileDirectoryCard";
 import { ToolCard } from "./ToolCard";
 import { TextDisplayCard } from "./TextDisplayCard";
+import { ExportToDriveButton } from "./ExportToDriveButton";
 import type { MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItems";
+
+interface DriveExportContext {
+  isConnected: boolean;
+  getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string } | null;
+  exportToDrive: (type: string, id: string) => Promise<void>;
+  isExporting: (id: string) => boolean;
+}
 
 interface MenuItemSectionProps {
   section: MenuItemSectionType;
@@ -31,6 +39,7 @@ interface MenuItemSectionProps {
   onMoveItemUp: (itemId: string, sectionId: string) => void;
   onMoveItemDown: (itemId: string, sectionId: string) => void;
   onItemClick?: (item: any) => void;
+  driveExport?: DriveExportContext;
 }
 
 export function MenuItemSection({
@@ -53,6 +62,7 @@ export function MenuItemSection({
   onMoveItemUp,
   onMoveItemDown,
   onItemClick,
+  driveExport,
 }: MenuItemSectionProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -132,6 +142,21 @@ export function MenuItemSection({
           }`}
         >
           {section.items.map((item, index) => {
+            // Drive export for text_display items (tools export at document level)
+            const driveType = item.item_type === "text_display" ? "text_display" : null;
+            const driveRef = driveExport?.isConnected && driveType ? driveExport.getRef(item.id) : null;
+            const showDriveExport = isAdmin && driveExport?.isConnected && driveType;
+
+            const driveButton = showDriveExport ? (
+              <ExportToDriveButton
+                entityId={item.id}
+                entityType={driveType!}
+                isExporting={driveExport!.isExporting(item.id)}
+                lastSynced={driveRef?.last_synced_at || null}
+                onExport={() => driveExport!.exportToDrive(driveType!, item.id)}
+              />
+            ) : null;
+
             if (item.item_type === "file_directory") {
               return (
                 <FileDirectoryCard
@@ -159,6 +184,7 @@ export function MenuItemSection({
                   onDelete={() => onDeleteItem(item.id)}
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
                   onClick={() => onItemClick?.(item)}
+                  driveButton={driveButton}
                 />
               );
             }
@@ -174,6 +200,7 @@ export function MenuItemSection({
                   onMoveDown={() => onMoveItemDown(item.id, section.id)}
                   onDelete={() => onDeleteItem(item.id)}
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
+                  driveButton={driveButton}
                 />
               );
             }

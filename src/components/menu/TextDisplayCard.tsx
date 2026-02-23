@@ -14,6 +14,7 @@ interface TextDisplayCardProps {
   onMoveDown: () => void;
   onDelete: () => void;
   onTitleChange: (newTitle: string) => void;
+  driveButton?: React.ReactNode;
 }
 
 export function TextDisplayCard({
@@ -24,6 +25,7 @@ export function TextDisplayCard({
   onMoveDown,
   onDelete,
   onTitleChange,
+  driveButton,
 }: TextDisplayCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -80,6 +82,7 @@ export function TextDisplayCard({
 
         {/* Admin controls */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          {driveButton}
           {!isFirst && (
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveUp} title="Move up">
               <ChevronUp className="h-4 w-4 text-muted-foreground" />
