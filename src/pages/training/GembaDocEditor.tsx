@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import type { Json } from "@/integrations/supabase/types";
-import { useDriveExport } from "@/hooks/useDriveExport";
+
 
 function GembaDocEditorContent() {
   const { gembaDocId, orgSlug, category } = useParams<{
@@ -48,7 +48,7 @@ function GembaDocEditorContent() {
     annotations: DrawingAction[];
   } | null>(null);
   const [deletePageDialogOpen, setDeletePageDialogOpen] = useState(false);
-  const driveExport = useDriveExport();
+  
   
   // Local state for title and description with debounced saving
   const [localTitle, setLocalTitle] = useState("");
@@ -459,10 +459,6 @@ function GembaDocEditorContent() {
                 onDoubleSidedChange={setDoubleSided}
                 onPrint={handlePrint}
                 isAdmin={isAdmin}
-                onExportToDrive={() => gembaDocId && driveExport.exportToDrive("gemba_doc", gembaDocId)}
-                isExportingToDrive={gembaDocId ? driveExport.isExporting(gembaDocId) : false}
-                lastDriveSyncAt={gembaDocId ? driveExport.getRef(gembaDocId)?.last_synced_at || null : null}
-                isDriveConnected={driveExport.isConnected}
               />
             </div>
 

@@ -36,7 +36,6 @@ async function getOrCreateRootFolder(
   integrationId: string,
   existingRootFolderId: string | null
 ): Promise<string> {
-  // Check if existing folder ID is still valid
   if (existingRootFolderId) {
     const checkRes = await fetch(
       `https://www.googleapis.com/drive/v3/files/${existingRootFolderId}?fields=id,trashed`,
@@ -46,11 +45,10 @@ async function getOrCreateRootFolder(
       const file = await checkRes.json();
       if (!file.trashed) return existingRootFolderId;
     } else {
-      await checkRes.text(); // consume body
+      await checkRes.text();
     }
   }
 
-  // Search for existing _app_storage folder
   const searchRes = await fetch(
     `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
       "name='_app_storage' and mimeType='application/vnd.google-apps.folder' and 'root' in parents and trashed=false"
@@ -67,7 +65,6 @@ async function getOrCreateRootFolder(
     return folderId;
   }
 
-  // Create new folder
   const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
     method: "POST",
     headers: {
@@ -118,7 +115,133 @@ async function getOrCreateSubFolder(
   return created.id;
 }
 
-// Create or update a Google Doc
+// Create a Google Doc from HTML, export as PDF, upload PDF, delete temp doc
+async function createPdfFromHtml(
+  accessToken: string,
+  folderId: string,
+  title: string,
+  htmlContent: string,
+  existingFileId: string | null
+): Promise<string> {
+  // Step 1: Create a temporary Google Doc with HTML content
+  const boundary = "multipart_boundary";
+  const metadata = JSON.stringify({
+    name: `_temp_${title}`,
+    mimeType: "application/vnd.google-apps.document",
+  });
+  const body =
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n` +
+    `--${boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${htmlContent}\r\n` +
+    `--${boundary}--`;
+
+  const createRes = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": `multipart/related; boundary=${boundary}`,
+      },
+      body,
+    }
+  );
+  const tempDoc = await createRes.json();
+  if (!tempDoc.id) {
+    throw new Error("Failed to create temporary document for PDF conversion");
+  }
+
+  try {
+    // Step 2: Export the Google Doc as PDF
+    const pdfRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${tempDoc.id}/export?mimeType=application/pdf`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!pdfRes.ok) {
+      const errText = await pdfRes.text();
+      throw new Error(`PDF export failed: ${errText}`);
+    }
+    const pdfBlob = await pdfRes.blob();
+
+    let driveFileId: string;
+
+    if (existingFileId) {
+      // Update existing PDF file
+      const updateRes = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=media`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/pdf",
+          },
+          body: pdfBlob,
+        }
+      );
+      const updateData = await updateRes.json();
+      driveFileId = updateData.id;
+
+      // Also update the name
+      await fetch(
+        `https://www.googleapis.com/drive/v3/files/${existingFileId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: `${title}.pdf` }),
+        }
+      );
+    } else {
+      // Upload new PDF file
+      const pdfBoundary = "pdf_boundary";
+      const pdfMetadata = JSON.stringify({
+        name: `${title}.pdf`,
+        parents: [folderId],
+      });
+
+      const metaPart = `--${pdfBoundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${pdfMetadata}\r\n`;
+      const filePart = `--${pdfBoundary}\r\nContent-Type: application/pdf\r\n\r\n`;
+      const endPart = `\r\n--${pdfBoundary}--`;
+
+      const metaBytes = new TextEncoder().encode(metaPart + filePart);
+      const fileBytes = new Uint8Array(await pdfBlob.arrayBuffer());
+      const endBytes = new TextEncoder().encode(endPart);
+
+      const combined = new Uint8Array(metaBytes.length + fileBytes.length + endBytes.length);
+      combined.set(metaBytes, 0);
+      combined.set(fileBytes, metaBytes.length);
+      combined.set(endBytes, metaBytes.length + fileBytes.length);
+
+      const uploadRes = await fetch(
+        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": `multipart/related; boundary=${pdfBoundary}`,
+          },
+          body: combined,
+        }
+      );
+      const uploadData = await uploadRes.json();
+      driveFileId = uploadData.id;
+    }
+
+    return driveFileId;
+  } finally {
+    // Step 3: Always delete the temporary Google Doc
+    await fetch(
+      `https://www.googleapis.com/drive/v3/files/${tempDoc.id}`,
+      {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+  }
+}
+
+// Create or update a Google Doc (for text_display items)
 async function createOrUpdateGoogleDoc(
   accessToken: string,
   folderId: string,
@@ -127,7 +250,6 @@ async function createOrUpdateGoogleDoc(
   existingFileId: string | null
 ): Promise<string> {
   if (existingFileId) {
-    // Update existing - upload new content
     const boundary = "multipart_boundary";
     const metadata = JSON.stringify({ name: title });
     const body =
@@ -150,7 +272,6 @@ async function createOrUpdateGoogleDoc(
     return data.id;
   }
 
-  // Create new Google Doc
   const boundary = "multipart_boundary";
   const metadata = JSON.stringify({
     name: title,
@@ -185,7 +306,6 @@ async function uploadFileToDrive(
   fileUrl: string,
   existingFileId: string | null
 ): Promise<string> {
-  // Fetch the file content
   const fileRes = await fetch(fileUrl);
   const fileBlob = await fileRes.blob();
   const mimeType = fileRes.headers.get("content-type") || "application/octet-stream";
@@ -206,14 +326,12 @@ async function uploadFileToDrive(
     return data.id;
   }
 
-  // Create new file
   const boundary = "file_boundary";
   const metadata = JSON.stringify({
     name: fileName,
     parents: [folderId],
   });
 
-  // For simple files, use resumable or multipart
   const metaPart = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n`;
   const filePart = `--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`;
   const endPart = `\r\n--${boundary}--`;
@@ -256,7 +374,6 @@ function buildChecklistHtml(checklist: any, sections: any[], items: any[]): stri
     html += "<ul>";
     for (const item of sectionItems) {
       html += `<li>${item.text}${item.notes ? ` — <em>${item.notes}</em>` : ""}</li>`;
-      // Sub-items
       const subItems = items
         .filter((i: any) => i.parent_item_id === item.id)
         .sort((a: any, b: any) => a.sort_order - b.sort_order);
@@ -371,7 +488,7 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { type, id } = await req.json();
+    const { type, id, folderId: userFolderId } = await req.json();
     if (!type || !id) {
       return new Response(JSON.stringify({ error: "Missing type or id" }), {
         status: 400,
@@ -422,17 +539,20 @@ Deno.serve(async (req) => {
         .eq("id", integration.id);
     }
 
-    // Get or create root folder
-    const rootFolderId = await getOrCreateRootFolder(
-      accessToken,
-      supabase,
-      integration.id,
-      integration.root_folder_id
-    );
-
-    // Get or create sub-folder by type
-    const subFolderName = getFolderName(type);
-    const subFolderId = await getOrCreateSubFolder(accessToken, rootFolderId, subFolderName);
+    // Determine target folder: user-chosen folder or fallback to _app_storage/subfolder
+    let targetFolderId: string;
+    if (userFolderId) {
+      targetFolderId = userFolderId;
+    } else {
+      const rootFolderId = await getOrCreateRootFolder(
+        accessToken,
+        supabase,
+        integration.id,
+        integration.root_folder_id
+      );
+      const subFolderName = getFolderName(type);
+      targetFolderId = await getOrCreateSubFolder(accessToken, rootFolderId, subFolderName);
+    }
 
     // Check for existing drive reference
     const { data: existingRef } = await supabase
@@ -478,9 +598,10 @@ Deno.serve(async (req) => {
       }
 
       const html = buildChecklistHtml(checklist, sections || [], items);
-      driveFileId = await createOrUpdateGoogleDoc(
+      // Export as PDF
+      driveFileId = await createPdfFromHtml(
         accessToken,
-        subFolderId,
+        targetFolderId,
         checklist.title,
         html,
         existingDriveFileId
@@ -515,9 +636,10 @@ Deno.serve(async (req) => {
       }
 
       const html = buildGembaDocHtml(doc, pages || [], cells);
-      driveFileId = await createOrUpdateGoogleDoc(
+      // Export as PDF
+      driveFileId = await createPdfFromHtml(
         accessToken,
-        subFolderId,
+        targetFolderId,
         doc.title,
         html,
         existingDriveFileId
@@ -538,13 +660,12 @@ Deno.serve(async (req) => {
 
       driveFileId = await uploadFileToDrive(
         accessToken,
-        subFolderId,
+        targetFolderId,
         file.file_name,
         file.file_url,
         existingDriveFileId
       );
     } else if (type === "text_display") {
-      // Text display items use menu_items description
       const { data: menuItem } = await supabaseUser
         .from("menu_items")
         .select("*")
@@ -561,7 +682,7 @@ Deno.serve(async (req) => {
       const html = `<h1>${menuItem.name}</h1><p>${menuItem.description || ""}</p>`;
       driveFileId = await createOrUpdateGoogleDoc(
         accessToken,
-        subFolderId,
+        targetFolderId,
         menuItem.name,
         html,
         existingDriveFileId
@@ -579,7 +700,7 @@ Deno.serve(async (req) => {
         .from("drive_file_references")
         .update({
           drive_file_id: driveFileId,
-          drive_folder_id: subFolderId,
+          drive_folder_id: targetFolderId,
           last_synced_at: new Date().toISOString(),
         })
         .eq("id", existingRef.id);
@@ -589,7 +710,7 @@ Deno.serve(async (req) => {
         entity_type: type,
         entity_id: id,
         drive_file_id: driveFileId,
-        drive_folder_id: subFolderId,
+        drive_folder_id: targetFolderId,
       });
     }
 

@@ -43,7 +43,7 @@ export function useDriveExport() {
   const getRef = (entityId: string) =>
     driveRefs?.find((r) => r.entity_id === entityId) || null;
 
-  const exportToDrive = async (type: string, id: string) => {
+  const exportToDrive = async (type: string, id: string, folderId?: string) => {
     setExportingIds((prev) => new Set(prev).add(id));
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -51,7 +51,7 @@ export function useDriveExport() {
 
       const { data, error } = await supabase.functions.invoke("google-drive-export", {
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: { type, id },
+        body: { type, id, folderId },
       });
 
       if (error) throw error;
