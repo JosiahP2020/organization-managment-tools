@@ -82,7 +82,7 @@ export function ToolCard({
     <>
       <div
         className={cn(
-          "group relative flex items-center gap-3 p-4 rounded-xl border transition-all",
+          "group relative flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-xl border transition-all",
           "bg-card hover:bg-accent/50 border-border hover:border-primary/30",
           !isEditing && onClick && "cursor-pointer"
         )}
@@ -107,7 +107,7 @@ export function ToolCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground">{item.name}</h3>
+              <h3 className="font-medium text-foreground text-xs sm:text-sm line-clamp-2 break-words">{item.name}</h3>
               <p className="text-xs text-muted-foreground">{toolLabel}</p>
             </>
           )}
@@ -175,7 +175,7 @@ export function ToolCard({
         {/* Synced indicator - always visible */}
         {isSynced && (
           <div className="shrink-0" title="Exported to Drive">
-            <CloudUpload className="h-4 w-4 text-primary" />
+            <CloudUpload className="h-3.5 w-3.5 text-primary" />
           </div>
         )}
       </div>
