@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2, ChevronUp, ChevronDown, Pencil } from "lucide-react";
+import { Trash2, ChevronUp, ChevronDown, Pencil, CloudUpload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
@@ -15,6 +15,7 @@ interface TextDisplayCardProps {
   onDelete: () => void;
   onTitleChange: (newTitle: string) => void;
   driveButton?: React.ReactNode;
+  isSynced?: boolean;
 }
 
 export function TextDisplayCard({
@@ -26,6 +27,7 @@ export function TextDisplayCard({
   onDelete,
   onTitleChange,
   driveButton,
+  isSynced,
 }: TextDisplayCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -84,27 +86,34 @@ export function TextDisplayCard({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           {driveButton}
           {!isFirst && (
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveUp} title="Move up">
+            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
               <ChevronUp className="h-4 w-4 text-muted-foreground" />
             </Button>
           )}
           {!isLast && (
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveDown} title="Move down">
+            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </Button>
           )}
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditing(true)}>
+          <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={() => setIsEditing(true)}>
             <Pencil className="h-4 w-4 text-muted-foreground" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 group-hover:bg-accent"
             onClick={() => setShowDeleteDialog(true)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Synced indicator - always visible */}
+        {isSynced && (
+          <div className="shrink-0" title="Exported to Drive">
+            <CloudUpload className="h-4 w-4 text-primary" />
+          </div>
+        )}
       </div>
 
       <DeleteConfirmDialog

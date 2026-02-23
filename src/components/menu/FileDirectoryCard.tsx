@@ -1,7 +1,14 @@
-import { ChevronUp, ChevronDown, Trash2 } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, CloudUpload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileDirectoryView } from "./FileDirectoryView";
+
+interface DriveExportContext {
+  isConnected: boolean;
+  getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string } | null;
+  exportToDrive: (type: string, id: string, folderId?: string) => Promise<void>;
+  isExporting: (id: string) => boolean;
+}
 
 interface FileDirectoryCardProps {
   item: {
@@ -16,6 +23,8 @@ interface FileDirectoryCardProps {
   onMoveDown: () => void;
   onDelete: () => void;
   onTitleChange: (newTitle: string) => void;
+  isSynced?: boolean;
+  driveExport?: DriveExportContext;
 }
 
 export function FileDirectoryCard({
@@ -26,6 +35,8 @@ export function FileDirectoryCard({
   onMoveDown,
   onDelete,
   onTitleChange,
+  isSynced,
+  driveExport,
 }: FileDirectoryCardProps) {
   const { isAdmin } = useAuth();
 
@@ -65,6 +76,11 @@ export function FileDirectoryCard({
           >
             <Trash2 className="h-4 w-4" />
           </Button>
+          {isSynced && (
+            <div className="shrink-0 ml-1" title="Exported to Drive">
+              <CloudUpload className="h-4 w-4 text-primary" />
+            </div>
+          )}
         </div>
       )}
 
@@ -73,6 +89,7 @@ export function FileDirectoryCard({
         menuItemId={item.id} 
         title={item.name} 
         onTitleChange={onTitleChange}
+        driveExport={driveExport}
       />
     </div>
   );

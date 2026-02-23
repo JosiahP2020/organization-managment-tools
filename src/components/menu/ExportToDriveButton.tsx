@@ -67,12 +67,14 @@ export function ExportToDriveButton({
         </Tooltip>
       </TooltipProvider>
 
-      <DriveFolderPickerDialog
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        onSelect={handleExport}
-        isExporting={isExporting}
-      />
+      <div onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+        <DriveFolderPickerDialog
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          onSelect={handleExport}
+          isExporting={isExporting}
+        />
+      </div>
     </>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckSquare, Grid3X3, ListChecks, ChevronUp, ChevronDown, Trash2, Pencil } from "lucide-react";
+import { CheckSquare, Grid3X3, ListChecks, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
@@ -17,6 +17,7 @@ interface ToolCardProps {
   onTitleChange: (newTitle: string) => void;
   onClick?: () => void;
   driveButton?: React.ReactNode;
+  isSynced?: boolean;
 }
 
 const toolIcons: Record<string, React.ElementType> = {
@@ -41,6 +42,7 @@ export function ToolCard({
   onTitleChange,
   onClick,
   driveButton,
+  isSynced,
 }: ToolCardProps) {
   const { isAdmin } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -118,7 +120,7 @@ export function ToolCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 group-hover:bg-accent"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditing(true);
@@ -131,7 +133,7 @@ export function ToolCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 group-hover:bg-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onMoveUp();
@@ -145,7 +147,7 @@ export function ToolCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7"
+                className="h-7 w-7 group-hover:bg-accent"
                 onClick={(e) => {
                   e.stopPropagation();
                   onMoveDown();
@@ -158,7 +160,7 @@ export function ToolCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-destructive hover:text-destructive"
+              className="h-7 w-7 text-destructive hover:text-destructive group-hover:bg-accent"
               onClick={(e) => {
                 e.stopPropagation();
                 setShowDeleteDialog(true);
@@ -167,6 +169,13 @@ export function ToolCard({
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
+          </div>
+        )}
+
+        {/* Synced indicator - always visible */}
+        {isSynced && (
+          <div className="shrink-0" title="Exported to Drive">
+            <CloudUpload className="h-4 w-4 text-primary" />
           </div>
         )}
       </div>

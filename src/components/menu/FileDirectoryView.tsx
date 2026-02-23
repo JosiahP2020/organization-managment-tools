@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { useFileDirectory, FileDirectoryFile } from "@/hooks/useFileDirectory";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
+import { ExportToDriveButton } from "./ExportToDriveButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,10 +28,18 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+interface DriveExportContext {
+  isConnected: boolean;
+  getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string } | null;
+  exportToDrive: (type: string, id: string, folderId?: string) => Promise<void>;
+  isExporting: (id: string) => boolean;
+}
+
 interface FileDirectoryViewProps {
   menuItemId: string;
   title?: string;
   onTitleChange?: (newTitle: string) => void;
+  driveExport?: DriveExportContext;
 }
 
 type FileTypeFilter = "all" | "documents" | "images" | "videos" | "audio" | "other";
@@ -68,7 +77,6 @@ function matchesFileType(fileType: string | null, filter: FileTypeFilter): boole
   
   const types = FILE_TYPE_CATEGORIES[filter];
   if (filter === "other") {
-    // Check if it doesn't match any specific category
     return !Object.entries(FILE_TYPE_CATEGORIES)
       .filter(([key]) => key !== "all" && key !== "other")
       .some(([, types]) => types.some(t => fileType.includes(t) || fileType.startsWith(t.split("/")[0])));
@@ -77,7 +85,7 @@ function matchesFileType(fileType: string | null, filter: FileTypeFilter): boole
   return types.some(t => fileType.includes(t) || fileType.startsWith(t.split("/")[0]));
 }
 
-export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDirectoryViewProps) {
+export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExport }: FileDirectoryViewProps) {
   const { isAdmin } = useAuth();
   const { files, isLoading, uploadFile, deleteFile } = useFileDirectory(menuItemId);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -121,7 +129,6 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDire
       await uploadFile.mutateAsync(file);
     }
     
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -148,18 +155,15 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDire
   const filteredFiles = useMemo(() => {
     let result = [...files];
 
-    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(f => f.file_name.toLowerCase().includes(query));
     }
 
-    // Apply type filter
     if (typeFilter !== "all") {
       result = result.filter(f => matchesFileType(f.file_type, typeFilter));
     }
 
-    // Apply sorting
     switch (sortBy) {
       case "newest":
         result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -258,43 +262,13 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDire
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "all"}
-                onCheckedChange={() => setTypeFilter("all")}
-              >
-                All Types
-              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={typeFilter === "all"} onCheckedChange={() => setTypeFilter("all")}>All Types</DropdownMenuCheckboxItem>
               <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "documents"}
-                onCheckedChange={() => setTypeFilter("documents")}
-              >
-                Documents
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "images"}
-                onCheckedChange={() => setTypeFilter("images")}
-              >
-                Images
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "videos"}
-                onCheckedChange={() => setTypeFilter("videos")}
-              >
-                Videos
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "audio"}
-                onCheckedChange={() => setTypeFilter("audio")}
-              >
-                Audio
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={typeFilter === "other"}
-                onCheckedChange={() => setTypeFilter("other")}
-              >
-                Other
-              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={typeFilter === "documents"} onCheckedChange={() => setTypeFilter("documents")}>Documents</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={typeFilter === "images"} onCheckedChange={() => setTypeFilter("images")}>Images</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={typeFilter === "videos"} onCheckedChange={() => setTypeFilter("videos")}>Videos</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={typeFilter === "audio"} onCheckedChange={() => setTypeFilter("audio")}>Audio</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem checked={typeFilter === "other"} onCheckedChange={() => setTypeFilter("other")}>Other</DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -308,18 +282,10 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDire
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setSortBy("newest")}>
-                Newest First
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("oldest")}>
-                Oldest First
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("name")}>
-                Name A-Z
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("size")}>
-                Size (Largest)
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("newest")}>Newest First</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("oldest")}>Oldest First</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("name")}>Name A-Z</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortBy("size")}>Size (Largest)</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -392,6 +358,7 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDire
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredFiles.map((file) => {
             const FileIcon = getFileIcon(file.file_type);
+            const fileRef = driveExport?.isConnected ? driveExport.getRef(file.id) : null;
             return (
               <Card
                 key={file.id}
@@ -418,10 +385,19 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDire
 
                 {/* Action Buttons */}
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {isAdmin && driveExport?.isConnected && (
+                    <ExportToDriveButton
+                      entityId={file.id}
+                      entityType="file"
+                      isExporting={driveExport.isExporting(file.id)}
+                      lastSynced={fileRef?.last_synced_at || null}
+                      onExport={(folderId) => driveExport.exportToDrive("file", file.id, folderId)}
+                    />
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-7 w-7 group-hover:bg-accent"
                     onClick={() => handleDownload(file)}
                     title="Download"
                   >
@@ -431,7 +407,7 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange }: FileDire
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      className="h-7 w-7 text-destructive hover:text-destructive group-hover:bg-accent"
                       onClick={() => handleDeleteClick(file)}
                       title="Delete"
                     >

@@ -181,6 +181,8 @@ export function MenuItemSection({
                   onMoveDown={() => onMoveItemDown(item.id, section.id)}
                   onDelete={() => onDeleteItem(item.id)}
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
+                  isSynced={!!driveRef}
+                  driveExport={driveExport}
                 />
               );
             }
@@ -198,6 +200,7 @@ export function MenuItemSection({
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
                   onClick={() => onItemClick?.(item)}
                   driveButton={driveButton}
+                  isSynced={!!driveRef}
                 />
               );
             }
@@ -214,6 +217,7 @@ export function MenuItemSection({
                   onDelete={() => onDeleteItem(item.id)}
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
                   driveButton={driveButton}
+                  isSynced={!!driveRef}
                 />
               );
             }
