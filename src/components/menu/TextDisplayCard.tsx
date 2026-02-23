@@ -53,24 +53,30 @@ export function TextDisplayCard({
     }
   };
 
-  const handleAddressClick = () => {
-    if (subType === "address" && item.name) {
-      const encoded = encodeURIComponent(item.name);
-      window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
-    }
-  };
-
   const isAddress = subType === "address";
+  const mapsUrl = isAddress && item.name
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`
+    : null;
 
   return (
     <>
       <div
         className={`group relative flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-lg bg-card border border-border transition-colors ${isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"}`}
-        onClick={!isEditing && isAddress ? handleAddressClick : undefined}
+        onClick={!isEditing && isAddress && mapsUrl ? () => {
+          const w = window.open(mapsUrl, "_blank", "noopener,noreferrer");
+          if (!w) {
+            // Fallback: create a temporary link
+            const a = document.createElement("a");
+            a.href = mapsUrl;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.click();
+          }
+        } : undefined}
       >
         {/* Icon */}
-        <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-primary/10 shrink-0">
-          <DynamicIcon name={item.icon} className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0">
+          <DynamicIcon name={item.icon} className="h-4 w-4 text-primary" />
         </div>
 
         {/* Content */}
