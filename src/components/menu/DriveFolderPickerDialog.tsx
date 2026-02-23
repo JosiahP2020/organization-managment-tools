@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Folder, FolderPlus, ChevronRight, Loader2, Upload, RefreshCw } from "lucide-react";
 import {
   Dialog,
@@ -68,12 +68,15 @@ export function DriveFolderPickerDialog({
     }
   }, []);
 
-  // Fetch on open and when navigating
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen) {
+  // Fetch folders whenever dialog opens
+  useEffect(() => {
+    if (open) {
       setBreadcrumbs([{ id: "root", name: "My Drive" }]);
       fetchFolders("root");
     }
+  }, [open, fetchFolders]);
+
+  const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
   };
 

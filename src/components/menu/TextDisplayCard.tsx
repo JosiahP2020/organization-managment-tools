@@ -55,7 +55,7 @@ export function TextDisplayCard({
 
   return (
     <>
-      <div className="group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-colors cursor-default">
+      <div className="group relative flex items-center gap-2 sm:gap-3 p-3 rounded-lg bg-card border border-border transition-colors cursor-default">
         {/* Icon */}
         <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0">
           <DynamicIcon name={item.icon} className="h-4 w-4 text-primary" />
@@ -74,7 +74,7 @@ export function TextDisplayCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground">{item.name}</h3>
+              <h3 className="font-medium text-foreground text-xs sm:text-sm line-clamp-2 break-words">{item.name}</h3>
               {subtitle && (
                 <p className="text-xs text-muted-foreground">{subtitle}</p>
               )}
@@ -112,7 +112,7 @@ export function TextDisplayCard({
         {/* Synced indicator - always visible */}
         {isSynced && (
           <div className="shrink-0" title="Exported to Drive">
-            <CloudUpload className="h-4 w-4 text-primary" />
+            <CloudUpload className="h-3.5 w-3.5 text-primary" />
           </div>
         )}
       </div>
