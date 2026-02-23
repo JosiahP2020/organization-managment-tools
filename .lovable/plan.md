@@ -1,91 +1,45 @@
 
 
-# Fix Drive Export Bugs + Add Sync Badges, File Export Buttons, and Solid Hover Buttons
+# Fix Google Drive PDF Export to Match Current Print Formats
 
-## Summary
+## Problem
+The edge function's HTML generation for PDFs uses slightly outdated styling that doesn't match the current `ChecklistPrintView` and `GembaDocPrintView` components.
 
-This plan addresses 7 issues and feature requests:
+## Changes Required
 
-1. **Folder list not loading on open** -- Add a refresh button to the folder picker dialog
-2. **Clicking empty space opens document** -- Stop click propagation from the dialog/export button
-3. **Export button click also opens document** -- Fix event propagation on the ExportToDriveButton
-4. **Folder icon misaligned** -- Center the folder icon and "No subfolders" text vertically in the empty state
-5. **Add sync badge to item cards** -- Show a small Drive icon indicator permanently on cards that have been exported
-6. **Add export buttons to file directory files** -- Show an export-to-Drive button on each file card inside FileDirectoryView
-7. **Make hover buttons solid on card hover** -- Change button styling so they have a solid background when the parent card is hovered (not just when the button itself is hovered)
+### 1. Update `buildChecklistHtml` in `supabase/functions/google-drive-export/index.ts`
 
----
+Align the checklist HTML with the exact styling from `ChecklistPrintView.tsx`:
+- Checkbox size: change from 18x18px / 3px radius to **20x20px / 4px radius** with `background: white`
+- Border bottom on header: ensure it's `2px solid black`
+- Item borders: use `border-bottom: 1px solid #e5e7eb` (Tailwind `border-gray-200`)
+- Item padding: `padding: 8px 0` matches `py-2`
+- Section items container: add `padding-left: 8px` to match `pl-2`
+- Ensure sub-items use `margin-left: 24px` per depth level
+
+### 2. Update `buildGembaDocHtml` in `supabase/functions/google-drive-export/index.ts`
+
+This has the bigger differences from `GembaDocPrintView.tsx`:
+- Add `@page { size: landscape; }` for landscape orientation (the default)
+- Pages should fill `100vh` height with `display: flex; flex-direction: column`
+- Grid should use `flex: 1` instead of fixed `200px` row heights
+- Cell images: use `width: 100%; height: 100%; object-fit: cover`
+- Step badge styling: match exact colors (`hsl(22, 90%, 54%)`) and sizing
+- Step text: use `font-family: Inter, system-ui; font-size: 0.8rem; font-weight: 600`
+- Empty cells: render as transparent (no content, no border)
+- Page breaks: add `page-break-after: always` per page
+- Header padding/margins: match `0.375rem` padding, `0.5rem` margin-bottom
+- Remove footers (as per the design spec — maximize image space)
+
+### 3. Redeploy the edge function
+
+Deploy the updated `google-drive-export` function.
 
 ## Technical Details
 
-### 1. Refresh Button in DriveFolderPickerDialog
+The core file to modify is `supabase/functions/google-drive-export/index.ts`, specifically:
+- `buildChecklistHtml()` (lines 374-445) — minor CSS tweaks
+- `buildGembaDocHtml()` (lines 448-506) — significant CSS rewrite to match the full-page landscape layout with flex grid
 
-**File:** `src/components/menu/DriveFolderPickerDialog.tsx`
-
-Add a `RefreshCw` icon button next to the breadcrumbs. Clicking it calls `fetchFolders(currentFolderId)` to reload the folder list.
-
-### 2 & 3. Fix Click Propagation (ExportToDriveButton + DriveFolderPickerDialog)
-
-**File:** `src/components/menu/ExportToDriveButton.tsx`
-
-The button already calls `e.stopPropagation()`, but the `DriveFolderPickerDialog` is rendered inside the card's clickable area. When the dialog closes (via X or Cancel), the click event bubbles up to the card's `onClick` handler which navigates to the document.
-
-**Fix:**
-- Wrap the `DriveFolderPickerDialog` render with a `<div onClick={e => e.stopPropagation()}>` to prevent any dialog interaction from bubbling to the card.
-- Also add `onPointerDownOutside` handler on DialogContent to stop propagation.
-
-### 4. Center Folder Icon in Empty State
-
-**File:** `src/components/menu/DriveFolderPickerDialog.tsx`
-
-The empty state container uses `h-full` but the ScrollArea needs explicit height handling. Add `items-center justify-center` and ensure the parent div fills the scroll area height properly. The fix is to make the empty-state wrapper a flex column with full height centering.
-
-### 5. Sync Badge on Item Cards
-
-**Files:** `src/components/menu/ToolCard.tsx`, `src/components/menu/TextDisplayCard.tsx`, `src/components/menu/FileDirectoryCard.tsx`
-
-Add a new optional `isSynced` prop (boolean). When true, show a small `CloudUpload` icon (from lucide) in `text-primary` right after the delete button (far right of the card). This icon is always visible (not hover-dependent), acting as a permanent indicator.
-
-**File:** `src/components/menu/MenuItemSection.tsx`
-
-Pass `isSynced={!!driveRef}` to each card component. For FileDirectoryCard, also pass the prop based on the drive ref lookup.
-
-### 6. Export Buttons on File Directory Files
-
-**File:** `src/components/menu/FileDirectoryView.tsx`
-
-Accept new optional props: `driveExport` context (same shape as MenuItemSection's DriveExportContext). For each file card, show an `ExportToDriveButton` in the action buttons area (next to Download and Delete). The entity type will be `"file"` and the entity ID will be the file's ID.
-
-**File:** `src/components/menu/FileDirectoryCard.tsx`
-
-Pass `driveExport` through to `FileDirectoryView`.
-
-**File:** `src/components/menu/MenuItemSection.tsx`
-
-Pass the `driveExport` context to `FileDirectoryCard` so it can thread it to FileDirectoryView.
-
-### 7. Solid Hover Buttons
-
-**Files:** `src/components/menu/ToolCard.tsx`, `src/components/menu/TextDisplayCard.tsx`, `src/components/menu/FileDirectoryView.tsx`
-
-Currently buttons use `variant="ghost"` which has a transparent background until directly hovered. Change the button classes so that when the parent card is hovered (`group-hover`), buttons get a solid background:
-
-- Add `group-hover/card:bg-secondary` (or similar) to each action button's className so they appear solid when the card is hovered, not just when the individual button is hovered.
-- Alternatively, wrap the button group in a container that gets `bg-secondary` on group hover and apply it uniformly.
-
-The simplest approach: on each Button inside the hover controls, add `group-hover:bg-accent` so they look solid as soon as the card is hovered.
-
----
-
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `src/components/menu/DriveFolderPickerDialog.tsx` | Add refresh button; fix empty state centering |
-| `src/components/menu/ExportToDriveButton.tsx` | Wrap dialog in stopPropagation div |
-| `src/components/menu/ToolCard.tsx` | Add `isSynced` badge; solid hover buttons |
-| `src/components/menu/TextDisplayCard.tsx` | Add `isSynced` badge; solid hover buttons |
-| `src/components/menu/FileDirectoryCard.tsx` | Add `isSynced` badge; pass driveExport to FileDirectoryView |
-| `src/components/menu/FileDirectoryView.tsx` | Add export buttons on individual file cards; solid hover buttons |
-| `src/components/menu/MenuItemSection.tsx` | Pass `isSynced` and `driveExport` to FileDirectoryCard |
+Both functions will use the organization's accent color (already passed in) and the `@page` CSS directive for proper print sizing. The SOP guide will default to landscape orientation using the doc's `orientation` field.
 
