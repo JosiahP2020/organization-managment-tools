@@ -61,24 +61,21 @@ export function GoogleDriveConnection() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // Use the top-level window origin for redirect (preview iframe vs top frame)
+      const topOrigin = window.top ? window.top.location.origin : window.location.origin;
       const { data, error } = await supabase.functions.invoke("google-drive-auth", {
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: { origin: window.location.origin },
+        body: { origin: topOrigin },
       });
 
       if (error) throw error;
       if (data?.url) {
-        // Open in new tab to avoid iframe restrictions (Google blocks OAuth in iframes)
-        const authWindow = window.open(data.url, "_blank");
-        if (!authWindow) {
-          // Fallback: try top-level navigation if popup blocked
-          if (window.top) {
-            window.top.location.href = data.url;
-          } else {
-            window.location.href = data.url;
-          }
+        // Navigate the top-level window to avoid iframe/new-tab issues
+        if (window.top && window.top !== window) {
+          window.top.location.href = data.url;
+        } else {
+          window.location.href = data.url;
         }
-        setIsConnecting(false);
       }
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to start connection", variant: "destructive" });
