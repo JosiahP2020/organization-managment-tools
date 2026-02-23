@@ -61,9 +61,17 @@ export function GoogleDriveConnection() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // The iframe origin is *.lovableproject.com but the actual preview URL
+      // is *.lovable.app. Transform the origin so the callback redirects correctly.
+      let origin = window.location.origin;
+      const projectMatch = origin.match(/^https:\/\/(.+)\.lovableproject\.com$/);
+      if (projectMatch) {
+        origin = `https://id-preview--${projectMatch[1]}.lovable.app`;
+      }
+
       const { data, error } = await supabase.functions.invoke("google-drive-auth", {
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: { origin: window.location.origin },
+        body: { origin },
       });
 
       if (error) throw error;
