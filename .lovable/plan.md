@@ -1,28 +1,50 @@
 
-# Google Drive Integration — Bidirectional Links
 
-## Current Implementation (Completed)
+# Graceful Google Drive Reconnection Handling
 
-### Export (App → Drive)
-- Creates a **Google Doc** in the user's chosen Drive folder containing a clickable link back to the app
-- No more PDFs or HTML rendering — just a simple link document
-- Supports all entity types: checklists, SOP guides, follow-up lists, text items, file directory files
-- Existing file detection: if a previously exported file was deleted from Drive, a fresh one is created
+## Problem
+When a Google OAuth refresh token expires or gets revoked (which **will** happen in production), users see a cryptic error like "Token refresh failed: invalid_grant". There's no clear guidance telling them what happened or how to fix it.
 
-### Drive → App (via link)
-- The Google Doc in Drive contains an "Open in App" hyperlink
-- Clicking it navigates to the app page where the item lives
+## Solution
+Add a specific error code for token failures across all Drive edge functions, then detect that code on the client side and show a friendly dialog prompting the user to reconnect Google Drive.
 
-### App → Drive (via synced icon)
-- The CloudUpload icon on synced cards is now **clickable**
-- Clicking it opens the corresponding Google Doc in Drive in a new tab
-- URL format: `https://docs.google.com/document/d/{drive_file_id}/edit`
+## Changes
 
-### Drive File References
-- `drive_file_references` table tracks the mapping between app entities and Drive files
-- `drive_file_id` is used to construct the Drive URL on the client side
+### 1. Edge Functions: Return a specific error code on token failure
+Update both `google-drive-export` and `google-drive-list-folders` edge functions so that when `refreshAccessToken` throws an `invalid_grant` error, the function:
+- Sets the integration status to `"disconnected"` in the database (so the app reflects reality)
+- Returns a JSON response with a recognizable error code like `"DRIVE_TOKEN_EXPIRED"`
 
-## Future Considerations
-- Import from Drive: Pick a Drive file and add it as a link in the app
-- Auto-sync when content changes
-- Stale reference cleanup when files are deleted from Drive
+This way the client can distinguish "token expired" from other errors.
+
+### 2. Client: Detect the error and show a reconnect dialog
+Update `useDriveExport.tsx` so that when an export call returns `DRIVE_TOKEN_EXPIRED`:
+- Instead of a plain error toast, show a toast with a clear message: **"Google Drive disconnected. Please reconnect in Organization Settings."**
+- Invalidate the `drive-connected` query so the UI immediately reflects the disconnected state
+
+### 3. Folder Picker: Same handling
+Update `DriveFolderPickerDialog` (or wherever the list-folders call is made) to also detect `DRIVE_TOKEN_EXPIRED` and show the same friendly message instead of a raw error.
+
+### 4. Export button: Pre-check connection
+The `ExportToDriveButton` already relies on `isConnected` from `useDriveExport`. Once the edge function marks the integration as disconnected and the query is invalidated, the export buttons will naturally reflect the disconnected state on next render.
+
+## Technical Details
+
+**Edge function changes** (both `google-drive-export/index.ts` and `google-drive-list-folders/index.ts`):
+- Wrap the `refreshAccessToken` call in a try/catch
+- On `invalid_grant`, update `organization_integrations` to set `status = 'disconnected'`
+- Return `{ error: "...", code: "DRIVE_TOKEN_EXPIRED" }` with status 400
+
+**Client changes** (`useDriveExport.tsx`):
+- Check `data?.code === "DRIVE_TOKEN_EXPIRED"` in the export handler
+- Show a descriptive toast with an action or message pointing to Organization Settings
+- Invalidate `drive-connected` query
+
+**Folder picker changes** (`DriveFolderPickerDialog.tsx`):
+- Same pattern: detect `DRIVE_TOKEN_EXPIRED` from the list-folders response and show the reconnect message instead of opening the picker
+
+## What Users Will See
+When their Google Drive token expires and they try to export:
+1. A clear toast message: "Google Drive has been disconnected. Please reconnect it in Organization Settings."
+2. The export/sync icons will update to reflect the disconnected state
+3. They can go to Organization Settings and click "Connect Google Drive" to re-authorize
