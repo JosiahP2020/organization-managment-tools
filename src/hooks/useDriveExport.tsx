@@ -66,6 +66,11 @@ export function useDriveExport() {
       });
 
       if (error) throw error;
+      if (data?.code === "DRIVE_TOKEN_EXPIRED") {
+        toast.error("Google Drive has been disconnected. Please reconnect it in Organization Settings.");
+        queryClient.invalidateQueries({ queryKey: ["drive-connected", organization?.id] });
+        return;
+      }
       if (data?.error) throw new Error(data.error);
 
       toast.success("Exported to Google Drive");

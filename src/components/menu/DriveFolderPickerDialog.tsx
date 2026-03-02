@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { Folder, FolderPlus, ChevronRight, Loader2, Upload, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,11 @@ export function DriveFolderPickerDialog({
       });
 
       if (error) throw error;
+      if (data?.code === "DRIVE_TOKEN_EXPIRED") {
+        toast.error("Google Drive has been disconnected. Please reconnect it in Organization Settings.");
+        onOpenChange(false);
+        return;
+      }
       setFolders(data?.folders || []);
     } catch (err) {
       console.error("Failed to list folders:", err);
