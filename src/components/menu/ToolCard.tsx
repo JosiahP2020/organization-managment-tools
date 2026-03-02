@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckSquare, Grid3X3, ListChecks, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload } from "lucide-react";
+import { CheckSquare, Grid3X3, ListChecks, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
@@ -18,7 +18,8 @@ interface ToolCardProps {
   onClick?: () => void;
   driveButton?: React.ReactNode;
   isSynced?: boolean;
-  onOpenDrive?: () => void;
+  isSyncingToDrive?: boolean;
+  onResync?: () => void;
 }
 
 const toolIcons: Record<string, React.ElementType> = {
@@ -44,7 +45,8 @@ export function ToolCard({
   onClick,
   driveButton,
   isSynced,
-  onOpenDrive,
+  isSyncingToDrive,
+  onResync,
 }: ToolCardProps) {
   const { isAdmin } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -174,17 +176,22 @@ export function ToolCard({
           </div>
         )}
 
-        {/* Synced indicator - clickable to open in Drive */}
+        {/* Synced indicator - clickable to resync */}
         {isSynced && (
           <button
             className="shrink-0 hover:opacity-70 transition-opacity"
-            title="Open in Google Drive"
+            title="Exported to Drive - Resync"
             onClick={(e) => {
               e.stopPropagation();
-              onOpenDrive?.();
+              onResync?.();
             }}
+            disabled={isSyncingToDrive}
           >
-            <CloudUpload className="h-3.5 w-3.5 text-primary" />
+            {isSyncingToDrive ? (
+              <Loader2 className="h-3.5 w-3.5 text-primary animate-spin" />
+            ) : (
+              <CloudUpload className="h-3.5 w-3.5 text-primary" />
+            )}
           </button>
         )}
       </div>

@@ -8,6 +8,7 @@ export function useDriveExport() {
   const { organization } = useAuth();
   const queryClient = useQueryClient();
   const [exportingIds, setExportingIds] = useState<Set<string>>(new Set());
+  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
   const verifiedRef = useRef(false);
 
   // Check if Google Drive is connected
@@ -112,16 +113,20 @@ export function useDriveExport() {
   };
 
   // Auto-sync: re-export if entity already has a Drive reference
-  const syncToDriveIfNeeded = useCallback(async (entityType: string, entityId: string) => {
+  const syncToDriveIfNeeded = useCallback(async (entityType: string, entityId: string, options?: { silent?: boolean }) => {
     if (!driveRefs || !isConnected) return;
     const ref = driveRefs.find((r) => r.entity_id === entityId && r.entity_type === entityType);
     if (!ref) return;
+
+    setSyncingIds((prev) => new Set(prev).add(entityId));
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      toast.info("Syncing to Drive...", { duration: 2000 });
+      if (!options?.silent) {
+        toast.info("Syncing to Drive...", { duration: 2000 });
+      }
 
       const { data, error } = await supabase.functions.invoke("google-drive-export", {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -130,11 +135,29 @@ export function useDriveExport() {
 
       if (!error && !data?.error) {
         queryClient.invalidateQueries({ queryKey: ["drive-file-refs", organization?.id] });
+        if (!options?.silent) {
+          toast.success("Synced to Drive");
+        }
       }
     } catch (err) {
       console.warn("Auto-sync to Drive failed:", err);
+    } finally {
+      setSyncingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(entityId);
+        return next;
+      });
     }
   }, [driveRefs, isConnected, organization?.id, queryClient]);
+
+  // Batch sync all items with drive refs for a given category
+  const syncAllForCategory = useCallback(async (items: Array<{ type: string; id: string }>) => {
+    for (const item of items) {
+      await syncToDriveIfNeeded(item.type, item.id, { silent: true });
+      // Small delay between calls to avoid rate limits
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }, [syncToDriveIfNeeded]);
 
   return {
     isConnected: !!isConnected,
@@ -142,7 +165,9 @@ export function useDriveExport() {
     getRef,
     exportToDrive,
     isExporting: (id: string) => exportingIds.has(id),
+    isSyncing: (id: string) => syncingIds.has(id),
     openInDrive,
     syncToDriveIfNeeded,
+    syncAllForCategory,
   };
 }
