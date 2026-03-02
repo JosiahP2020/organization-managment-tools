@@ -1,69 +1,74 @@
 
 
-# Restore PDF Export for Printable Documents, Keep Google Docs for Text Items
+# Lockbox Title, Address Links, Drive Resync, and Auto-Sync
 
-## Summary
-Revert the export to a hybrid approach:
-- **Checklists, SOPs, Follow-up Lists** (printable documents) -> Export as **PDFs** to Google Drive, matching the existing print layout
-- **Text Display items** (address, lockbox, text) -> Keep as **Google Docs** with the "Open in App" link
-- **App-to-Drive links** -> Keep the clickable cloud icon that opens the file in Drive
+## 4 Issues to Address
 
-## Changes
+### 1. Lockbox Code Export Title
+**Problem**: When exporting a lockbox code to Google Drive, the title is just the code (e.g., "1212"). It should be "Lockbox Code: 1212".
 
-### 1. Edge Function: Rebuild PDF export for printable documents
-**File: `supabase/functions/google-drive-export/index.ts`**
+**Fix**: In the edge function (`google-drive-export/index.ts`), when resolving the title for `text_display` items, also fetch `description` (which stores the subtype: "text", "address", or "lockbox"). If `description === "lockbox"`, prefix the title with "Lockbox Code: ". If `description === "address"`, prefix with "Address: ".
 
-For `checklist` and `gemba_doc` types, the function will:
-1. Fetch the full document data (sections, items, pages, cells, organization logo)
-2. Build HTML matching the print layout (inline styles -- required since Google Docs strips CSS classes)
-3. Upload HTML as a temporary Google Doc (Google converts it)
-4. Export the Google Doc as PDF via the Drive export API
-5. Upload the PDF binary as a file to the target folder
-6. Delete the temporary Google Doc
-7. Store the PDF file ID in `drive_file_references`
+### 2. Address Link Blocked in Preview
+**Problem**: Clicking an address card shows "google.com is blocked / ERR_BLOCKED_BY_RESPONSE". This is because the card renders as an `<a>` tag, and the preview iframe's sandbox restrictions block cross-origin navigation.
 
-For `text_display` type, keep the current Google Doc with "Open in App" link (no change).
+**Fix**: Change the address card from an `<a>` tag to a `<div>` with an `onClick` handler that calls `window.open(mapsUrl, "_blank")`. This avoids the iframe navigation restriction and works in both the preview and production. For non-admin mode only (admin mode already suppresses the link).
 
-For `file_directory_file` type, keep current behavior.
+### 3. Resync Drive References (Detect Deleted Files)
+**Problem**: If a user deletes files from Google Drive, the app still shows them as "synced" with the cloud icon. Re-exporting then errors because the edge function tries to update a file that no longer exists.
 
-### 2. Fix Drive links for PDFs vs Docs
-**File: `src/hooks/useDriveExport.tsx`**
+**Fix**: Create a new edge function `google-drive-verify` that accepts a list of `drive_file_id` values, checks each one against Google Drive (HEAD request to see if it exists / is trashed), and returns which ones are still valid. Then call this on page load from `useDriveExport` to clean up stale references.
 
-The `openInDrive` function currently always opens `docs.google.com/document/d/{id}/edit`. For PDF files, it should open `drive.google.com/file/d/{id}/view` instead. Store a `file_type` indicator (either in the edge function response or by checking the entity type) to determine which URL pattern to use.
+- New edge function: `supabase/functions/google-drive-verify/index.ts` -- accepts an array of drive file IDs, batch-checks them via Google Drive API, deletes invalid `drive_file_references` rows, returns the list of removed entity IDs.
+- Update `useDriveExport.tsx` to call this verification after fetching `driveRefs`, pruning stale entries so the UI updates.
 
-Simple approach: use `drive.google.com/file/d/{id}/view` for all types -- this works for both PDFs and Google Docs in Drive's viewer.
+### 4. Auto-Sync: Update Drive When Content Changes
+**Problem**: When a user edits a checklist or SOP that's already exported to Drive, the Drive copy becomes stale.
 
-### 3. HTML templates for print layouts
+**Fix**: Add an auto-sync mechanism. After any mutation that modifies content (add/edit/delete items, sections, cells, images), if the entity has a `drive_file_reference`, automatically re-export to Drive in the background.
 
-**Checklist PDF HTML**: Mirror `ChecklistPrintView.tsx` with inline styles:
-- Header with org logo (left) and centered title
-- Sections with left-accent border and gray background
-- Checkbox squares (20x20px, 2px border) or numbered items based on `display_mode`
-- Nested child items with indentation
+- Add a helper function `syncToDriveIfNeeded(entityType, entityId)` to `useDriveExport` that checks if a drive ref exists for that entity and, if so, silently re-exports using the stored folder ID.
+- Call this function from the `onSuccess` callbacks of relevant mutations in the checklist editor, gemba doc editor, and text display edit handlers.
+- Show a subtle toast like "Syncing to Drive..." with no error interruption (fail silently with a console warning).
 
-**SOP/Gemba Doc PDF HTML**: Mirror `GembaDocPrintView.tsx` with inline styles:
-- Landscape orientation
-- Header with logo (left), title (center), page number (right, orange badge)
-- Grid of cells with images, step number badges (orange), and step text below
-- Multiple pages
+## Technical Details
 
-### 4. Data fetching in edge function
+### Edge function title fix (google-drive-export/index.ts, ~line 615-617)
+Change the `text_display` title resolution to also fetch `description`:
+```typescript
+const { data: menuItem } = await supabaseUser
+  .from("menu_items")
+  .select("name, description")
+  .eq("id", rawId)
+  .single();
 
-For checklists, the function needs to fetch:
-- `checklists` (title, description, display_mode)
-- `checklist_sections` (title, display_mode, image_url, sort_order)
-- `checklist_items` (text, parent_item_id, sort_order, item_type)
-- `organizations` (main_logo_url, accent_color)
+const subType = menuItem?.description;
+if (subType === "lockbox") {
+  title = `Lockbox Code: ${menuItem?.name || ""}`;
+} else if (subType === "address") {
+  title = `Address: ${menuItem?.name || ""}`;
+} else {
+  title = menuItem?.name || "Text Item";
+}
+```
 
-For gemba_docs, the function needs to fetch:
-- `gemba_docs` (title, description, grid_columns, grid_rows, orientation)
-- `gemba_doc_pages` (page_number)
-- `gemba_doc_cells` (position, image_url, step_number, step_text)
-- `organizations` (main_logo_url, accent_color)
+### Address card fix (TextDisplayCard.tsx, ~line 63-71)
+Replace the `<a>` wrapper with a `<div>` that uses `onClick={() => window.open(mapsUrl, "_blank")}` for address items.
 
-## Technical Notes
+### New edge function: google-drive-verify/index.ts
+- Accepts `{ driveFileIds: string[] }` in the request body
+- Authenticates user, gets org integration token
+- For each drive file ID, calls `GET https://www.googleapis.com/drive/v3/files/{id}?fields=id,trashed`
+- Returns `{ invalidIds: string[] }` for files that are 404 or trashed
+- Deletes corresponding `drive_file_references` rows
 
-- The "create temp doc -> export PDF -> upload PDF -> delete temp doc" flow requires 4 API calls to Google but produces a real PDF that renders correctly in Drive's viewer
-- All HTML uses inline styles (no `<style>` blocks) since Google's HTML-to-Doc converter strips them
-- The existing token refresh, folder management, and `DRIVE_TOKEN_EXPIRED` error handling remain unchanged
-- The `drive_file_references` table stores the final PDF file ID, not the temp doc ID
+### useDriveExport.tsx changes
+- After `driveRefs` query succeeds and has results, trigger a background verification call
+- Add `syncToDriveIfNeeded(entityType, entityId)` function that checks for existing ref and re-exports if found
+- Expose `syncToDriveIfNeeded` so editor components can call it after mutations
+
+### Editor integration
+- In `ChecklistEditor` page: after item/section mutations succeed, call `syncToDriveIfNeeded("checklist", checklistId)`
+- In `GembaDocEditor` page: after cell/page mutations succeed, call `syncToDriveIfNeeded("gemba_doc", gembaDocId)`
+- In `MenuItemSection`/`TextDisplayCard`: after title edit, call `syncToDriveIfNeeded("text_display", itemId)`
+
