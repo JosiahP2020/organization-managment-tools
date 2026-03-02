@@ -613,8 +613,10 @@ Deno.serve(async (req) => {
         }
       }
     } else if (rawType === "text_display") {
-      const { data: menuItem } = await supabaseUser.from("menu_items").select("name").eq("id", rawId).single();
-      title = menuItem?.name || "Text Item";
+      const { data: menuItem } = await supabaseUser.from("menu_items").select("name, description").eq("id", rawId).single();
+      const subType = menuItem?.description; // "text", "address", or "lockbox"
+      const label = subType === "address" ? "Address" : subType === "lockbox" ? "Lock Box Code" : null;
+      title = label ? `${label}: ${menuItem?.name || ""}` : (menuItem?.name || "Text Item");
     } else if (rawType === "file_directory_file") {
       const { data: file } = await supabaseUser.from("file_directory_files").select("file_name").eq("id", rawId).single();
       title = file?.file_name || "File";
@@ -713,12 +715,26 @@ Deno.serve(async (req) => {
       const accentColor = org?.accent_color || "hsl(22, 90%, 54%)";
 
       if (rawType === "checklist") {
-        // Fetch checklist data
-        const { data: checklist } = await supabaseUser
-          .from("checklists")
-          .select("id, title, description, display_mode")
-          .eq("id", rawId)
-          .single();
+        // Try direct ID first, then resolve via menu_item_documents
+        let checklistId = rawId;
+        let checklist = (await supabaseUser.from("checklists").select("id, title, description, display_mode").eq("id", rawId).maybeSingle()).data;
+
+        if (!checklist) {
+          // rawId is a menu_item ID — resolve the actual checklist
+          const { data: menuItemDoc } = await supabaseUser
+            .from("menu_item_documents")
+            .select("document_id")
+            .eq("menu_item_id", rawId)
+            .eq("document_type", "checklist")
+            .is("archived_at", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (menuItemDoc?.document_id) {
+            checklistId = menuItemDoc.document_id;
+            checklist = (await supabaseUser.from("checklists").select("id, title, description, display_mode").eq("id", checklistId).single()).data;
+          }
+        }
 
         if (!checklist) throw new Error("Checklist not found");
 
@@ -742,12 +758,23 @@ Deno.serve(async (req) => {
         const html = buildChecklistHtml(checklist, sectionsWithItems, logoUrl, accentColor);
         driveFileId = await createPdfFromHtml(accessToken, targetFolderId, title, html, existingDriveFileId);
       } else {
-        // Fetch gemba doc data
-        const { data: doc } = await supabaseUser
-          .from("gemba_docs")
-          .select("id, title, description, grid_columns, grid_rows, orientation")
-          .eq("id", rawId)
-          .single();
+        // Try direct ID first, then resolve via menu_item_documents
+        let doc = (await supabaseUser.from("gemba_docs").select("id, title, description, grid_columns, grid_rows, orientation").eq("id", rawId).maybeSingle()).data;
+
+        if (!doc) {
+          const { data: menuItemDoc } = await supabaseUser
+            .from("menu_item_documents")
+            .select("document_id")
+            .eq("menu_item_id", rawId)
+            .eq("document_type", "gemba_doc")
+            .is("archived_at", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (menuItemDoc?.document_id) {
+            doc = (await supabaseUser.from("gemba_docs").select("id, title, description, grid_columns, grid_rows, orientation").eq("id", menuItemDoc.document_id).single()).data;
+          }
+        }
 
         if (!doc) throw new Error("SOP Guide not found");
 
