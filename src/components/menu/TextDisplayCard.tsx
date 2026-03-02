@@ -55,14 +55,25 @@ export function TextDisplayCard({
     }
   };
 
-  const CardWrapper = ({ children, className }: { children: React.ReactNode; className: string }) => (
-    <div className={className}>{children}</div>
-  );
+  const isAddress = subType === "address";
+  const mapsUrl = isAddress && item.name
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`
+    : null;
+
+  const CardWrapper = isAddress && mapsUrl && !isEditing
+    ? ({ children, className }: { children: React.ReactNode; className: string }) => (
+        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={className}>
+          {children}
+        </a>
+      )
+    : ({ children, className }: { children: React.ReactNode; className: string }) => (
+        <div className={className}>{children}</div>
+      );
 
   return (
     <>
       <CardWrapper
-        className="group relative flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-lg bg-card border border-border transition-colors cursor-default"
+        className={`group relative flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-lg bg-card border border-border transition-colors no-underline ${isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"}`}
       >
         {/* Icon */}
         <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0">
