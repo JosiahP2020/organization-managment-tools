@@ -47,7 +47,7 @@ export function useDriveExport() {
   const openInDrive = (entityId: string) => {
     const ref = getRef(entityId);
     if (ref?.drive_file_id) {
-      window.open(`https://docs.google.com/document/d/${ref.drive_file_id}/edit`, "_blank");
+      window.open(`https://drive.google.com/file/d/${ref.drive_file_id}/view`, "_blank");
     }
   };
 
