@@ -14,10 +14,11 @@ import type { MenuItemSection as MenuItemSectionType } from "@/hooks/useMenuItem
 
 interface DriveExportContext {
   isConnected: boolean;
-  getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string } | null;
+  getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string; drive_folder_id?: string | null } | null;
   exportToDrive: (type: string, id: string, folderId?: string) => Promise<void>;
   isExporting: (id: string) => boolean;
-  openInDrive: (entityId: string) => void;
+  isSyncing: (id: string) => boolean;
+  syncToDriveIfNeeded: (entityType: string, entityId: string, options?: { silent?: boolean }) => Promise<void>;
 }
 
 interface MenuItemSectionProps {
@@ -183,8 +184,9 @@ export function MenuItemSection({
                   onDelete={() => onDeleteItem(item.id)}
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
                   isSynced={!!driveRef}
+                  isSyncingToDrive={driveExport?.isSyncing(item.id)}
                   driveExport={driveExport}
-                  onOpenDrive={driveRef ? () => driveExport?.openInDrive(item.id) : undefined}
+                  onResync={driveRef && driveType ? () => driveExport?.syncToDriveIfNeeded(driveType!, item.id) : undefined}
                 />
               );
             }
@@ -203,7 +205,8 @@ export function MenuItemSection({
                   onClick={() => onItemClick?.(item)}
                   driveButton={driveButton}
                   isSynced={!!driveRef}
-                  onOpenDrive={driveRef ? () => driveExport?.openInDrive(item.id) : undefined}
+                  isSyncingToDrive={driveExport?.isSyncing(item.id)}
+                  onResync={driveRef && driveType ? () => driveExport?.syncToDriveIfNeeded(driveType!, item.id) : undefined}
                 />
               );
             }
@@ -221,7 +224,8 @@ export function MenuItemSection({
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
                   driveButton={driveButton}
                   isSynced={!!driveRef}
-                  onOpenDrive={driveRef ? () => driveExport?.openInDrive(item.id) : undefined}
+                  isSyncingToDrive={driveExport?.isSyncing(item.id)}
+                  onResync={driveRef && driveType ? () => driveExport?.syncToDriveIfNeeded(driveType!, item.id) : undefined}
                 />
               );
             }

@@ -1,4 +1,4 @@
-import { ChevronUp, ChevronDown, Trash2, CloudUpload } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, CloudUpload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileDirectoryView } from "./FileDirectoryView";
@@ -8,7 +8,8 @@ interface DriveExportContext {
   getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string } | null;
   exportToDrive: (type: string, id: string, folderId?: string) => Promise<void>;
   isExporting: (id: string) => boolean;
-  openInDrive: (entityId: string) => void;
+  isSyncing: (id: string) => boolean;
+  syncToDriveIfNeeded: (entityType: string, entityId: string, options?: { silent?: boolean }) => Promise<void>;
 }
 
 interface FileDirectoryCardProps {
@@ -25,8 +26,9 @@ interface FileDirectoryCardProps {
   onDelete: () => void;
   onTitleChange: (newTitle: string) => void;
   isSynced?: boolean;
+  isSyncingToDrive?: boolean;
   driveExport?: DriveExportContext;
-  onOpenDrive?: () => void;
+  onResync?: () => void;
 }
 
 export function FileDirectoryCard({
@@ -38,8 +40,9 @@ export function FileDirectoryCard({
   onDelete,
   onTitleChange,
   isSynced,
+  isSyncingToDrive,
   driveExport,
-  onOpenDrive,
+  onResync,
 }: FileDirectoryCardProps) {
   const { isAdmin } = useAuth();
 
@@ -82,10 +85,15 @@ export function FileDirectoryCard({
           {isSynced && (
             <button
               className="shrink-0 ml-1 hover:opacity-70 transition-opacity"
-              title="Open in Google Drive"
-              onClick={() => onOpenDrive?.()}
+              title="Exported to Drive - Resync"
+              onClick={() => onResync?.()}
+              disabled={isSyncingToDrive}
             >
-              <CloudUpload className="h-4 w-4 text-primary" />
+              {isSyncingToDrive ? (
+                <Loader2 className="h-4 w-4 text-primary animate-spin" />
+              ) : (
+                <CloudUpload className="h-4 w-4 text-primary" />
+              )}
             </button>
           )}
         </div>

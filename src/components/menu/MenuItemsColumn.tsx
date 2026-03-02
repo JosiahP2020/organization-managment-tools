@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -65,6 +65,35 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
 
   // Collect all item IDs for SortableContext
   const allItemIds = sections.flatMap((section) => section.items.map((item) => item.id));
+
+  // Auto-sync: resync all exported items when entering this page
+  const autoSyncDoneRef = useRef(false);
+  useEffect(() => {
+    if (autoSyncDoneRef.current || !driveExport.isConnected || !driveExport.driveRefs.length || !sections.length) return;
+    autoSyncDoneRef.current = true;
+
+    // Collect items that have drive refs
+    const itemsToSync: Array<{ type: string; id: string }> = [];
+    for (const section of sections) {
+      for (const item of section.items) {
+        let driveType: string | null = null;
+        if (item.item_type === "text_display") driveType = "text_display";
+        else if (item.item_type === "tool") {
+          const toolType = (item as any).tool_type;
+          if (toolType === "checklist" || toolType === "follow_up_list") driveType = "checklist";
+          else if (toolType === "sop_guide") driveType = "gemba_doc";
+        }
+        if (driveType && driveExport.getRef(item.id)) {
+          itemsToSync.push({ type: driveType, id: item.id });
+        }
+      }
+    }
+
+    if (itemsToSync.length > 0) {
+      console.log(`Auto-syncing ${itemsToSync.length} items to Drive...`);
+      driveExport.syncAllForCategory(itemsToSync);
+    }
+  }, [sections, driveExport.isConnected, driveExport.driveRefs]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
