@@ -720,12 +720,35 @@ Deno.serve(async (req) => {
       const accentColor = org?.accent_color || "hsl(22, 90%, 54%)";
 
       if (rawType === "checklist") {
-        // Fetch checklist data
+        // Fetch checklist data — rawId may be a checklist ID or a menu_item ID
+        let checklistId = rawId;
+        const { data: directCl } = await supabaseUser
+          .from("checklists")
+          .select("id")
+          .eq("id", rawId)
+          .maybeSingle();
+
+        if (!directCl) {
+          // rawId is a menu_item ID, look up the linked checklist
+          const { data: menuItemDoc } = await supabaseUser
+            .from("menu_item_documents")
+            .select("document_id")
+            .eq("menu_item_id", rawId)
+            .eq("document_type", "checklist")
+            .is("archived_at", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (menuItemDoc?.document_id) {
+            checklistId = menuItemDoc.document_id;
+          }
+        }
+
         const { data: checklist } = await supabaseUser
           .from("checklists")
           .select("id, title, description, display_mode")
-          .eq("id", rawId)
-          .single();
+          .eq("id", checklistId)
+          .maybeSingle();
 
         if (!checklist) throw new Error("Checklist not found");
 
@@ -749,12 +772,34 @@ Deno.serve(async (req) => {
         const html = buildChecklistHtml(checklist, sectionsWithItems, logoUrl, accentColor);
         driveFileId = await createPdfFromHtml(accessToken, targetFolderId, title, html, existingDriveFileId);
       } else {
-        // Fetch gemba doc data
+        // Fetch gemba doc data — rawId may be a gemba_doc ID or a menu_item ID
+        let gembaDocId = rawId;
+        const { data: directGd } = await supabaseUser
+          .from("gemba_docs")
+          .select("id")
+          .eq("id", rawId)
+          .maybeSingle();
+
+        if (!directGd) {
+          const { data: menuItemDoc } = await supabaseUser
+            .from("menu_item_documents")
+            .select("document_id")
+            .eq("menu_item_id", rawId)
+            .eq("document_type", "gemba_doc")
+            .is("archived_at", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (menuItemDoc?.document_id) {
+            gembaDocId = menuItemDoc.document_id;
+          }
+        }
+
         const { data: doc } = await supabaseUser
           .from("gemba_docs")
           .select("id, title, description, grid_columns, grid_rows, orientation")
-          .eq("id", rawId)
-          .single();
+          .eq("id", gembaDocId)
+          .maybeSingle();
 
         if (!doc) throw new Error("SOP Guide not found");
 
