@@ -121,7 +121,23 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const refreshed = await refreshAccessToken(integration.refresh_token);
+      let refreshed;
+      try {
+        refreshed = await refreshAccessToken(integration.refresh_token);
+      } catch (refreshErr: any) {
+        if (refreshErr.message?.includes("invalid_grant")) {
+          // Token revoked or expired — mark integration as disconnected
+          await supabase
+            .from("organization_integrations")
+            .update({ status: "disconnected" })
+            .eq("id", integration.id);
+          return new Response(
+            JSON.stringify({ error: "Google Drive has been disconnected. Please reconnect it in Organization Settings.", code: "DRIVE_TOKEN_EXPIRED" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        throw refreshErr;
+      }
       accessToken = refreshed.access_token;
       await supabase
         .from("organization_integrations")
