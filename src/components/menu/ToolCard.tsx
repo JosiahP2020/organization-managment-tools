@@ -119,18 +119,6 @@ export function ToolCard({
         {isAdmin && !isEditing && (
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             {driveButton}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 group-hover:bg-accent"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
-              title="Edit title"
-            >
-              <Pencil className="h-3 w-3" />
-            </Button>
             {!isFirst && (
               <Button
                 variant="ghost"
@@ -159,6 +147,18 @@ export function ToolCard({
                 <ChevronDown className="h-3 w-3" />
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 group-hover:bg-accent"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditing(true);
+              }}
+              title="Edit title"
+            >
+              <Pencil className="h-3 w-3" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
