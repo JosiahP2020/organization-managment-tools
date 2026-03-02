@@ -60,20 +60,17 @@ export function TextDisplayCard({
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`
     : null;
 
-  const CardWrapper = isAddress && mapsUrl && !isEditing
-    ? ({ children, className }: { children: React.ReactNode; className: string }) => (
-        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={className}>
-          {children}
-        </a>
-      )
-    : ({ children, className }: { children: React.ReactNode; className: string }) => (
-        <div className={className}>{children}</div>
-      );
+  const handleCardClick = () => {
+    if (isAddress && mapsUrl && !isEditing) {
+      window.open(mapsUrl, "_blank");
+    }
+  };
 
   return (
     <>
-      <CardWrapper
-        className={`group relative flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-lg bg-card border border-border transition-colors no-underline ${isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"}`}
+      <div
+        className={`group relative flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-lg bg-card border border-border transition-colors ${isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"}`}
+        onClick={handleCardClick}
       >
         {/* Icon */}
         <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0">
@@ -143,7 +140,7 @@ export function TextDisplayCard({
             <CloudUpload className="h-3.5 w-3.5 text-primary" />
           </button>
         )}
-      </CardWrapper>
+      </div>
 
       <DeleteConfirmDialog
         open={showDeleteDialog}

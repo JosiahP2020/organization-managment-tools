@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
+import { useDriveExport } from "@/hooks/useDriveExport";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChecklistSidebar } from "@/components/training/ChecklistSidebar";
@@ -42,6 +43,7 @@ const ChecklistEditor = () => {
   const { checklistId } = useParams<{ checklistId: string }>();
   const { organization, isAdmin } = useAuth();
   const { subLogoUrl } = useThemeLogos();
+  const { syncToDriveIfNeeded } = useDriveExport();
   const queryClient = useQueryClient();
   const printRef = useRef<HTMLDivElement>(null);
   
@@ -118,6 +120,7 @@ const ChecklistEditor = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["checklist", checklistId] });
       toast.success(checklist?.is_locked ? "Checklist unlocked" : "Checklist locked");
+      if (checklistId) syncToDriveIfNeeded("checklist", checklistId);
     },
     onError: () => {
       toast.error("Failed to update lock status");
