@@ -18,6 +18,7 @@ interface ToolCardProps {
   onClick?: () => void;
   driveButton?: React.ReactNode;
   isSynced?: boolean;
+  onOpenDrive?: () => void;
 }
 
 const toolIcons: Record<string, React.ElementType> = {
@@ -43,6 +44,7 @@ export function ToolCard({
   onClick,
   driveButton,
   isSynced,
+  onOpenDrive,
 }: ToolCardProps) {
   const { isAdmin } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -172,11 +174,18 @@ export function ToolCard({
           </div>
         )}
 
-        {/* Synced indicator - always visible */}
+        {/* Synced indicator - clickable to open in Drive */}
         {isSynced && (
-          <div className="shrink-0" title="Exported to Drive">
+          <button
+            className="shrink-0 hover:opacity-70 transition-opacity"
+            title="Open in Google Drive"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDrive?.();
+            }}
+          >
             <CloudUpload className="h-3.5 w-3.5 text-primary" />
-          </div>
+          </button>
         )}
       </div>
 

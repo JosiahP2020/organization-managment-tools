@@ -8,6 +8,7 @@ interface DriveExportContext {
   getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string } | null;
   exportToDrive: (type: string, id: string, folderId?: string) => Promise<void>;
   isExporting: (id: string) => boolean;
+  openInDrive: (entityId: string) => void;
 }
 
 interface FileDirectoryCardProps {
@@ -25,6 +26,7 @@ interface FileDirectoryCardProps {
   onTitleChange: (newTitle: string) => void;
   isSynced?: boolean;
   driveExport?: DriveExportContext;
+  onOpenDrive?: () => void;
 }
 
 export function FileDirectoryCard({
@@ -37,6 +39,7 @@ export function FileDirectoryCard({
   onTitleChange,
   isSynced,
   driveExport,
+  onOpenDrive,
 }: FileDirectoryCardProps) {
   const { isAdmin } = useAuth();
 
@@ -77,9 +80,13 @@ export function FileDirectoryCard({
             <Trash2 className="h-4 w-4" />
           </Button>
           {isSynced && (
-            <div className="shrink-0 ml-1" title="Exported to Drive">
+            <button
+              className="shrink-0 ml-1 hover:opacity-70 transition-opacity"
+              title="Open in Google Drive"
+              onClick={() => onOpenDrive?.()}
+            >
               <CloudUpload className="h-4 w-4 text-primary" />
-            </div>
+            </button>
           )}
         </div>
       )}

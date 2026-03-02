@@ -1,45 +1,28 @@
 
+# Google Drive Integration — Bidirectional Links
 
-# Fix Google Drive PDF Export to Match Current Print Formats
+## Current Implementation (Completed)
 
-## Problem
-The edge function's HTML generation for PDFs uses slightly outdated styling that doesn't match the current `ChecklistPrintView` and `GembaDocPrintView` components.
+### Export (App → Drive)
+- Creates a **Google Doc** in the user's chosen Drive folder containing a clickable link back to the app
+- No more PDFs or HTML rendering — just a simple link document
+- Supports all entity types: checklists, SOP guides, follow-up lists, text items, file directory files
+- Existing file detection: if a previously exported file was deleted from Drive, a fresh one is created
 
-## Changes Required
+### Drive → App (via link)
+- The Google Doc in Drive contains an "Open in App" hyperlink
+- Clicking it navigates to the app page where the item lives
 
-### 1. Update `buildChecklistHtml` in `supabase/functions/google-drive-export/index.ts`
+### App → Drive (via synced icon)
+- The CloudUpload icon on synced cards is now **clickable**
+- Clicking it opens the corresponding Google Doc in Drive in a new tab
+- URL format: `https://docs.google.com/document/d/{drive_file_id}/edit`
 
-Align the checklist HTML with the exact styling from `ChecklistPrintView.tsx`:
-- Checkbox size: change from 18x18px / 3px radius to **20x20px / 4px radius** with `background: white`
-- Border bottom on header: ensure it's `2px solid black`
-- Item borders: use `border-bottom: 1px solid #e5e7eb` (Tailwind `border-gray-200`)
-- Item padding: `padding: 8px 0` matches `py-2`
-- Section items container: add `padding-left: 8px` to match `pl-2`
-- Ensure sub-items use `margin-left: 24px` per depth level
+### Drive File References
+- `drive_file_references` table tracks the mapping between app entities and Drive files
+- `drive_file_id` is used to construct the Drive URL on the client side
 
-### 2. Update `buildGembaDocHtml` in `supabase/functions/google-drive-export/index.ts`
-
-This has the bigger differences from `GembaDocPrintView.tsx`:
-- Add `@page { size: landscape; }` for landscape orientation (the default)
-- Pages should fill `100vh` height with `display: flex; flex-direction: column`
-- Grid should use `flex: 1` instead of fixed `200px` row heights
-- Cell images: use `width: 100%; height: 100%; object-fit: cover`
-- Step badge styling: match exact colors (`hsl(22, 90%, 54%)`) and sizing
-- Step text: use `font-family: Inter, system-ui; font-size: 0.8rem; font-weight: 600`
-- Empty cells: render as transparent (no content, no border)
-- Page breaks: add `page-break-after: always` per page
-- Header padding/margins: match `0.375rem` padding, `0.5rem` margin-bottom
-- Remove footers (as per the design spec — maximize image space)
-
-### 3. Redeploy the edge function
-
-Deploy the updated `google-drive-export` function.
-
-## Technical Details
-
-The core file to modify is `supabase/functions/google-drive-export/index.ts`, specifically:
-- `buildChecklistHtml()` (lines 374-445) — minor CSS tweaks
-- `buildGembaDocHtml()` (lines 448-506) — significant CSS rewrite to match the full-page landscape layout with flex grid
-
-Both functions will use the organization's accent color (already passed in) and the `@page` CSS directive for proper print sizing. The SOP guide will default to landscape orientation using the doc's `orientation` field.
-
+## Future Considerations
+- Import from Drive: Pick a Drive file and add it as a link in the app
+- Auto-sync when content changes
+- Stale reference cleanup when files are deleted from Drive

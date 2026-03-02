@@ -43,15 +43,26 @@ export function useDriveExport() {
   const getRef = (entityId: string) =>
     driveRefs?.find((r) => r.entity_id === entityId) || null;
 
+  // Open the Drive document in a new tab
+  const openInDrive = (entityId: string) => {
+    const ref = getRef(entityId);
+    if (ref?.drive_file_id) {
+      window.open(`https://docs.google.com/document/d/${ref.drive_file_id}/edit`, "_blank");
+    }
+  };
+
   const exportToDrive = async (type: string, id: string, folderId?: string) => {
     setExportingIds((prev) => new Set(prev).add(id));
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
+      // Pass the current page URL as the app link
+      const appUrl = window.location.href;
+
       const { data, error } = await supabase.functions.invoke("google-drive-export", {
         headers: { Authorization: `Bearer ${session.access_token}` },
-        body: { type, id, folderId },
+        body: { type, id, folderId, appUrl },
       });
 
       if (error) throw error;
@@ -76,5 +87,6 @@ export function useDriveExport() {
     getRef,
     exportToDrive,
     isExporting: (id: string) => exportingIds.has(id),
+    openInDrive,
   };
 }
