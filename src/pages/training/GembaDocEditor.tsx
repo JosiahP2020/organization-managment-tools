@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeLogos } from "@/hooks/useThemeLogos";
+import { useDriveExport } from "@/hooks/useDriveExport";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +38,7 @@ function GembaDocEditorContent() {
   const queryClient = useQueryClient();
   const { isAdmin } = useAuth();
   const { subLogoUrl } = useThemeLogos();
+  const { syncToDriveIfNeeded } = useDriveExport();
   const printRef = useRef<HTMLDivElement>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,6 +126,7 @@ function GembaDocEditorContent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["gemba-doc", gembaDocId] });
+      if (gembaDocId) syncToDriveIfNeeded("gemba_doc", gembaDocId);
     },
     onError: (error) => {
       toast({
@@ -173,6 +176,7 @@ function GembaDocEditorContent() {
     },
     onSuccess: () => {
       refetchCells();
+      if (gembaDocId) syncToDriveIfNeeded("gemba_doc", gembaDocId);
     },
     onError: (error) => {
       toast({

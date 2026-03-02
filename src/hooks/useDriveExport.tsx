@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -8,6 +8,7 @@ export function useDriveExport() {
   const { organization } = useAuth();
   const queryClient = useQueryClient();
   const [exportingIds, setExportingIds] = useState<Set<string>>(new Set());
+  const verifiedRef = useRef(false);
 
   // Check if Google Drive is connected
   const { data: isConnected } = useQuery({
@@ -33,12 +34,37 @@ export function useDriveExport() {
       if (!organization?.id) return [];
       const { data } = await supabase
         .from("drive_file_references")
-        .select("entity_id, entity_type, last_synced_at, drive_file_id")
+        .select("entity_id, entity_type, last_synced_at, drive_file_id, drive_folder_id")
         .eq("organization_id", organization.id);
       return data || [];
     },
     enabled: !!organization?.id,
   });
+
+  // Background verify: check if Drive files still exist, clean up stale refs
+  useEffect(() => {
+    if (!isConnected || !driveRefs || driveRefs.length === 0 || verifiedRef.current) return;
+    verifiedRef.current = true;
+
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const { data, error } = await supabase.functions.invoke("google-drive-verify", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: {},
+        });
+
+        if (!error && data?.removedEntityIds?.length > 0) {
+          queryClient.invalidateQueries({ queryKey: ["drive-file-refs", organization?.id] });
+          console.log(`Cleaned up ${data.removedEntityIds.length} stale Drive references`);
+        }
+      } catch (err) {
+        console.warn("Drive verify failed:", err);
+      }
+    })();
+  }, [isConnected, driveRefs, organization?.id, queryClient]);
 
   const getRef = (entityId: string) =>
     driveRefs?.find((r) => r.entity_id === entityId) || null;
@@ -57,7 +83,6 @@ export function useDriveExport() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      // Pass the current page URL as the app link
       const appUrl = window.location.href;
 
       const { data, error } = await supabase.functions.invoke("google-drive-export", {
@@ -86,6 +111,31 @@ export function useDriveExport() {
     }
   };
 
+  // Auto-sync: re-export if entity already has a Drive reference
+  const syncToDriveIfNeeded = useCallback(async (entityType: string, entityId: string) => {
+    if (!driveRefs || !isConnected) return;
+    const ref = driveRefs.find((r) => r.entity_id === entityId && r.entity_type === entityType);
+    if (!ref) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      toast.info("Syncing to Drive...", { duration: 2000 });
+
+      const { data, error } = await supabase.functions.invoke("google-drive-export", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { type: entityType, id: entityId, folderId: ref.drive_folder_id, appUrl: window.location.href },
+      });
+
+      if (!error && !data?.error) {
+        queryClient.invalidateQueries({ queryKey: ["drive-file-refs", organization?.id] });
+      }
+    } catch (err) {
+      console.warn("Auto-sync to Drive failed:", err);
+    }
+  }, [driveRefs, isConnected, organization?.id, queryClient]);
+
   return {
     isConnected: !!isConnected,
     driveRefs: driveRefs || [],
@@ -93,5 +143,6 @@ export function useDriveExport() {
     exportToDrive,
     isExporting: (id: string) => exportingIds.has(id),
     openInDrive,
+    syncToDriveIfNeeded,
   };
 }

@@ -613,8 +613,15 @@ Deno.serve(async (req) => {
         }
       }
     } else if (rawType === "text_display") {
-      const { data: menuItem } = await supabaseUser.from("menu_items").select("name").eq("id", rawId).single();
-      title = menuItem?.name || "Text Item";
+      const { data: menuItem } = await supabaseUser.from("menu_items").select("name, description").eq("id", rawId).single();
+      const subType = menuItem?.description;
+      if (subType === "lockbox") {
+        title = `Lockbox Code: ${menuItem?.name || ""}`;
+      } else if (subType === "address") {
+        title = `Address: ${menuItem?.name || ""}`;
+      } else {
+        title = menuItem?.name || "Text Item";
+      }
     } else if (rawType === "file_directory_file") {
       const { data: file } = await supabaseUser.from("file_directory_files").select("file_name").eq("id", rawId).single();
       title = file?.file_name || "File";

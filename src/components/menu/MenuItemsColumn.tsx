@@ -225,7 +225,14 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
                   onAddSection={() => handleAddSection(section.id)}
                   onDeleteSection={(sectionId) => deleteItem.mutate(sectionId)}
                   onDeleteItem={(itemId) => deleteItem.mutate(itemId)}
-                  onEditItem={(itemId, name) => updateItemName.mutate({ itemId, name })}
+                  onEditItem={(itemId, name) => {
+                    updateItemName.mutate({ itemId, name });
+                    // Find item to check if it's a text_display for auto-sync
+                    const item = section.items.find(i => i.id === itemId);
+                    if (item?.item_type === "text_display") {
+                      driveExport.syncToDriveIfNeeded("text_display", itemId);
+                    }
+                  }}
                   onMoveUp={(sectionId) => moveSectionUp.mutate(sectionId)}
                   onMoveDown={(sectionId) => moveSectionDown.mutate(sectionId)}
                   onMoveItemUp={(itemId, sectionId) => moveItemUp.mutate({ itemId, sectionId })}
