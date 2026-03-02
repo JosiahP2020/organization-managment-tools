@@ -17,6 +17,7 @@ interface DriveExportContext {
   getRef: (entityId: string) => { entity_id: string; last_synced_at: string; drive_file_id: string } | null;
   exportToDrive: (type: string, id: string, folderId?: string) => Promise<void>;
   isExporting: (id: string) => boolean;
+  openInDrive: (entityId: string) => void;
 }
 
 interface MenuItemSectionProps {
@@ -183,6 +184,7 @@ export function MenuItemSection({
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
                   isSynced={!!driveRef}
                   driveExport={driveExport}
+                  onOpenDrive={driveRef ? () => driveExport?.openInDrive(item.id) : undefined}
                 />
               );
             }
@@ -201,6 +203,7 @@ export function MenuItemSection({
                   onClick={() => onItemClick?.(item)}
                   driveButton={driveButton}
                   isSynced={!!driveRef}
+                  onOpenDrive={driveRef ? () => driveExport?.openInDrive(item.id) : undefined}
                 />
               );
             }
@@ -218,6 +221,7 @@ export function MenuItemSection({
                   onTitleChange={(newTitle) => onEditItem(item.id, newTitle)}
                   driveButton={driveButton}
                   isSynced={!!driveRef}
+                  onOpenDrive={driveRef ? () => driveExport?.openInDrive(item.id) : undefined}
                 />
               );
             }

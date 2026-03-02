@@ -16,6 +16,7 @@ interface TextDisplayCardProps {
   onTitleChange: (newTitle: string) => void;
   driveButton?: React.ReactNode;
   isSynced?: boolean;
+  onOpenDrive?: () => void;
 }
 
 export function TextDisplayCard({
@@ -28,6 +29,7 @@ export function TextDisplayCard({
   onTitleChange,
   driveButton,
   isSynced,
+  onOpenDrive,
 }: TextDisplayCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -127,11 +129,19 @@ export function TextDisplayCard({
           </Button>
         </div>
 
-        {/* Synced indicator - always visible */}
+        {/* Synced indicator - clickable to open in Drive */}
         {isSynced && (
-          <div className="shrink-0" title="Exported to Drive">
+          <button
+            className="shrink-0 hover:opacity-70 transition-opacity"
+            title="Open in Google Drive"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onOpenDrive?.();
+            }}
+          >
             <CloudUpload className="h-3.5 w-3.5 text-primary" />
-          </div>
+          </button>
         )}
       </CardWrapper>
 
