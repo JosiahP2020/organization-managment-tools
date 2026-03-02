@@ -1,50 +1,69 @@
 
 
-# Graceful Google Drive Reconnection Handling
+# Restore PDF Export for Printable Documents, Keep Google Docs for Text Items
 
-## Problem
-When a Google OAuth refresh token expires or gets revoked (which **will** happen in production), users see a cryptic error like "Token refresh failed: invalid_grant". There's no clear guidance telling them what happened or how to fix it.
-
-## Solution
-Add a specific error code for token failures across all Drive edge functions, then detect that code on the client side and show a friendly dialog prompting the user to reconnect Google Drive.
+## Summary
+Revert the export to a hybrid approach:
+- **Checklists, SOPs, Follow-up Lists** (printable documents) -> Export as **PDFs** to Google Drive, matching the existing print layout
+- **Text Display items** (address, lockbox, text) -> Keep as **Google Docs** with the "Open in App" link
+- **App-to-Drive links** -> Keep the clickable cloud icon that opens the file in Drive
 
 ## Changes
 
-### 1. Edge Functions: Return a specific error code on token failure
-Update both `google-drive-export` and `google-drive-list-folders` edge functions so that when `refreshAccessToken` throws an `invalid_grant` error, the function:
-- Sets the integration status to `"disconnected"` in the database (so the app reflects reality)
-- Returns a JSON response with a recognizable error code like `"DRIVE_TOKEN_EXPIRED"`
+### 1. Edge Function: Rebuild PDF export for printable documents
+**File: `supabase/functions/google-drive-export/index.ts`**
 
-This way the client can distinguish "token expired" from other errors.
+For `checklist` and `gemba_doc` types, the function will:
+1. Fetch the full document data (sections, items, pages, cells, organization logo)
+2. Build HTML matching the print layout (inline styles -- required since Google Docs strips CSS classes)
+3. Upload HTML as a temporary Google Doc (Google converts it)
+4. Export the Google Doc as PDF via the Drive export API
+5. Upload the PDF binary as a file to the target folder
+6. Delete the temporary Google Doc
+7. Store the PDF file ID in `drive_file_references`
 
-### 2. Client: Detect the error and show a reconnect dialog
-Update `useDriveExport.tsx` so that when an export call returns `DRIVE_TOKEN_EXPIRED`:
-- Instead of a plain error toast, show a toast with a clear message: **"Google Drive disconnected. Please reconnect in Organization Settings."**
-- Invalidate the `drive-connected` query so the UI immediately reflects the disconnected state
+For `text_display` type, keep the current Google Doc with "Open in App" link (no change).
 
-### 3. Folder Picker: Same handling
-Update `DriveFolderPickerDialog` (or wherever the list-folders call is made) to also detect `DRIVE_TOKEN_EXPIRED` and show the same friendly message instead of a raw error.
+For `file_directory_file` type, keep current behavior.
 
-### 4. Export button: Pre-check connection
-The `ExportToDriveButton` already relies on `isConnected` from `useDriveExport`. Once the edge function marks the integration as disconnected and the query is invalidated, the export buttons will naturally reflect the disconnected state on next render.
+### 2. Fix Drive links for PDFs vs Docs
+**File: `src/hooks/useDriveExport.tsx`**
 
-## Technical Details
+The `openInDrive` function currently always opens `docs.google.com/document/d/{id}/edit`. For PDF files, it should open `drive.google.com/file/d/{id}/view` instead. Store a `file_type` indicator (either in the edge function response or by checking the entity type) to determine which URL pattern to use.
 
-**Edge function changes** (both `google-drive-export/index.ts` and `google-drive-list-folders/index.ts`):
-- Wrap the `refreshAccessToken` call in a try/catch
-- On `invalid_grant`, update `organization_integrations` to set `status = 'disconnected'`
-- Return `{ error: "...", code: "DRIVE_TOKEN_EXPIRED" }` with status 400
+Simple approach: use `drive.google.com/file/d/{id}/view` for all types -- this works for both PDFs and Google Docs in Drive's viewer.
 
-**Client changes** (`useDriveExport.tsx`):
-- Check `data?.code === "DRIVE_TOKEN_EXPIRED"` in the export handler
-- Show a descriptive toast with an action or message pointing to Organization Settings
-- Invalidate `drive-connected` query
+### 3. HTML templates for print layouts
 
-**Folder picker changes** (`DriveFolderPickerDialog.tsx`):
-- Same pattern: detect `DRIVE_TOKEN_EXPIRED` from the list-folders response and show the reconnect message instead of opening the picker
+**Checklist PDF HTML**: Mirror `ChecklistPrintView.tsx` with inline styles:
+- Header with org logo (left) and centered title
+- Sections with left-accent border and gray background
+- Checkbox squares (20x20px, 2px border) or numbered items based on `display_mode`
+- Nested child items with indentation
 
-## What Users Will See
-When their Google Drive token expires and they try to export:
-1. A clear toast message: "Google Drive has been disconnected. Please reconnect it in Organization Settings."
-2. The export/sync icons will update to reflect the disconnected state
-3. They can go to Organization Settings and click "Connect Google Drive" to re-authorize
+**SOP/Gemba Doc PDF HTML**: Mirror `GembaDocPrintView.tsx` with inline styles:
+- Landscape orientation
+- Header with logo (left), title (center), page number (right, orange badge)
+- Grid of cells with images, step number badges (orange), and step text below
+- Multiple pages
+
+### 4. Data fetching in edge function
+
+For checklists, the function needs to fetch:
+- `checklists` (title, description, display_mode)
+- `checklist_sections` (title, display_mode, image_url, sort_order)
+- `checklist_items` (text, parent_item_id, sort_order, item_type)
+- `organizations` (main_logo_url, accent_color)
+
+For gemba_docs, the function needs to fetch:
+- `gemba_docs` (title, description, grid_columns, grid_rows, orientation)
+- `gemba_doc_pages` (page_number)
+- `gemba_doc_cells` (position, image_url, step_number, step_text)
+- `organizations` (main_logo_url, accent_color)
+
+## Technical Notes
+
+- The "create temp doc -> export PDF -> upload PDF -> delete temp doc" flow requires 4 API calls to Google but produces a real PDF that renders correctly in Drive's viewer
+- All HTML uses inline styles (no `<style>` blocks) since Google's HTML-to-Doc converter strips them
+- The existing token refresh, folder management, and `DRIVE_TOKEN_EXPIRED` error handling remain unchanged
+- The `drive_file_references` table stores the final PDF file ID, not the temp doc ID
