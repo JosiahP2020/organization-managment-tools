@@ -1,74 +1,57 @@
 
 
-# Lockbox Title, Address Links, Drive Resync, and Auto-Sync
+# Resync Drive Files: Manual Button + Auto-Sync on Page Load
 
-## 4 Issues to Address
+## Summary
+Three changes: (1) the permanent cloud icon on synced cards now triggers a resync instead of opening Drive, (2) auto-resync all exported items when entering a submenu page, (3) ensure content edits trigger re-export reliably.
 
-### 1. Lockbox Code Export Title
-**Problem**: When exporting a lockbox code to Google Drive, the title is just the code (e.g., "1212"). It should be "Lockbox Code: 1212".
+## Changes
 
-**Fix**: In the edge function (`google-drive-export/index.ts`), when resolving the title for `text_display` items, also fetch `description` (which stores the subtype: "text", "address", or "lockbox"). If `description === "lockbox"`, prefix the title with "Lockbox Code: ". If `description === "address"`, prefix with "Address: ".
+### 1. Cloud Icon: Resync Instead of Open in Drive
+**Files: `ToolCard.tsx`, `TextDisplayCard.tsx`, `FileDirectoryCard.tsx`**
 
-### 2. Address Link Blocked in Preview
-**Problem**: Clicking an address card shows "google.com is blocked / ERR_BLOCKED_BY_RESPONSE". This is because the card renders as an `<a>` tag, and the preview iframe's sandbox restrictions block cross-origin navigation.
+- Change the permanent `CloudUpload` icon's `onClick` from calling `onOpenDrive()` to calling a new `onResync()` callback
+- Change tooltip from "Open in Google Drive" to "Exported to Drive - Resync"
+- While resyncing, show a spinning `Loader2` icon instead of the cloud icon
+- The `MenuItemSection.tsx` will pass a resync handler instead of `openInDrive`
 
-**Fix**: Change the address card from an `<a>` tag to a `<div>` with an `onClick` handler that calls `window.open(mapsUrl, "_blank")`. This avoids the iframe navigation restriction and works in both the preview and production. For non-admin mode only (admin mode already suppresses the link).
+### 2. MenuItemSection: Wire Up Resync
+**File: `MenuItemSection.tsx`**
 
-### 3. Resync Drive References (Detect Deleted Files)
-**Problem**: If a user deletes files from Google Drive, the app still shows them as "synced" with the cloud icon. Re-exporting then errors because the edge function tries to update a file that no longer exists.
+- Update the `DriveExportContext` interface to include `syncToDriveIfNeeded`
+- For each synced item, pass `onResync` that calls `driveExport.syncToDriveIfNeeded(type, id)` using the stored folder from the existing drive ref
+- Remove `onOpenDrive` prop usage from all card components
 
-**Fix**: Create a new edge function `google-drive-verify` that accepts a list of `drive_file_id` values, checks each one against Google Drive (HEAD request to see if it exists / is trashed), and returns which ones are still valid. Then call this on page load from `useDriveExport` to clean up stale references.
+### 3. useDriveExport: Add Batch Resync + Page-Load Sync
+**File: `useDriveExport.tsx`**
 
-- New edge function: `supabase/functions/google-drive-verify/index.ts` -- accepts an array of drive file IDs, batch-checks them via Google Drive API, deletes invalid `drive_file_references` rows, returns the list of removed entity IDs.
-- Update `useDriveExport.tsx` to call this verification after fetching `driveRefs`, pruning stale entries so the UI updates.
+- Add `syncAllForCategory(categoryId)` function: given a category ID, find all menu items in that category that have drive refs, and re-export each one sequentially (to avoid rate limits)
+- Expose this function so `MenuItemsColumn` can call it on mount
+- Make `syncToDriveIfNeeded` return a promise and show the spinner state via a new `isSyncing(id)` tracker (separate from `exportingIds`)
 
-### 4. Auto-Sync: Update Drive When Content Changes
-**Problem**: When a user edits a checklist or SOP that's already exported to Drive, the Drive copy becomes stale.
+### 4. MenuItemsColumn: Trigger Auto-Sync on Page Load
+**File: `MenuItemsColumn.tsx`**
 
-**Fix**: Add an auto-sync mechanism. After any mutation that modifies content (add/edit/delete items, sections, cells, images), if the entity has a `drive_file_reference`, automatically re-export to Drive in the background.
+- After `sections` data loads and `driveExport.driveRefs` are available, trigger a one-time background sync for all items in this category that have existing drive refs
+- Use a `useEffect` with a ref guard to prevent repeated syncs
+- This ensures whenever a user navigates to a submenu, all exported items get updated
 
-- Add a helper function `syncToDriveIfNeeded(entityType, entityId)` to `useDriveExport` that checks if a drive ref exists for that entity and, if so, silently re-exports using the stored folder ID.
-- Call this function from the `onSuccess` callbacks of relevant mutations in the checklist editor, gemba doc editor, and text display edit handlers.
-- Show a subtle toast like "Syncing to Drive..." with no error interruption (fail silently with a console warning).
+### 5. ExportToDriveButton: No Change Needed
+The export button (with folder picker) stays as-is for first-time exports. Only the permanent synced indicator changes behavior.
 
 ## Technical Details
 
-### Edge function title fix (google-drive-export/index.ts, ~line 615-617)
-Change the `text_display` title resolution to also fetch `description`:
-```typescript
-const { data: menuItem } = await supabaseUser
-  .from("menu_items")
-  .select("name, description")
-  .eq("id", rawId)
-  .single();
+### Resync flow
+- When user clicks cloud icon or when auto-sync fires, call `syncToDriveIfNeeded(entityType, entityId)`
+- This reuses the existing `drive_folder_id` from the drive ref, so no folder picker is needed
+- The edge function already handles updating existing files via `existingDriveFileId`
 
-const subType = menuItem?.description;
-if (subType === "lockbox") {
-  title = `Lockbox Code: ${menuItem?.name || ""}`;
-} else if (subType === "address") {
-  title = `Address: ${menuItem?.name || ""}`;
-} else {
-  title = menuItem?.name || "Text Item";
-}
-```
+### Auto-sync on page load
+- In `MenuItemsColumn`, after sections load, collect all item IDs that have drive refs
+- Call `syncToDriveIfNeeded` for each with a small delay between calls (sequential, not parallel) to avoid Google API rate limits
+- Show no toast for auto-sync (silent background operation), only log to console
 
-### Address card fix (TextDisplayCard.tsx, ~line 63-71)
-Replace the `<a>` wrapper with a `<div>` that uses `onClick={() => window.open(mapsUrl, "_blank")}` for address items.
-
-### New edge function: google-drive-verify/index.ts
-- Accepts `{ driveFileIds: string[] }` in the request body
-- Authenticates user, gets org integration token
-- For each drive file ID, calls `GET https://www.googleapis.com/drive/v3/files/{id}?fields=id,trashed`
-- Returns `{ invalidIds: string[] }` for files that are 404 or trashed
-- Deletes corresponding `drive_file_references` rows
-
-### useDriveExport.tsx changes
-- After `driveRefs` query succeeds and has results, trigger a background verification call
-- Add `syncToDriveIfNeeded(entityType, entityId)` function that checks for existing ref and re-exports if found
-- Expose `syncToDriveIfNeeded` so editor components can call it after mutations
-
-### Editor integration
-- In `ChecklistEditor` page: after item/section mutations succeed, call `syncToDriveIfNeeded("checklist", checklistId)`
-- In `GembaDocEditor` page: after cell/page mutations succeed, call `syncToDriveIfNeeded("gemba_doc", gembaDocId)`
-- In `MenuItemSection`/`TextDisplayCard`: after title edit, call `syncToDriveIfNeeded("text_display", itemId)`
-
+### Syncing state tracking
+- Add a `syncingIds` Set (separate from `exportingIds`) to track which items are currently being resynced
+- Expose `isSyncing(id)` so the cloud icon can show a spinner during resync
+- Cards will check both `isExporting` and `isSyncing` to determine spinner state
