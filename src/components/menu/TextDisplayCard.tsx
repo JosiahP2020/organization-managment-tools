@@ -1,8 +1,18 @@
 import { useState } from "react";
-import { Trash2, ChevronUp, ChevronDown, Pencil, CloudUpload, Loader2 } from "lucide-react";
+import { Trash2, ChevronUp, ChevronDown, Pencil, CloudUpload, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import type { MenuItem } from "@/hooks/useMenuItems";
 
@@ -34,6 +44,7 @@ export function TextDisplayCard({
   onResync,
 }: TextDisplayCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showMapsDialog, setShowMapsDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
 
@@ -64,8 +75,15 @@ export function TextDisplayCard({
 
   const handleCardClick = () => {
     if (isAddress && mapsUrl && !isEditing) {
+      setShowMapsDialog(true);
+    }
+  };
+
+  const handleOpenMaps = () => {
+    if (mapsUrl) {
       window.open(mapsUrl, "_blank");
     }
+    setShowMapsDialog(false);
   };
 
   return (
@@ -159,6 +177,24 @@ export function TextDisplayCard({
         title="Delete Text Item"
         description={`Are you sure you want to delete this text item? This action cannot be undone.`}
       />
+
+      <AlertDialog open={showMapsDialog} onOpenChange={setShowMapsDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Open in Google Maps</AlertDialogTitle>
+            <AlertDialogDescription>
+              Open "{item.name}" in Google Maps?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleOpenMaps} className="gap-2">
+              <ExternalLink className="h-4 w-4" />
+              Open Maps
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
