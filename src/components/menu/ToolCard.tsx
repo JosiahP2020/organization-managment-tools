@@ -53,7 +53,7 @@ export function ToolCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.name);
-  const { isPressed, handlers, reset, pressedRef } = useLongPress();
+  const { isPressed, handlers, reset, pressedRef, cardRef } = useLongPress();
 
   // Get the appropriate icon for the tool type
   const toolType = (item as any).tool_type || "checklist";
@@ -90,9 +90,11 @@ export function ToolCard({
   return (
     <>
       <div
+        ref={cardRef}
         className={cn(
           "group relative flex items-center gap-3 p-3 rounded-xl border transition-all",
           "bg-card hover:bg-accent/50 border-border hover:border-primary/30",
+          isPressed && "ring-2 ring-primary/50 bg-accent/30",
           !isEditing && onClick && "cursor-pointer"
         )}
         onClick={handleCardClick}

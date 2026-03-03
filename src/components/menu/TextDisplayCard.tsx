@@ -49,7 +49,7 @@ export function TextDisplayCard({
   const [showMapsDialog, setShowMapsDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
-  const { isPressed, handlers, reset, pressedRef } = useLongPress();
+  const { isPressed, handlers, reset, pressedRef, cardRef } = useLongPress();
 
   const subType = item.description; // "text", "address", or "lockbox"
 
@@ -93,9 +93,11 @@ export function TextDisplayCard({
   return (
     <>
       <div
+        ref={cardRef}
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-colors",
-          isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"
+          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-all",
+          isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default",
+          isPressed && "ring-2 ring-primary/50 bg-accent/30"
         )}
         onClick={handleCardClick}
         {...handlers}

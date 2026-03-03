@@ -54,7 +54,7 @@ export function FileDirectoryCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
-  const { isPressed, handlers, reset, pressedRef } = useLongPress();
+  const { isPressed, handlers, reset, pressedRef, cardRef } = useLongPress();
 
   const handleSaveEdit = () => {
     if (editName.trim() && editName !== item.name) {
@@ -75,9 +75,11 @@ export function FileDirectoryCard({
     <>
       {/* Collapsed card - matches ToolCard/TextDisplayCard style */}
       <div
+        ref={cardRef}
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-colors cursor-pointer hover:bg-accent/50",
-          expanded && "rounded-b-none border-b-0"
+          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-all cursor-pointer hover:bg-accent/50",
+          expanded && "rounded-b-none border-b-0",
+          isPressed && "ring-2 ring-primary/50 bg-accent/30"
         )}
         onClick={() => {
           if (pressedRef.current) return;
