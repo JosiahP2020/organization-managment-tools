@@ -117,7 +117,7 @@ export function FileDirectoryCard({
 
         {/* Admin controls */}
         {isAdmin && !isEditing && (
-          <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 [@media(hover:hover)]:group-hover:opacity-100")} onClick={(e) => e.stopPropagation()}>
+          <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto")} onClick={(e) => e.stopPropagation()}>
             {!isFirst && (
               <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
                 <ChevronUp className="h-3 w-3" />
