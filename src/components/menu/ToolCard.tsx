@@ -111,7 +111,7 @@ export function ToolCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground text-sm line-clamp-2 break-words">{item.name}</h3>
+              <h3 className="font-medium text-foreground text-sm truncate">{item.name}</h3>
               <p className="text-xs text-muted-foreground mt-1">{toolLabel}</p>
             </>
           )}

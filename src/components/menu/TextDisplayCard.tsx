@@ -93,7 +93,7 @@ export function TextDisplayCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground text-sm leading-tight break-words">{item.name}</h3>
+              <h3 className="font-medium text-foreground text-sm truncate">{item.name}</h3>
               {subtitle && (
                 <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
               )}
