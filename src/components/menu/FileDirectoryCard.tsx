@@ -83,7 +83,10 @@ export function FileDirectoryCard({
         )}
         onClick={() => {
           if (pressedRef.current) return;
-          if (!isEditing) setExpanded(!expanded);
+          if (!isEditing) {
+            reset();
+            setExpanded(!expanded);
+          }
         }}
         {...handlers}
       >
