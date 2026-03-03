@@ -86,7 +86,7 @@ export function ToolCard({
     <>
       <div
         className={cn(
-          "group relative flex items-start gap-3 p-3 rounded-xl border transition-all",
+          "group relative flex items-center gap-3 p-3 rounded-xl border transition-all",
           "bg-card hover:bg-accent/50 border-border hover:border-primary/30",
           !isEditing && onClick && "cursor-pointer"
         )}
