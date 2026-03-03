@@ -86,15 +86,15 @@ export function ToolCard({
     <>
       <div
         className={cn(
-          "group relative flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-xl border transition-all",
+          "group relative flex items-start gap-3 p-3 rounded-xl border transition-all",
           "bg-card hover:bg-accent/50 border-border hover:border-primary/30",
           !isEditing && onClick && "cursor-pointer"
         )}
         onClick={handleCardClick}
       >
         {/* Icon */}
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 shrink-0">
-          <Icon className="h-4 w-4 text-primary" />
+        <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
 
         {/* Content */}
@@ -111,8 +111,8 @@ export function ToolCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground text-xs sm:text-sm line-clamp-2 break-words">{item.name}</h3>
-              <p className="text-xs text-muted-foreground">{toolLabel}</p>
+              <h3 className="font-medium text-foreground text-sm line-clamp-2 break-words">{item.name}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{toolLabel}</p>
             </>
           )}
         </div>

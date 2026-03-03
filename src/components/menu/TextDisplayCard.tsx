@@ -71,12 +71,12 @@ export function TextDisplayCard({
   return (
     <>
       <div
-        className={`group relative flex items-center gap-1.5 sm:gap-3 p-2 sm:p-3 rounded-lg bg-card border border-border transition-colors ${isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"}`}
+        className={`group relative flex items-start gap-3 p-3 rounded-lg bg-card border border-border transition-colors ${isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"}`}
         onClick={handleCardClick}
       >
         {/* Icon */}
-        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0">
-          <DynamicIcon name={item.icon} className="h-4 w-4 text-primary" />
+        <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0">
+          <DynamicIcon name={item.icon} className="h-5 w-5 text-primary" />
         </div>
 
         {/* Content */}
@@ -93,9 +93,9 @@ export function TextDisplayCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground text-[11px] sm:text-sm leading-tight break-words">{item.name}</h3>
+              <h3 className="font-medium text-foreground text-sm leading-tight break-words">{item.name}</h3>
               {subtitle && (
-                <p className="text-[10px] sm:text-xs text-muted-foreground">{subtitle}</p>
+                <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
               )}
             </>
           )}
