@@ -127,7 +127,7 @@ export function ToolCard({
 
         {/* Admin Controls */}
         {isAdmin && !isEditing && (
-          <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
+          <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 [@media(hover:hover)]:group-hover:opacity-100")}>
             {driveButton}
             {!isFirst && (
               <Button
