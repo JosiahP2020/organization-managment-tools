@@ -1,7 +1,11 @@
-import { ChevronUp, ChevronDown, Trash2, CloudUpload, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { ChevronUp, ChevronDown, Trash2, CloudUpload, Loader2, FolderOpen, ChevronRight, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileDirectoryView } from "./FileDirectoryView";
+import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
+import { cn } from "@/lib/utils";
 
 interface DriveExportContext {
   isConnected: boolean;
@@ -45,67 +49,137 @@ export function FileDirectoryCard({
   onResync,
 }: FileDirectoryCardProps) {
   const { isAdmin } = useAuth();
+  const [expanded, setExpanded] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(item.name);
+
+  const handleSaveEdit = () => {
+    if (editName.trim() && editName !== item.name) {
+      onTitleChange(editName.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSaveEdit();
+    else if (e.key === "Escape") {
+      setEditName(item.name);
+      setIsEditing(false);
+    }
+  };
 
   return (
-    <div className="group/directory relative py-4">
-      {/* Admin Controls - positioned at top right */}
-      {isAdmin && (
-        <div className="absolute right-0 top-4 flex items-center gap-1 opacity-0 group-hover/directory:opacity-100 transition-opacity z-10">
-          {!isFirst && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-7 w-7 shadow-md"
-              onClick={onMoveUp}
-              title="Move up"
-            >
-              <ChevronUp className="h-4 w-4" />
-            </Button>
+    <>
+      {/* Collapsed card - matches ToolCard/TextDisplayCard style */}
+      <div
+        className={cn(
+          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-colors cursor-pointer hover:bg-accent/50",
+          expanded && "rounded-b-none border-b-0"
+        )}
+        onClick={() => !isEditing && setExpanded(!expanded)}
+      >
+        {/* Icon */}
+        <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0">
+          <FolderOpen className="h-5 w-5 text-primary" />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={handleSaveEdit}
+              onKeyDown={handleKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus
+              className="h-7 text-sm"
+            />
+          ) : (
+            <>
+              <h3 className="font-medium text-foreground text-sm truncate">{item.name}</h3>
+              <p className="text-xs text-muted-foreground mt-1">File Directory</p>
+            </>
           )}
-          {!isLast && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="h-7 w-7 shadow-md"
-              onClick={onMoveDown}
-              title="Move down"
-            >
-              <ChevronDown className="h-4 w-4" />
+        </div>
+
+        {/* Admin controls */}
+        {isAdmin && !isEditing && (
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={(e) => e.stopPropagation()}>
+            {!isFirst && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
+                <ChevronUp className="h-3 w-3" />
+              </Button>
+            )}
+            {!isLast && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={() => { setEditName(item.name); setIsEditing(true); }} title="Edit">
+              <Pencil className="h-3 w-3" />
             </Button>
-          )}
-          <Button
-            variant="destructive"
-            size="icon"
-            className="h-7 w-7 shadow-md"
-            onClick={onDelete}
-            title="Delete"
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 group-hover:bg-accent"
+              onClick={() => setShowDeleteDialog(true)}
+              title="Delete"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+
+        {/* Synced indicator */}
+        {isSynced && (
+          <button
+            className="shrink-0 hover:opacity-70 transition-opacity"
+            title="Exported to Drive - Resync"
+            onClick={(e) => {
+              e.stopPropagation();
+              onResync?.();
+            }}
+            disabled={isSyncingToDrive}
           >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          {isSynced && (
-            <button
-              className="shrink-0 ml-1 hover:opacity-70 transition-opacity"
-              title="Exported to Drive - Resync"
-              onClick={() => onResync?.()}
-              disabled={isSyncingToDrive}
-            >
-              {isSyncingToDrive ? (
-                <Loader2 className="h-4 w-4 text-primary animate-spin" />
-              ) : (
-                <CloudUpload className="h-4 w-4 text-primary" />
-              )}
-            </button>
-          )}
+            {isSyncingToDrive ? (
+              <Loader2 className="h-3.5 w-3.5 text-primary animate-spin" />
+            ) : (
+              <CloudUpload className="h-3.5 w-3.5 text-primary" />
+            )}
+          </button>
+        )}
+
+        {/* Expand chevron */}
+        <ChevronRight className={cn(
+          "h-4 w-4 text-muted-foreground transition-transform shrink-0",
+          expanded && "rotate-90"
+        )} />
+      </div>
+
+      {/* Expanded content */}
+      {expanded && (
+        <div className="border border-t-0 border-border rounded-b-lg p-3 bg-card">
+          <FileDirectoryView
+            menuItemId={item.id}
+            title={item.name}
+            onTitleChange={onTitleChange}
+            driveExport={driveExport}
+          />
         </div>
       )}
 
-      {/* File Directory View - inline */}
-      <FileDirectoryView 
-        menuItemId={item.id} 
-        title={item.name} 
-        onTitleChange={onTitleChange}
-        driveExport={driveExport}
+      <DeleteConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={() => {
+          onDelete();
+          setShowDeleteDialog(false);
+        }}
+        title="Delete File Directory"
+        description={`Are you sure you want to delete "${item.name}"? All files within will be removed.`}
       />
-    </div>
+    </>
   );
 }
