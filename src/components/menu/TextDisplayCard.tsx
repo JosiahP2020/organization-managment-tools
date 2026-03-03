@@ -14,6 +14,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
+import { useLongPress } from "@/hooks/useLongPress";
+import { cn } from "@/lib/utils";
 import type { MenuItem } from "@/hooks/useMenuItems";
 
 interface TextDisplayCardProps {
@@ -47,6 +49,7 @@ export function TextDisplayCard({
   const [showMapsDialog, setShowMapsDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
+  const { isPressed, handlers, reset, pressedRef } = useLongPress();
 
   const subType = item.description; // "text", "address", or "lockbox"
 
@@ -74,6 +77,7 @@ export function TextDisplayCard({
     : null;
 
   const handleCardClick = () => {
+    if (pressedRef.current) return;
     if (isAddress && mapsUrl && !isEditing) {
       setShowMapsDialog(true);
     }
@@ -89,8 +93,12 @@ export function TextDisplayCard({
   return (
     <>
       <div
-        className={`group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-colors ${isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"}`}
+        className={cn(
+          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-colors",
+          isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default"
+        )}
         onClick={handleCardClick}
+        {...handlers}
       >
         {/* Icon */}
         <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0 self-center">
@@ -120,7 +128,7 @@ export function TextDisplayCard({
         </div>
 
         {/* Admin controls */}
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 group-hover:opacity-100")} onClick={(e) => e.stopPropagation()}>
           {driveButton}
           {!isFirst && (
             <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">

@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { FileDirectoryView } from "./FileDirectoryView";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import { cn } from "@/lib/utils";
+import { useLongPress } from "@/hooks/useLongPress";
 
 interface DriveExportContext {
   isConnected: boolean;
@@ -53,6 +54,7 @@ export function FileDirectoryCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
+  const { isPressed, handlers, reset, pressedRef } = useLongPress();
 
   const handleSaveEdit = () => {
     if (editName.trim() && editName !== item.name) {
@@ -77,7 +79,11 @@ export function FileDirectoryCard({
           "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-colors cursor-pointer hover:bg-accent/50",
           expanded && "rounded-b-none border-b-0"
         )}
-        onClick={() => !isEditing && setExpanded(!expanded)}
+        onClick={() => {
+          if (pressedRef.current) return;
+          if (!isEditing) setExpanded(!expanded);
+        }}
+        {...handlers}
       >
         {/* Icon */}
         <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0">
@@ -106,7 +112,7 @@ export function FileDirectoryCard({
 
         {/* Admin controls */}
         {isAdmin && !isEditing && (
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 group-hover:opacity-100")} onClick={(e) => e.stopPropagation()}>
             {!isFirst && (
               <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
                 <ChevronUp className="h-3 w-3" />

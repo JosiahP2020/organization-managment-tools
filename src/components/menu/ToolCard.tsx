@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { useLongPress } from "@/hooks/useLongPress";
 import type { MenuItem } from "@/hooks/useMenuItems";
 
 interface ToolCardProps {
@@ -52,6 +53,7 @@ export function ToolCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.name);
+  const { isPressed, handlers, reset, pressedRef } = useLongPress();
 
   // Get the appropriate icon for the tool type
   const toolType = (item as any).tool_type || "checklist";
@@ -77,6 +79,9 @@ export function ToolCard({
   };
 
   const handleCardClick = () => {
+    if (pressedRef.current) {
+      return; // Don't navigate if long-press triggered
+    }
     if (!isEditing && onClick) {
       onClick();
     }
@@ -91,6 +96,7 @@ export function ToolCard({
           !isEditing && onClick && "cursor-pointer"
         )}
         onClick={handleCardClick}
+        {...handlers}
       >
         {/* Icon */}
         <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0">
@@ -119,7 +125,7 @@ export function ToolCard({
 
         {/* Admin Controls */}
         {isAdmin && !isEditing && (
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
             {driveButton}
             {!isFirst && (
               <Button
