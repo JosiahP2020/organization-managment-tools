@@ -222,8 +222,8 @@ const ChecklistEditor = () => {
       <div className="print:hidden">
         <DashboardLayout>
           <div className="relative">
-            {/* Sidebar - Positioned absolutely on the left, independent from content */}
-            <div className="absolute left-0 top-[7.5rem]">
+            {/* Sidebar - Positioned absolutely on the left on desktop, FAB on mobile */}
+            <div className="hidden md:block absolute left-0 top-[7.5rem]">
               <ChecklistSidebar
                 isLocked={isLocked}
                 hideCompleted={hideCompleted}
@@ -238,7 +238,22 @@ const ChecklistEditor = () => {
               />
             </div>
 
-            {/* Checklist content - Independent centered container */}
+            {/* Mobile sidebar - rendered as FAB + Sheet */}
+            <div className="md:hidden">
+              <ChecklistSidebar
+                isLocked={isLocked}
+                hideCompleted={hideCompleted}
+                hideAllImages={hideAllImages}
+                hasAnyImages={hasAnyImages}
+                onToggleHideCompleted={() => setHideCompleted(!hideCompleted)}
+                onToggleHideImages={() => setHideAllImages(!hideAllImages)}
+                onToggleLock={handleToggleLock}
+                onReset={handleReset}
+                onPrint={handlePrint}
+                canEdit={isAdmin}
+              />
+            </div>
+
             <div className="max-w-4xl mx-auto">
               {/* Header: Sub-logo left, Title centered, Completion below */}
               <div className="relative flex items-start mb-8">
