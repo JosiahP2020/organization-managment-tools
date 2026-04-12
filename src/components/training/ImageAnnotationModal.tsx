@@ -275,11 +275,21 @@ export function ImageAnnotationModal({
     };
 
     if (selectedTool === "text") {
-      const text = prompt("Enter text:");
-      if (text) {
-        newAction.text = text;
-        setHistory([...history, newAction]);
-        setRedoStack([]);
+      // Show in-app text input at click position
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const displayX = e.clientX - rect.left;
+        const displayY = e.clientY - rect.top;
+        setTextInput({
+          visible: true,
+          x: displayX,
+          y: displayY,
+          canvasX: coords.x,
+          canvasY: coords.y,
+          value: "",
+        });
+        setTimeout(() => textInputRef.current?.focus(), 50);
       }
       setIsDrawing(false);
       return;
