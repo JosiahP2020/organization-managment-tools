@@ -106,6 +106,7 @@ export function ImageAnnotationModal({
     value: string;
   }>({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
   const textInputRef = useRef<HTMLInputElement>(null);
+  const textBlurEnabled = useRef(false);
 
   // Load image and set canvas dimensions
   useEffect(() => {
