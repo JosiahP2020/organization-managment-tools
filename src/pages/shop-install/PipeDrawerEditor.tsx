@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { BackButton } from "@/components/BackButton";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,10 +72,16 @@ const PipeDrawerEditor = () => {
         quantity: entry.quantity,
         sort_order: entries.length,
       } as any);
-      if (error) throw error;
+      if (error) {
+        console.error("Failed to save pipe drawer entry:", error);
+        throw error;
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pipe-drawer-entries", measurementId] }),
-    onError: () => toast.error("Failed to save entry"),
+    onError: (err) => {
+      console.error("Mutation error saving entry:", err);
+      toast.error("Failed to save entry");
+    },
   });
 
   const deleteEntryMutation = useMutation({
@@ -111,7 +116,6 @@ const PipeDrawerEditor = () => {
   return (
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
-        <BackButton />
         <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-6 text-center">
           {measurement?.notes || "Pipe Drawer Measurements"}
         </h1>
