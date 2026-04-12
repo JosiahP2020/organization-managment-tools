@@ -375,8 +375,21 @@ export function ImageAnnotationModal({
   };
 
   const handleSave = () => {
-    commitTextInput();
-    onSave(history);
+    // If text input is active, commit it inline before saving
+    let finalHistory = history;
+    if (textInput.visible && textInput.value.trim()) {
+      const newAction: DrawingAction = {
+        id: crypto.randomUUID(),
+        tool: "text",
+        color: selectedColor,
+        thickness,
+        start: { x: textInput.canvasX, y: textInput.canvasY },
+        text: textInput.value.trim(),
+      };
+      finalHistory = [...history, newAction];
+    }
+    setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+    onSave(finalHistory);
     onOpenChange(false);
   };
 
