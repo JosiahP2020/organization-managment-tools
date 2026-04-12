@@ -3,6 +3,8 @@ import { Upload, Trash2, Pencil, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { AnnotatedImage } from "./AnnotatedImage";
+import type { DrawingAction } from "./ImageAnnotationModal";
 
 interface GembaDocCellProps {
   imageUrl: string | null;
@@ -102,16 +104,19 @@ export function GembaDocCell({
       <div className="relative flex-1 min-h-[120px] flex items-center justify-center bg-muted/50">
         {imageUrl ? (
           <>
-            <img
-              src={imageUrl}
-              alt={`Step ${stepNumber}`}
-              className="w-full h-full object-contain"
-            />
-            {/* Render annotations if any */}
-            {imageAnnotations && imageAnnotations.length > 0 && (
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Annotation overlay would be rendered here */}
-              </div>
+            {imageAnnotations && imageAnnotations.length > 0 ? (
+              <AnnotatedImage
+                src={imageUrl}
+                annotations={imageAnnotations as unknown as DrawingAction[]}
+                alt={`Step ${stepNumber}`}
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src={imageUrl}
+                alt={`Step ${stepNumber}`}
+                className="w-full h-full object-contain"
+              />
             )}
             
             {/* Hover action buttons - top right, no blur/overlay */}
