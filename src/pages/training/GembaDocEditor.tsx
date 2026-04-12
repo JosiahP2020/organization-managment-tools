@@ -107,6 +107,23 @@ function GembaDocEditorContent() {
     enabled: !!currentPageData?.id,
   });
 
+  // Fetch ALL cells for print view (across all pages)
+  const allPageIds = pages?.map((p) => p.id) || [];
+  const { data: allCells } = useQuery({
+    queryKey: ["gemba-doc-all-cells", gembaDocId, allPageIds.join(",")],
+    queryFn: async () => {
+      if (!allPageIds.length) return [];
+      const { data, error } = await supabase
+        .from("gemba_doc_cells")
+        .select("*")
+        .in("page_id", allPageIds)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+    enabled: allPageIds.length > 0,
+  });
+
   // Update doc mutation
   const updateDocMutation = useMutation({
     mutationFn: async (updates: {
@@ -416,7 +433,7 @@ function GembaDocEditorContent() {
   const printPages =
     pages?.map((page) => ({
       page_number: page.page_number,
-      cells: (cells || [])
+      cells: (allCells || [])
         .filter((c) => c.page_id === page.id)
         .map((c) => ({
           position: c.position,
