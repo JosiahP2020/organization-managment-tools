@@ -171,7 +171,12 @@ const MenuDetail = () => {
       } else if (toolType === "follow_up_list") {
         navigate(`/dashboard/${slug}/training/follow_up_list?toolId=${item.id}`);
       } else if (toolType === "pipe_drawer") {
-        navigate(`/dashboard/${slug}/pipe-drawer/${item.id}?mode=list`);
+        // For pipe drawer, even in unlimited mode, navigate to the linked measurement
+        if (docLink?.document_id) {
+          navigate(`/dashboard/${slug}/pipe-drawer/${docLink.document_id}`);
+        } else {
+          toast.error("No measurement linked to this tool");
+        }
       }
     }
   };
