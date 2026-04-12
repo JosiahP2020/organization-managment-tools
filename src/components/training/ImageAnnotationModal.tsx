@@ -96,6 +96,17 @@ export function ImageAnnotationModal({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
+  // Text input state
+  const [textInput, setTextInput] = useState<{
+    visible: boolean;
+    x: number; // display position (CSS px)
+    y: number;
+    canvasX: number; // canvas coordinate
+    canvasY: number;
+    value: string;
+  }>({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+  const textInputRef = useRef<HTMLInputElement>(null);
+
   // Load image and set canvas dimensions
   useEffect(() => {
     if (!open || !imageUrl) return;
@@ -264,11 +275,21 @@ export function ImageAnnotationModal({
     };
 
     if (selectedTool === "text") {
-      const text = prompt("Enter text:");
-      if (text) {
-        newAction.text = text;
-        setHistory([...history, newAction]);
-        setRedoStack([]);
+      // Show in-app text input at click position
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const displayX = e.clientX - rect.left;
+        const displayY = e.clientY - rect.top;
+        setTextInput({
+          visible: true,
+          x: displayX,
+          y: displayY,
+          canvasX: coords.x,
+          canvasY: coords.y,
+          value: "",
+        });
+        setTimeout(() => textInputRef.current?.focus(), 50);
       }
       setIsDrawing(false);
       return;
@@ -331,7 +352,24 @@ export function ImageAnnotationModal({
     setClearConfirmOpen(false);
   };
 
+  const commitTextInput = () => {
+    if (textInput.value.trim()) {
+      const newAction: DrawingAction = {
+        id: crypto.randomUUID(),
+        tool: "text",
+        color: selectedColor,
+        thickness,
+        start: { x: textInput.canvasX, y: textInput.canvasY },
+        text: textInput.value.trim(),
+      };
+      setHistory([...history, newAction]);
+      setRedoStack([]);
+    }
+    setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+  };
+
   const handleSave = () => {
+    commitTextInput();
     onSave(history);
     onOpenChange(false);
   };
@@ -459,23 +497,71 @@ export function ImageAnnotationModal({
             </div>
           </div>
 
+          {/* Thickness Slider */}
+          <div className="flex items-center gap-3 px-2">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Thickness</span>
+            <input
+              type="range"
+              min={1}
+              max={20}
+              value={thickness}
+              onChange={(e) => setThickness(Number(e.target.value))}
+              className="flex-1 h-2 accent-primary"
+            />
+            <div
+              className="rounded-full bg-foreground shrink-0"
+              style={{ width: thickness * 2, height: thickness * 2, minWidth: 4, minHeight: 4 }}
+            />
+          </div>
+
           {/* Canvas Area */}
           <div
             ref={containerRef}
-            className="flex-1 flex items-center justify-center bg-muted/50 rounded-lg overflow-hidden"
+            className="relative flex-1 flex items-center justify-center bg-muted/50 rounded-lg overflow-hidden"
           >
             {imageLoaded ? (
-              <canvas
-                ref={canvasRef}
-                width={imageDimensions.width}
-                height={imageDimensions.height}
-                style={{ width: canvasWidth, height: canvasHeight }}
-                className="cursor-crosshair border rounded shadow-sm"
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-              />
+              <div className="relative">
+                <canvas
+                  ref={canvasRef}
+                  width={imageDimensions.width}
+                  height={imageDimensions.height}
+                  style={{ width: canvasWidth, height: canvasHeight }}
+                  className="cursor-crosshair border rounded shadow-sm"
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                />
+                {/* In-app text input overlay */}
+                {textInput.visible && (
+                  <div
+                    className="absolute z-20"
+                    style={{
+                      left: textInput.x,
+                      top: textInput.y - 16,
+                    }}
+                  >
+                    <input
+                      ref={textInputRef}
+                      type="text"
+                      value={textInput.value}
+                      onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          commitTextInput();
+                        } else if (e.key === "Escape") {
+                          setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+                        }
+                      }}
+                      onBlur={commitTextInput}
+                      className="bg-background border-2 border-primary rounded px-2 py-1 text-sm text-foreground min-w-[120px] shadow-lg outline-none"
+                      style={{ color: selectedColor }}
+                      placeholder="Type text, press Enter"
+                      autoFocus
+                    />
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="text-muted-foreground">Loading image...</div>
             )}
