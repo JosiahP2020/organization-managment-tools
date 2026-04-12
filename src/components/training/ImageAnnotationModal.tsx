@@ -546,6 +546,8 @@ export function ImageAnnotationModal({
                       left: textInput.x,
                       top: textInput.y - 16,
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
                   >
                     <input
                       ref={textInputRef}
@@ -553,13 +555,18 @@ export function ImageAnnotationModal({
                       value={textInput.value}
                       onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
                       onKeyDown={(e) => {
+                        e.stopPropagation();
                         if (e.key === "Enter") {
                           commitTextInput();
                         } else if (e.key === "Escape") {
                           setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
                         }
                       }}
-                      onBlur={commitTextInput}
+                      onBlur={() => {
+                        if (textBlurEnabled.current) {
+                          commitTextInput();
+                        }
+                      }}
                       className="bg-background border-2 border-primary rounded px-2 py-1 text-sm text-foreground min-w-[120px] shadow-lg outline-none"
                       style={{ color: selectedColor }}
                       placeholder="Type text, press Enter"
