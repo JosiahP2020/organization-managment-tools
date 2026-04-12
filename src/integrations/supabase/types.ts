@@ -960,7 +960,7 @@ export type Database = {
           id: string
           notes: string | null
           organization_id: string
-          project_id: string
+          project_id: string | null
           updated_at: string
         }
         Insert: {
@@ -970,7 +970,7 @@ export type Database = {
           id?: string
           notes?: string | null
           organization_id: string
-          project_id: string
+          project_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -980,7 +980,7 @@ export type Database = {
           id?: string
           notes?: string | null
           organization_id?: string
-          project_id?: string
+          project_id?: string | null
           updated_at?: string
         }
         Relationships: [

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckSquare, Grid3X3, ListChecks } from "lucide-react";
+import { CheckSquare, Grid3X3, ListChecks, Ruler } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 
-export type ToolType = "checklist" | "sop_guide" | "follow_up_list";
+export type ToolType = "checklist" | "sop_guide" | "follow_up_list" | "pipe_drawer";
 export type ToolMode = "unlimited" | "single";
 
 interface AddToolDialogProps {
@@ -46,6 +46,12 @@ const toolOptions = [
     label: "Follow-up List",
     icon: ListChecks,
     description: "Track follow-up items and tasks",
+  },
+  {
+    value: "pipe_drawer" as ToolType,
+    label: "Pipe Drawer",
+    icon: Ruler,
+    description: "Record pipe drawer measurements",
   },
 ];
 
@@ -99,7 +105,7 @@ export function AddToolDialog({
           {/* Tool Type Selection */}
           <div className="space-y-3">
             <Label>Tool Type</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {toolOptions.map((option) => {
                 const Icon = option.icon;
                 const isSelected = toolType === option.value;

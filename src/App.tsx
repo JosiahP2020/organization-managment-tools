@@ -63,6 +63,7 @@ const App = () => (
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId" element={<ProjectDetail />} />
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId/follow-up-list/:checklistId" element={<ChecklistEditor />} />
                 <Route path="/dashboard/:orgSlug/shop-install/projects/:projectId/pipe-drawer/:measurementId" element={<PipeDrawerEditor />} />
+                <Route path="/dashboard/:orgSlug/pipe-drawer/:measurementId" element={<PipeDrawerEditor />} />
                 <Route path="/settings" element={<Settings />} />
                 {/* Legacy routes redirect to new combined settings */}
                 <Route path="/settings/account" element={<Settings />} />
