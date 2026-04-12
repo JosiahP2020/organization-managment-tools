@@ -433,7 +433,7 @@ function GembaDocEditorContent() {
   const printPages =
     pages?.map((page) => ({
       page_number: page.page_number,
-      cells: (cells || [])
+      cells: (allCells || [])
         .filter((c) => c.page_id === page.id)
         .map((c) => ({
           position: c.position,
