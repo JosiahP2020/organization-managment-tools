@@ -19,6 +19,7 @@ import GembaDocEditor from "./pages/training/GembaDocEditor";
 import ShopInstall from "./pages/ShopInstall";
 import ProjectList from "./pages/shop-install/ProjectList";
 import ProjectDetail from "./pages/shop-install/ProjectDetail";
+import PipeDrawerEditor from "./pages/shop-install/PipeDrawerEditor";
 import Settings from "./pages/settings/Settings";
 import UserManagement from "./pages/admin/UserManagement";
 import OrganizationSettings from "./pages/admin/OrganizationSettings";
