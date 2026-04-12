@@ -224,9 +224,6 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
                   )}
                 </div>
               )}
-              <span className="gemba-print-page-number">
-                {page.page_number}
-              </span>
             </div>
 
             {/* Grid */}
@@ -264,9 +261,9 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
                         className="gemba-print-cell-image"
                       />
                     </div>
-                    {/* Step description below */}
+                    {/* Step description below with step number */}
                     <p className="gemba-print-step-text">
-                      {cell?.step_text || ""}
+                      {cell?.step_text ? `${stepNumber}. ${cell.step_text}` : ""}
                     </p>
                   </div>
                 );
