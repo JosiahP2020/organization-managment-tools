@@ -352,7 +352,24 @@ export function ImageAnnotationModal({
     setClearConfirmOpen(false);
   };
 
+  const commitTextInput = () => {
+    if (textInput.value.trim()) {
+      const newAction: DrawingAction = {
+        id: crypto.randomUUID(),
+        tool: "text",
+        color: selectedColor,
+        thickness,
+        start: { x: textInput.canvasX, y: textInput.canvasY },
+        text: textInput.value.trim(),
+      };
+      setHistory([...history, newAction]);
+      setRedoStack([]);
+    }
+    setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+  };
+
   const handleSave = () => {
+    commitTextInput();
     onSave(history);
     onOpenChange(false);
   };
