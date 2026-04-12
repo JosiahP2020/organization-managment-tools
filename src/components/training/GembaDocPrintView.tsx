@@ -1,4 +1,6 @@
 import { forwardRef } from "react";
+import { AnnotatedImage } from "./AnnotatedImage";
+import type { DrawingAction } from "./ImageAnnotationModal";
 
 interface CellData {
   position: number;
@@ -255,11 +257,20 @@ export const GembaDocPrintView = forwardRef<HTMLDivElement, GembaDocPrintViewPro
                       <div className="gemba-print-step-badge">
                         {stepNumber}
                       </div>
-                      <img
-                        src={cell.image_url}
-                        alt={`Step ${stepNumber}`}
-                        className="gemba-print-cell-image"
-                      />
+                      {cell.image_annotations && cell.image_annotations.length > 0 ? (
+                        <AnnotatedImage
+                          src={cell.image_url!}
+                          annotations={cell.image_annotations as unknown as DrawingAction[]}
+                          alt={`Step ${stepNumber}`}
+                          className="gemba-print-cell-image"
+                        />
+                      ) : (
+                        <img
+                          src={cell.image_url}
+                          alt={`Step ${stepNumber}`}
+                          className="gemba-print-cell-image"
+                        />
+                      )}
                     </div>
                     {/* Step description below with step number */}
                     <p className="gemba-print-step-text">
