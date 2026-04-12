@@ -889,6 +889,69 @@ export type Database = {
           },
         ]
       }
+      pipe_drawer_entries: {
+        Row: {
+          created_at: string
+          drawer_height: string | null
+          drawer_label: string | null
+          id: string
+          left: string | null
+          measurement_id: string
+          mid: string | null
+          organization_id: string
+          quantity: number
+          right: string | null
+          slides_length: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          drawer_height?: string | null
+          drawer_label?: string | null
+          id?: string
+          left?: string | null
+          measurement_id: string
+          mid?: string | null
+          organization_id: string
+          quantity?: number
+          right?: string | null
+          slides_length?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          drawer_height?: string | null
+          drawer_label?: string | null
+          id?: string
+          left?: string | null
+          measurement_id?: string
+          mid?: string | null
+          organization_id?: string
+          quantity?: number
+          right?: string | null
+          slides_length?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipe_drawer_entries_measurement_id_fkey"
+            columns: ["measurement_id"]
+            isOneToOne: false
+            referencedRelation: "pipe_drawer_measurements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipe_drawer_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipe_drawer_measurements: {
         Row: {
           archived_at: string | null
