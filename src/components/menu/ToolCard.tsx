@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckSquare, Grid3X3, ListChecks, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload, Loader2 } from "lucide-react";
+import { CheckSquare, Grid3X3, ListChecks, Ruler, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
@@ -27,12 +27,14 @@ const toolIcons: Record<string, React.ElementType> = {
   checklist: CheckSquare,
   sop_guide: Grid3X3,
   follow_up_list: ListChecks,
+  pipe_drawer: Ruler,
 };
 
 const toolLabels: Record<string, string> = {
   checklist: "Checklist",
   sop_guide: "SOP Guide",
   follow_up_list: "Follow-up List",
+  pipe_drawer: "Pipe Drawer",
 };
 
 export function ToolCard({

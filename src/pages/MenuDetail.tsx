@@ -159,6 +159,9 @@ const MenuDetail = () => {
         navigate(`/dashboard/${slug}/training/${category}/${docLink.document_id}`);
       } else if (toolType === "sop_guide") {
         navigate(`/dashboard/${slug}/training/machine_operation/gemba/${docLink.document_id}`);
+      } else if (toolType === "pipe_drawer") {
+        // For pipe_drawer single mode, the document_id is the measurement record id
+        navigate(`/dashboard/${slug}/shop-install/projects/_/pipe-drawer/${docLink.document_id}`);
       }
     } else {
       // Unlimited mode - navigate to a list view with the menu item ID
@@ -168,6 +171,8 @@ const MenuDetail = () => {
         navigate(`/dashboard/${slug}/training/sop_guides?toolId=${item.id}`);
       } else if (toolType === "follow_up_list") {
         navigate(`/dashboard/${slug}/training/follow_up_list?toolId=${item.id}`);
+      } else if (toolType === "pipe_drawer") {
+        navigate(`/dashboard/${slug}/training/pipe_drawer?toolId=${item.id}`);
       }
     }
   };
