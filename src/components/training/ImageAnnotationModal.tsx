@@ -67,13 +67,6 @@ const COLORS = [
   "#ffffff",
 ];
 
-const TEXT_SIZES = [
-  { label: "S", value: 18 },
-  { label: "M", value: 28 },
-  { label: "L", value: 40 },
-  { label: "XL", value: 56 },
-];
-
 const TOOLS: { tool: Tool; icon: React.ElementType; label: string }[] = [
   { tool: "pen", icon: Pencil, label: "Pen" },
   { tool: "line", icon: Minus, label: "Line" },
@@ -97,7 +90,6 @@ export function ImageAnnotationModal({
   const [selectedTool, setSelectedTool] = useState<Tool>("pen");
   const [selectedColor, setSelectedColor] = useState("#ef4444");
   const [thickness, setThickness] = useState(3);
-  const [textSize, setTextSize] = useState(28);
   const [history, setHistory] = useState<DrawingAction[]>(initialAnnotations || []);
   const [redoStack, setRedoStack] = useState<DrawingAction[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -106,24 +98,30 @@ export function ImageAnnotationModal({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
-  // Text input state
+  // Text input state - now with width/height for resizable box
   const [textInput, setTextInput] = useState<{
     visible: boolean;
-    x: number;
+    x: number; // display px relative to canvas wrapper
     y: number;
+    width: number; // display px
+    height: number;
     canvasX: number;
     canvasY: number;
     value: string;
-    editingId?: string; // if editing an existing text action
-  }>({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
-  const textInputRef = useRef<HTMLInputElement>(null);
+    editingId?: string;
+  }>({ visible: false, x: 0, y: 0, width: 200, height: 40, canvasX: 0, canvasY: 0, value: "" });
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
   const textBlurEnabled = useRef(false);
 
-  // Dragging text input
+  // Dragging text box
   const [isDraggingText, setIsDraggingText] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  // Load image and set canvas dimensions
+  // Resizing text box
+  const [isResizingText, setIsResizingText] = useState(false);
+  const resizeStart = useRef({ mouseX: 0, mouseY: 0, w: 0, h: 0 });
+
+  // Load image
   useEffect(() => {
     if (!open || !imageUrl) return;
     const img = new Image();
@@ -145,11 +143,17 @@ export function ImageAnnotationModal({
     };
   }, []);
 
-  // Redraw canvas when history changes
+  // Compute fontSize from the display box height → canvas coordinates
+  const getTextFontSize = useCallback(() => {
+    const { scaleY } = getCanvasScale();
+    // Font size = box height in canvas coords * ~0.7 (to fit with padding)
+    return Math.max(12, Math.round(textInput.height * scaleY * 0.7));
+  }, [textInput.height, getCanvasScale]);
+
+  // Redraw canvas
   const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !imageLoaded) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -158,23 +162,16 @@ export function ImageAnnotationModal({
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
       history.forEach((action) => {
-        // Skip drawing text that's currently being edited
         if (action.id === textInput.editingId) return;
         drawAction(ctx, action);
       });
-
-      if (currentAction) {
-        drawAction(ctx, currentAction);
-      }
+      if (currentAction) drawAction(ctx, currentAction);
     };
     img.src = imageUrl;
   }, [history, currentAction, imageUrl, imageLoaded, textInput.editingId]);
 
-  useEffect(() => {
-    redrawCanvas();
-  }, [redrawCanvas]);
+  useEffect(() => { redrawCanvas(); }, [redrawCanvas]);
 
   const drawAction = (ctx: CanvasRenderingContext2D, action: DrawingAction) => {
     ctx.strokeStyle = action.color;
@@ -188,7 +185,7 @@ export function ImageAnnotationModal({
         if (action.points && action.points.length > 0) {
           ctx.beginPath();
           ctx.moveTo(action.points[0].x, action.points[0].y);
-          action.points.forEach((point) => ctx.lineTo(point.x, point.y));
+          action.points.forEach((p) => ctx.lineTo(p.x, p.y));
           ctx.stroke();
         }
         break;
@@ -210,23 +207,15 @@ export function ImageAnnotationModal({
           ctx.stroke();
           ctx.beginPath();
           ctx.moveTo(action.end.x, action.end.y);
-          ctx.lineTo(
-            action.end.x - headLength * Math.cos(angle - Math.PI / 6),
-            action.end.y - headLength * Math.sin(angle - Math.PI / 6)
-          );
+          ctx.lineTo(action.end.x - headLength * Math.cos(angle - Math.PI / 6), action.end.y - headLength * Math.sin(angle - Math.PI / 6));
           ctx.moveTo(action.end.x, action.end.y);
-          ctx.lineTo(
-            action.end.x - headLength * Math.cos(angle + Math.PI / 6),
-            action.end.y - headLength * Math.sin(angle + Math.PI / 6)
-          );
+          ctx.lineTo(action.end.x - headLength * Math.cos(angle + Math.PI / 6), action.end.y - headLength * Math.sin(angle + Math.PI / 6));
           ctx.stroke();
         }
         break;
       case "circle":
         if (action.start && action.end) {
-          const radius = Math.sqrt(
-            Math.pow(action.end.x - action.start.x, 2) + Math.pow(action.end.y - action.start.y, 2)
-          );
+          const radius = Math.sqrt(Math.pow(action.end.x - action.start.x, 2) + Math.pow(action.end.y - action.start.y, 2));
           ctx.beginPath();
           ctx.arc(action.start.x, action.start.y, radius, 0, 2 * Math.PI);
           ctx.stroke();
@@ -250,7 +239,7 @@ export function ImageAnnotationModal({
           ctx.globalCompositeOperation = "destination-out";
           ctx.beginPath();
           ctx.moveTo(action.points[0].x, action.points[0].y);
-          action.points.forEach((point) => ctx.lineTo(point.x, point.y));
+          action.points.forEach((p) => ctx.lineTo(p.x, p.y));
           ctx.lineWidth = action.thickness * 3;
           ctx.stroke();
           ctx.globalCompositeOperation = "source-over";
@@ -272,21 +261,14 @@ export function ImageAnnotationModal({
   };
 
   const findTextActionAtCoords = (canvasX: number, canvasY: number): DrawingAction | null => {
-    // Check history in reverse to find topmost text
     for (let i = history.length - 1; i >= 0; i--) {
       const action = history[i];
       if (action.tool === "text" && action.start && action.text) {
         const fs = action.fontSize || 28;
         const x = action.start.x;
         const y = action.start.y;
-        // Approximate hit box: text baseline is at y, text extends upward by fontSize
-        const textWidth = action.text.length * fs * 0.6; // rough estimate
-        if (
-          canvasX >= x - 5 &&
-          canvasX <= x + textWidth + 5 &&
-          canvasY >= y - fs - 5 &&
-          canvasY <= y + 10
-        ) {
+        const textWidth = action.text.length * fs * 0.6;
+        if (canvasX >= x - 5 && canvasX <= x + textWidth + 5 && canvasY >= y - fs - 5 && canvasY <= y + 10) {
           return action;
         }
       }
@@ -298,42 +280,48 @@ export function ImageAnnotationModal({
     const coords = getCanvasCoords(e);
 
     if (selectedTool === "text") {
-      // First check if clicking on existing text to edit it
-      const existingText = findTextActionAtCoords(coords.x, coords.y);
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
       const displayX = e.clientX - rect.left;
       const displayY = e.clientY - rect.top;
 
+      // Check if clicking existing text to edit
+      const existingText = findTextActionAtCoords(coords.x, coords.y);
+
       if (existingText && existingText.start) {
-        // Edit existing text
         const { scaleX, scaleY } = getCanvasScale();
+        const fs = existingText.fontSize || 28;
+        const estimatedWidth = (existingText.text?.length || 5) * fs * 0.6 / scaleX;
+        const estimatedHeight = fs / scaleY * 1.4;
         textBlurEnabled.current = false;
         setTextInput({
           visible: true,
           x: existingText.start.x / scaleX,
-          y: (existingText.start.y / scaleY) - 8,
+          y: (existingText.start.y - fs) / scaleY,
+          width: Math.max(150, estimatedWidth),
+          height: Math.max(36, estimatedHeight),
           canvasX: existingText.start.x,
           canvasY: existingText.start.y,
           value: existingText.text || "",
           editingId: existingText.id,
         });
-        setTextSize(existingText.fontSize || 28);
         setSelectedColor(existingText.color);
         setTimeout(() => {
           textInputRef.current?.focus();
           setTimeout(() => { textBlurEnabled.current = true; }, 200);
         }, 100);
       } else {
-        // New text at click position
+        // New text
         textBlurEnabled.current = false;
         setTextInput({
           visible: true,
           x: displayX,
-          y: displayY - 8,
+          y: displayY,
+          width: 200,
+          height: 40,
           canvasX: coords.x,
-          canvasY: coords.y,
+          canvasY: coords.y + 28, // baseline offset
           value: "",
         });
         setTimeout(() => {
@@ -385,16 +373,14 @@ export function ImageAnnotationModal({
 
   const handleUndo = () => {
     if (history.length === 0) return;
-    const lastAction = history[history.length - 1];
+    setRedoStack([...redoStack, history[history.length - 1]]);
     setHistory(history.slice(0, -1));
-    setRedoStack([...redoStack, lastAction]);
   };
 
   const handleRedo = () => {
     if (redoStack.length === 0) return;
-    const action = redoStack[redoStack.length - 1];
+    setHistory([...history, redoStack[redoStack.length - 1]]);
     setRedoStack(redoStack.slice(0, -1));
-    setHistory([...history, action]);
   };
 
   const handleClearAll = () => {
@@ -404,12 +390,12 @@ export function ImageAnnotationModal({
   };
 
   const commitTextInput = () => {
+    const fontSize = getTextFontSize();
     if (textInput.value.trim()) {
       if (textInput.editingId) {
-        // Update existing text action
         setHistory(history.map(a =>
           a.id === textInput.editingId
-            ? { ...a, text: textInput.value.trim(), color: selectedColor, fontSize: textSize, start: { x: textInput.canvasX, y: textInput.canvasY } }
+            ? { ...a, text: textInput.value.trim(), color: selectedColor, fontSize, start: { x: textInput.canvasX, y: textInput.canvasY } }
             : a
         ));
       } else {
@@ -418,7 +404,7 @@ export function ImageAnnotationModal({
           tool: "text",
           color: selectedColor,
           thickness,
-          fontSize: textSize,
+          fontSize,
           start: { x: textInput.canvasX, y: textInput.canvasY },
           text: textInput.value.trim(),
         };
@@ -426,19 +412,19 @@ export function ImageAnnotationModal({
         setRedoStack([]);
       }
     } else if (textInput.editingId) {
-      // If editing and cleared text, remove it
       setHistory(history.filter(a => a.id !== textInput.editingId));
     }
-    setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+    setTextInput({ visible: false, x: 0, y: 0, width: 200, height: 40, canvasX: 0, canvasY: 0, value: "" });
   };
 
   const handleSave = () => {
     let finalHistory = history;
     if (textInput.visible && textInput.value.trim()) {
+      const fontSize = getTextFontSize();
       if (textInput.editingId) {
         finalHistory = history.map(a =>
           a.id === textInput.editingId
-            ? { ...a, text: textInput.value.trim(), color: selectedColor, fontSize: textSize, start: { x: textInput.canvasX, y: textInput.canvasY } }
+            ? { ...a, text: textInput.value.trim(), color: selectedColor, fontSize, start: { x: textInput.canvasX, y: textInput.canvasY } }
             : a
         );
       } else {
@@ -447,100 +433,101 @@ export function ImageAnnotationModal({
           tool: "text",
           color: selectedColor,
           thickness,
-          fontSize: textSize,
+          fontSize,
           start: { x: textInput.canvasX, y: textInput.canvasY },
           text: textInput.value.trim(),
         };
         finalHistory = [...history, newAction];
       }
     }
-    setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+    setTextInput({ visible: false, x: 0, y: 0, width: 200, height: 40, canvasX: 0, canvasY: 0, value: "" });
     onSave(finalHistory);
     onOpenChange(false);
   };
 
-  // Text drag handlers
+  // Drag to move text box
   const handleTextDragStart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDraggingText(true);
-    dragOffset.current = {
-      x: e.clientX - textInput.x,
-      y: e.clientY - textInput.y,
-    };
+    dragOffset.current = { x: e.clientX - textInput.x, y: e.clientY - textInput.y };
   };
 
   useEffect(() => {
     if (!isDraggingText) return;
-
     const handleMove = (e: MouseEvent) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
+      const { scaleX, scaleY } = getCanvasScale();
       const newX = e.clientX - dragOffset.current.x;
       const newY = e.clientY - dragOffset.current.y;
-      const { scaleX, scaleY } = getCanvasScale();
-      // Clamp within canvas
-      const clampedX = Math.max(0, Math.min(newX, rect.width - 50));
-      const clampedY = Math.max(0, Math.min(newY, rect.height - 20));
       setTextInput(prev => ({
         ...prev,
-        x: clampedX,
-        y: clampedY,
-        canvasX: clampedX * scaleX,
-        canvasY: (clampedY + 8) * scaleY,
+        x: Math.max(0, newX),
+        y: Math.max(0, newY),
+        canvasX: Math.max(0, newX) * scaleX,
+        canvasY: (Math.max(0, newY) + prev.height) * scaleY * 0.7 + Math.max(0, newY) * scaleY * 0.3,
       }));
     };
-
-    const handleUp = () => {
-      setIsDraggingText(false);
-    };
-
+    const handleUp = () => setIsDraggingText(false);
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mouseup", handleUp);
-    };
+    return () => { window.removeEventListener("mousemove", handleMove); window.removeEventListener("mouseup", handleUp); };
   }, [isDraggingText, getCanvasScale]);
+
+  // Resize text box from corner
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizingText(true);
+    resizeStart.current = { mouseX: e.clientX, mouseY: e.clientY, w: textInput.width, h: textInput.height };
+  };
+
+  useEffect(() => {
+    if (!isResizingText) return;
+    const handleMove = (e: MouseEvent) => {
+      const dx = e.clientX - resizeStart.current.mouseX;
+      const dy = e.clientY - resizeStart.current.mouseY;
+      const newW = Math.max(100, resizeStart.current.w + dx);
+      const newH = Math.max(28, resizeStart.current.h + dy);
+      setTextInput(prev => {
+        const { scaleY } = getCanvasScale();
+        return {
+          ...prev,
+          width: newW,
+          height: newH,
+          // Recalculate canvasY based on new height (text baseline)
+          canvasY: (prev.y + newH) * scaleY * 0.7 + prev.y * scaleY * 0.3,
+        };
+      });
+    };
+    const handleUp = () => setIsResizingText(false);
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+    return () => { window.removeEventListener("mousemove", handleMove); window.removeEventListener("mouseup", handleUp); };
+  }, [isResizingText, getCanvasScale]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!open) return;
-      if (textInput.visible) return; // Don't interfere with text input
+      if (!open || textInput.visible) return;
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === "z" && e.shiftKey) {
-          e.preventDefault();
-          handleRedo();
-        } else if (e.key === "z") {
-          e.preventDefault();
-          handleUndo();
-        }
+        if (e.key === "z" && e.shiftKey) { e.preventDefault(); handleRedo(); }
+        else if (e.key === "z") { e.preventDefault(); handleUndo(); }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, history, redoStack, textInput.visible]);
 
-  // Calculate canvas size to fit in modal
+  // Canvas display size
   const maxWidth = 800;
   const maxHeight = 500;
   let canvasWidth = imageDimensions.width;
   let canvasHeight = imageDimensions.height;
-
-  if (canvasWidth > maxWidth) {
-    const ratio = maxWidth / canvasWidth;
-    canvasWidth = maxWidth;
-    canvasHeight = canvasHeight * ratio;
-  }
-  if (canvasHeight > maxHeight) {
-    const ratio = maxHeight / canvasHeight;
-    canvasHeight = maxHeight;
-    canvasWidth = canvasWidth * ratio;
-  }
+  if (canvasWidth > maxWidth) { const r = maxWidth / canvasWidth; canvasWidth = maxWidth; canvasHeight *= r; }
+  if (canvasHeight > maxHeight) { const r = maxHeight / canvasHeight; canvasHeight = maxHeight; canvasWidth *= r; }
 
   const isTextTool = selectedTool === "text";
+  const displayFontSize = Math.max(12, Math.round(textInput.height * 0.65));
 
   return (
     <>
@@ -554,106 +541,41 @@ export function ImageAnnotationModal({
           <div className="flex flex-wrap items-center gap-2 p-2 bg-muted rounded-lg">
             <div className="flex gap-1">
               {TOOLS.map(({ tool, icon: Icon, label }) => (
-                <Button
-                  key={tool}
-                  variant={selectedTool === tool ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setSelectedTool(tool)}
-                  title={label}
-                  className="h-9 w-9"
-                >
+                <Button key={tool} variant={selectedTool === tool ? "default" : "outline"} size="icon" onClick={() => setSelectedTool(tool)} title={label} className="h-9 w-9">
                   <Icon className="h-4 w-4" />
                 </Button>
               ))}
             </div>
-
             <div className="w-px h-6 bg-border" />
-
             <div className="flex gap-1">
-              <Button variant="outline" size="icon" onClick={handleUndo} disabled={history.length === 0} title="Undo (Ctrl+Z)" className="h-9 w-9">
-                <Undo2 className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0} title="Redo (Ctrl+Shift+Z)" className="h-9 w-9">
-                <Redo2 className="h-4 w-4" />
-              </Button>
+              <Button variant="outline" size="icon" onClick={handleUndo} disabled={history.length === 0} title="Undo (Ctrl+Z)" className="h-9 w-9"><Undo2 className="h-4 w-4" /></Button>
+              <Button variant="outline" size="icon" onClick={handleRedo} disabled={redoStack.length === 0} title="Redo (Ctrl+Shift+Z)" className="h-9 w-9"><Redo2 className="h-4 w-4" /></Button>
             </div>
-
             <div className="w-px h-6 bg-border" />
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setClearConfirmOpen(true)}
-              disabled={history.length === 0}
-              title="Clear All"
-              className="h-9 w-9 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-
+            <Button variant="outline" size="icon" onClick={() => setClearConfirmOpen(true)} disabled={history.length === 0} title="Clear All" className="h-9 w-9 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
             <div className="flex-1" />
-
-            {/* Colors */}
             <div className="flex gap-1">
               {COLORS.map((color) => (
-                <button
-                  key={color}
-                  className={cn(
-                    "w-7 h-7 rounded-full border-2 transition-transform",
-                    selectedColor === color ? "border-primary scale-110" : "border-transparent hover:scale-105"
-                  )}
-                  style={{ backgroundColor: color }}
-                  onClick={() => setSelectedColor(color)}
-                  title={color}
-                />
+                <button key={color} className={cn("w-7 h-7 rounded-full border-2 transition-transform", selectedColor === color ? "border-primary scale-110" : "border-transparent hover:scale-105")} style={{ backgroundColor: color }} onClick={() => setSelectedColor(color)} title={color} />
               ))}
             </div>
           </div>
 
-          {/* Thickness / Text Size controls */}
+          {/* Thickness (hidden when text tool) / Text hint */}
           <div className="flex items-center gap-3 px-2">
             {isTextTool ? (
-              <>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">Text Size</span>
-                <div className="flex gap-1">
-                  {TEXT_SIZES.map((s) => (
-                    <Button
-                      key={s.value}
-                      variant={textSize === s.value ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setTextSize(s.value)}
-                      className="h-7 px-3 text-xs"
-                    >
-                      {s.label}
-                    </Button>
-                  ))}
-                </div>
-                <span className="text-xs text-muted-foreground">Click existing text to edit it</span>
-              </>
+              <span className="text-xs text-muted-foreground">Click to place text · Drag corners to resize · Drag handle to move · Click existing text to edit</span>
             ) : (
               <>
                 <span className="text-xs text-muted-foreground whitespace-nowrap">Thickness</span>
-                <input
-                  type="range"
-                  min={1}
-                  max={20}
-                  value={thickness}
-                  onChange={(e) => setThickness(Number(e.target.value))}
-                  className="flex-1 h-2 accent-primary"
-                />
-                <div
-                  className="rounded-full bg-foreground shrink-0"
-                  style={{ width: thickness * 2, height: thickness * 2, minWidth: 4, minHeight: 4 }}
-                />
+                <input type="range" min={1} max={20} value={thickness} onChange={(e) => setThickness(Number(e.target.value))} className="flex-1 h-2 accent-primary" />
+                <div className="rounded-full bg-foreground shrink-0" style={{ width: thickness * 2, height: thickness * 2, minWidth: 4, minHeight: 4 }} />
               </>
             )}
           </div>
 
-          {/* Canvas Area */}
-          <div
-            ref={containerRef}
-            className="relative flex-1 flex items-center justify-center bg-muted/50 rounded-lg overflow-hidden"
-          >
+          {/* Canvas */}
+          <div ref={containerRef} className="relative flex-1 flex items-center justify-center bg-muted/50 rounded-lg overflow-hidden">
             {imageLoaded ? (
               <div className="relative">
                 <canvas
@@ -667,50 +589,70 @@ export function ImageAnnotationModal({
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
                 />
-                {/* In-app text input overlay */}
+                {/* Resizable text input overlay */}
                 {textInput.visible && (
                   <div
-                    className="absolute z-20 flex items-center gap-1"
+                    className="absolute z-20"
                     style={{
                       left: textInput.x,
                       top: textInput.y,
+                      width: textInput.width,
+                      height: textInput.height,
                     }}
                     onPointerDown={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
                   >
-                    {/* Drag handle */}
+                    {/* Move handle */}
                     <div
-                      className="cursor-move p-1 bg-muted rounded hover:bg-muted-foreground/20 shrink-0"
+                      className="absolute -left-7 top-0 cursor-move p-1 bg-muted rounded hover:bg-muted-foreground/20"
                       onMouseDown={handleTextDragStart}
                       title="Drag to reposition"
                     >
                       <Move className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <input
+
+                    {/* Text area */}
+                    <textarea
                       ref={textInputRef}
-                      type="text"
                       value={textInput.value}
                       onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
                       onKeyDown={(e) => {
                         e.stopPropagation();
-                        if (e.key === "Enter") {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
                           commitTextInput();
                         } else if (e.key === "Escape") {
-                          setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+                          setTextInput({ visible: false, x: 0, y: 0, width: 200, height: 40, canvasX: 0, canvasY: 0, value: "" });
                         }
                       }}
                       onBlur={() => {
-                        if (textBlurEnabled.current && !isDraggingText) {
+                        if (textBlurEnabled.current && !isDraggingText && !isResizingText) {
                           commitTextInput();
                         }
                       }}
-                      className="bg-background border-2 border-primary rounded px-2 py-1 text-foreground min-w-[150px] shadow-lg outline-none font-bold"
+                      className="w-full h-full bg-background/80 border-2 border-primary rounded px-2 py-1 text-foreground shadow-lg outline-none font-bold resize-none overflow-hidden"
                       style={{
                         color: selectedColor,
-                        fontSize: `${Math.max(14, textSize * 0.6)}px`,
+                        fontSize: `${displayFontSize}px`,
+                        lineHeight: 1.1,
                       }}
-                      placeholder="Type text, press Enter"
+                      placeholder="Type here..."
                       autoFocus
+                    />
+
+                    {/* Resize handle (bottom-right corner) */}
+                    <div
+                      className="absolute -bottom-1 -right-1 w-4 h-4 bg-primary rounded-sm cursor-se-resize border border-background shadow"
+                      onMouseDown={handleResizeStart}
+                      title="Drag to resize"
+                    />
+                    {/* Resize handle (bottom-left corner) */}
+                    <div
+                      className="absolute -bottom-1 -left-1 w-3 h-3 bg-primary/60 rounded-sm cursor-sw-resize border border-background shadow opacity-60"
+                      onMouseDown={(e) => {
+                        // For bottom-left, we'd need more complex logic; keep simple with just bottom-right
+                        e.stopPropagation();
+                      }}
                     />
                   </div>
                 )}
@@ -722,12 +664,10 @@ export function ImageAnnotationModal({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              <X className="h-4 w-4 mr-2" />
-              Cancel
+              <X className="h-4 w-4 mr-2" />Cancel
             </Button>
             <Button onClick={handleSave}>
-              <Check className="h-4 w-4 mr-2" />
-              Save Annotations
+              <Check className="h-4 w-4 mr-2" />Save Annotations
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -737,18 +677,11 @@ export function ImageAnnotationModal({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Clear All Annotations</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove all annotations? This cannot be undone.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Are you sure you want to remove all annotations? This cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleClearAll}
-            >
-              Clear All
-            </AlertDialogAction>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleClearAll}>Clear All</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
