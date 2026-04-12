@@ -263,7 +263,7 @@ export function useMenuItems(categoryId: string | undefined) {
     }: { 
       name: string; 
       description?: string;
-      toolType: "checklist" | "sop_guide" | "follow_up_list";
+      toolType: "checklist" | "sop_guide" | "follow_up_list" | "pipe_drawer";
       toolMode: "unlimited" | "single";
       sectionId?: string | null;
     }) => {
@@ -276,6 +276,7 @@ export function useMenuItems(categoryId: string | undefined) {
         checklist: "machine_operation",
         sop_guide: "machine_operation",
         follow_up_list: "follow_up_list",
+        pipe_drawer: "machine_operation",
       };
 
       // Icon mapping
@@ -283,6 +284,7 @@ export function useMenuItems(categoryId: string | undefined) {
         checklist: "check-square",
         sop_guide: "grid-3x3",
         follow_up_list: "list-checks",
+        pipe_drawer: "ruler",
       };
 
       let documentId: string | null = null;
@@ -329,6 +331,22 @@ export function useMenuItems(categoryId: string | undefined) {
             gemba_doc_id: gembaDoc.id,
             page_number: 1,
           });
+      } else if (toolType === "pipe_drawer") {
+        // Create a pipe_drawer_measurements record
+        const { data: pdRecord, error: pdError } = await supabase
+          .from("pipe_drawer_measurements")
+          .insert({
+            organization_id: organization.id,
+            created_by: user.id,
+            project_id: null as any, // Not tied to a project when created from menu
+            notes: name.trim(),
+          })
+          .select()
+          .single();
+
+        if (pdError) throw pdError;
+        documentId = pdRecord.id;
+        documentType = "pipe_drawer";
       }
 
       // Get max sort_order for items in this section
