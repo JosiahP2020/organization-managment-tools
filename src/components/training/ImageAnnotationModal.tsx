@@ -96,6 +96,17 @@ export function ImageAnnotationModal({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
 
+  // Text input state
+  const [textInput, setTextInput] = useState<{
+    visible: boolean;
+    x: number; // display position (CSS px)
+    y: number;
+    canvasX: number; // canvas coordinate
+    canvasY: number;
+    value: string;
+  }>({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+  const textInputRef = useRef<HTMLInputElement>(null);
+
   // Load image and set canvas dimensions
   useEffect(() => {
     if (!open || !imageUrl) return;
