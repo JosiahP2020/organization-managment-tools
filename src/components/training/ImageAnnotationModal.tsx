@@ -282,6 +282,7 @@ export function ImageAnnotationModal({
         const rect = canvas.getBoundingClientRect();
         const displayX = e.clientX - rect.left;
         const displayY = e.clientY - rect.top;
+        textBlurEnabled.current = false;
         setTextInput({
           visible: true,
           x: displayX,
@@ -290,7 +291,11 @@ export function ImageAnnotationModal({
           canvasY: coords.y,
           value: "",
         });
-        setTimeout(() => textInputRef.current?.focus(), 50);
+        // Delay focus and blur-enable so Dialog focus trap doesn't steal it
+        setTimeout(() => {
+          textInputRef.current?.focus();
+          setTimeout(() => { textBlurEnabled.current = true; }, 200);
+        }, 100);
       }
       setIsDrawing(false);
       return;
