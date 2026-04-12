@@ -106,6 +106,7 @@ export function ImageAnnotationModal({
     value: string;
   }>({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
   const textInputRef = useRef<HTMLInputElement>(null);
+  const textBlurEnabled = useRef(false);
 
   // Load image and set canvas dimensions
   useEffect(() => {
@@ -281,6 +282,7 @@ export function ImageAnnotationModal({
         const rect = canvas.getBoundingClientRect();
         const displayX = e.clientX - rect.left;
         const displayY = e.clientY - rect.top;
+        textBlurEnabled.current = false;
         setTextInput({
           visible: true,
           x: displayX,
@@ -289,7 +291,11 @@ export function ImageAnnotationModal({
           canvasY: coords.y,
           value: "",
         });
-        setTimeout(() => textInputRef.current?.focus(), 50);
+        // Delay focus and blur-enable so Dialog focus trap doesn't steal it
+        setTimeout(() => {
+          textInputRef.current?.focus();
+          setTimeout(() => { textBlurEnabled.current = true; }, 200);
+        }, 100);
       }
       setIsDrawing(false);
       return;
@@ -369,8 +375,21 @@ export function ImageAnnotationModal({
   };
 
   const handleSave = () => {
-    commitTextInput();
-    onSave(history);
+    // If text input is active, commit it inline before saving
+    let finalHistory = history;
+    if (textInput.visible && textInput.value.trim()) {
+      const newAction: DrawingAction = {
+        id: crypto.randomUUID(),
+        tool: "text",
+        color: selectedColor,
+        thickness,
+        start: { x: textInput.canvasX, y: textInput.canvasY },
+        text: textInput.value.trim(),
+      };
+      finalHistory = [...history, newAction];
+    }
+    setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
+    onSave(finalHistory);
     onOpenChange(false);
   };
 
@@ -540,6 +559,8 @@ export function ImageAnnotationModal({
                       left: textInput.x,
                       top: textInput.y - 16,
                     }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
                   >
                     <input
                       ref={textInputRef}
@@ -547,13 +568,18 @@ export function ImageAnnotationModal({
                       value={textInput.value}
                       onChange={(e) => setTextInput({ ...textInput, value: e.target.value })}
                       onKeyDown={(e) => {
+                        e.stopPropagation();
                         if (e.key === "Enter") {
                           commitTextInput();
                         } else if (e.key === "Escape") {
                           setTextInput({ visible: false, x: 0, y: 0, canvasX: 0, canvasY: 0, value: "" });
                         }
                       }}
-                      onBlur={commitTextInput}
+                      onBlur={() => {
+                        if (textBlurEnabled.current) {
+                          commitTextInput();
+                        }
+                      }}
                       className="bg-background border-2 border-primary rounded px-2 py-1 text-sm text-foreground min-w-[120px] shadow-lg outline-none"
                       style={{ color: selectedColor }}
                       placeholder="Type text, press Enter"
