@@ -47,15 +47,6 @@ export function DashboardHeader() {
           )}
         </div>
 
-        {/* Right - Sub-logo on sub-pages */}
-        {!isMainDashboard && (
-          <Logo
-            size="lg"
-            customSrc={subLogoUrl}
-            variant="icon"
-            filterClass={logoFilterClass}
-          />
-        )}
 
         {/* Center - Logo (main dashboard only) */}
         {isMainDashboard && (
