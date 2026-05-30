@@ -46,6 +46,8 @@ const ChecklistEditor = () => {
   const { syncToDriveIfNeeded } = useDriveExport();
   const queryClient = useQueryClient();
   const printRef = useRef<HTMLDivElement>(null);
+  useChecklistSelectionAdapter(checklistId);
+
   
   const [hideCompleted, setHideCompleted] = useState(false);
   const [hideAllImages, setHideAllImages] = useState(false);
