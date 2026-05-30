@@ -18,6 +18,7 @@ import { useThemeLogos } from "@/hooks/useThemeLogos";
 export function DashboardHeader() {
   const { isAdmin, organization } = useAuth();
   const location = useLocation();
+  const { mainLogoUrl, logoFilterClass } = useThemeLogos();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Show back button on sub-pages, not on main dashboard (/dashboard/:orgSlug)
