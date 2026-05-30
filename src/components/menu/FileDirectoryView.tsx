@@ -368,9 +368,41 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
                 )}
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 p-2 rounded-lg bg-muted">
-                    <FileIcon className="h-5 w-5 text-muted-foreground" />
-                  </div>
+                  <a
+                    href={file.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 h-14 w-14 rounded-lg bg-muted overflow-hidden flex items-center justify-center border border-border"
+                    title={`Preview ${file.file_name}`}
+                  >
+                    {file.file_type?.startsWith("image/") ? (
+                      <img
+                        src={file.file_url}
+                        alt={file.file_name}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : file.file_type?.startsWith("video/") ? (
+                      <video
+                        src={file.file_url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : file.file_type === "application/pdf" ? (
+                      <object
+                        data={`${file.file_url}#page=1&view=FitH&toolbar=0&navpanes=0`}
+                        type="application/pdf"
+                        className="h-full w-full pointer-events-none"
+                        aria-label={file.file_name}
+                      >
+                        <FileIcon className="h-5 w-5 text-muted-foreground" />
+                      </object>
+                    ) : (
+                      <FileIcon className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </a>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm truncate" title={file.file_name}>
                       {file.file_name}
