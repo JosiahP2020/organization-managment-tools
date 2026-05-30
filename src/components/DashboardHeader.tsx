@@ -49,13 +49,13 @@ export function DashboardHeader() {
 
 
         {/* Center - Logo */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none px-2" style={{ maxWidth: 'calc(100% - 8rem)' }}>
+        <div className="absolute left-1/2 -translate-x-1/2 top-6 flex items-center justify-center pointer-events-none px-2" style={{ maxWidth: 'calc(100% - 8rem)' }}>
           <Logo
-            size={isMainDashboard ? "xl" : "lg"}
+            size="xl"
             customSrc={mainLogoUrl}
             variant="full"
             filterClass={logoFilterClass}
-            className={isMainDashboard ? "max-h-20 w-auto object-contain" : "max-h-16 w-auto object-contain"}
+            className={isMainDashboard ? "max-h-24 w-auto object-contain" : "max-h-20 w-auto object-contain"}
           />
         </div>
 
