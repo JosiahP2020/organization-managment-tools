@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Trash2, ChevronUp, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import type { DashboardCategory } from "@/hooks/useDashboardCategories";
 import { LeftAccentCard, StatCard, CleanMinimalCard } from "./CategoryCardVariants";
 import type { CardStyle } from "@/hooks/useOrganizationSettings";
+import { useSelectableItem } from "@/components/selection";
+import { cn } from "@/lib/utils";
 
 interface SortableMenuCardProps {
   category: DashboardCategory;
@@ -33,6 +35,13 @@ export function SortableMenuCard({
 }: SortableMenuCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
+  const { selected, active, longPressHandlers, handleClick } = useSelectableItem({
+    surface: "dashboard:categories",
+    id: category.id,
+    meta: { label: category.name, type: "dashboard_category", parentId: sectionId },
+    enabled: isAdmin,
+  });
+
   const CardComponent = cardStyle === 'stat-card' 
     ? StatCard 
     : cardStyle === 'clean-minimal' 
@@ -41,9 +50,22 @@ export function SortableMenuCard({
 
   return (
     <>
-      <div className="group relative">
-        {/* Admin controls - visible on hover */}
-        {isAdmin && (
+      <div
+        className={cn(
+          "group relative transition-all rounded-xl",
+          selected && "ring-2 ring-primary"
+        )}
+        {...longPressHandlers}
+        onClick={handleClick()}
+      >
+        {selected && (
+          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow z-30">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
+
+        {/* Admin controls - hidden in select mode */}
+        {isAdmin && !active && (
           <div className="absolute -top-2 -right-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {!isFirst && (
               <Button
@@ -73,7 +95,6 @@ export function SortableMenuCard({
                 <ChevronDown className="h-4 w-4" />
               </Button>
             )}
-            {/* Delete button */}
             <Button
               variant="destructive"
               size="icon"
@@ -90,9 +111,10 @@ export function SortableMenuCard({
 
         <CardComponent
           category={category}
-          onClick={onClick}
+          onClick={active ? () => {} : onClick}
           showEditButton={false}
         />
+
       </div>
 
       <DeleteConfirmDialog

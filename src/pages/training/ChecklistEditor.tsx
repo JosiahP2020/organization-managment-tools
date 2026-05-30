@@ -14,6 +14,8 @@ import { ChecklistPrintView } from "@/components/training/ChecklistPrintView";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus, Image } from "lucide-react";
+import { useChecklistSelectionAdapter } from "@/components/training/useChecklistSelectionAdapter";
+
 
 
 export interface ChecklistItem {
@@ -46,6 +48,8 @@ const ChecklistEditor = () => {
   const { syncToDriveIfNeeded } = useDriveExport();
   const queryClient = useQueryClient();
   const printRef = useRef<HTMLDivElement>(null);
+  useChecklistSelectionAdapter(checklistId);
+
   
   const [hideCompleted, setHideCompleted] = useState(false);
   const [hideAllImages, setHideAllImages] = useState(false);
