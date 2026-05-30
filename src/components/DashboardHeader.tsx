@@ -34,7 +34,7 @@ export function DashboardHeader() {
               variant="outline"
               size="icon"
               onClick={() => setSidebarOpen(true)}
-              className="h-14 w-14 text-foreground bg-background border-border shadow-md hover:bg-accent"
+              className="h-14 w-14 text-primary bg-primary/10 border-border shadow-md hover:bg-primary/20"
               aria-label="Open menu"
             >
               <Menu className="h-8 w-8" />
