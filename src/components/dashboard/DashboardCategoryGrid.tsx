@@ -10,8 +10,12 @@ import { FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardCategory } from "@/hooks/useDashboardCategories";
+import { useDashboardSelectionAdapter } from "./useDashboardSelectionAdapter";
+
 
 export function DashboardCategoryGrid() {
+  useDashboardSelectionAdapter();
+
   const { 
     sections, 
     isLoading, 
