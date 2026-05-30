@@ -5,11 +5,13 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Hash } from "lucide-react";
+import { Plus, Trash2, Hash, Check } from "lucide-react";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSelectableItem } from "@/components/selection";
+
 
 interface ChecklistItemProps {
   item: ChecklistItemType;
@@ -52,6 +54,14 @@ export function ChecklistItem({
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+
+  const { selected, active, longPressHandlers, handleClick } = useSelectableItem({
+    surface: `checklist:${checklistId}`,
+    id: item.id,
+    meta: { label: item.text, type: "checklist_item", parentId: sectionId },
+    enabled: canEdit && !isEditing,
+  });
+
 
   const childItems = getChildItems(item.id);
   const visibleChildren = hideCompleted
@@ -178,10 +188,13 @@ export function ChecklistItem({
 
   // Handle row click for mobile to toggle action buttons
   const handleRowClick = (e: React.MouseEvent) => {
+    if (active) {
+      // In select mode, useSelectableItem.handleClick handles it via the wrapper below
+      return;
+    }
     // Only handle on mobile, and don't trigger if clicking on interactive elements
     if (isMobile && canEdit) {
       const target = e.target as HTMLElement;
-      // Check if click is on the row itself, not on buttons, inputs, or checkbox
       if (!target.closest('button') && !target.closest('input') && !target.closest('[role="checkbox"]')) {
         setShowMobileActions(prev => !prev);
       }
@@ -192,9 +205,19 @@ export function ChecklistItem({
     <div className={cn(depth > 0 && "ml-6 border-l-2 border-muted pl-4")}>
       {/* Use group/item to isolate hover effect to this specific item row */}
       <div 
-        className="group/item flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors"
-        onClick={handleRowClick}
+        className={cn(
+          "group/item flex items-start gap-3 py-2 hover:bg-muted/50 rounded-md px-2 -mx-2 transition-colors relative",
+          selected && "bg-primary/10 ring-2 ring-primary"
+        )}
+        onClick={handleClick(handleRowClick)}
+        {...longPressHandlers}
       >
+        {selected && (
+          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow z-10">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
+
         {/* Checkbox or Number */}
         {displayMode === "numbered" ? (
           <div className="mt-0.5 w-5 flex justify-center">
