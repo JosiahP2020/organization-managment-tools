@@ -111,9 +111,10 @@ export function SortableMenuCard({
 
         <CardComponent
           category={category}
-          onClick={onClick}
+          onClick={active ? () => {} : onClick}
           showEditButton={false}
         />
+
       </div>
 
       <DeleteConfirmDialog
