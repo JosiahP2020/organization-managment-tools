@@ -200,40 +200,32 @@ const MenuDetail = () => {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto px-2 sm:px-4">
-        {/* Header: Title left, sub-logo top right */}
-        <div className="flex items-start justify-between gap-4 mb-6">
-          <div className="flex-1 min-w-0">
-            {isEditingTitle ? (
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                onBlur={handleSaveTitle}
-                onKeyDown={handleTitleKeyDown}
-                autoFocus
-                className="text-2xl md:text-3xl font-bold"
-              />
-            ) : (
-              <h1
-                className={`text-2xl md:text-3xl font-bold text-foreground truncate ${isAdmin ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
-                onClick={handleStartEditTitle}
-              >
-                {category?.name || "Menu"}
-              </h1>
-            )}
-            {category?.description && !isEditingTitle && (
-              <p className="text-muted-foreground mt-1 truncate">
-                {category.description}
-              </p>
-            )}
-          </div>
-          <Logo
-            size="md"
-            customSrc={subLogoUrl}
-            variant="icon"
-            filterClass={logoFilterClass}
-            className="shrink-0"
-          />
+        {/* Header: Title */}
+        <div className="mb-6">
+          {isEditingTitle ? (
+            <Input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleSaveTitle}
+              onKeyDown={handleTitleKeyDown}
+              autoFocus
+              className="text-2xl md:text-3xl font-bold"
+            />
+          ) : (
+            <h1
+              className={`text-2xl md:text-3xl font-bold text-foreground truncate ${isAdmin ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+              onClick={handleStartEditTitle}
+            >
+              {category?.name || "Menu"}
+            </h1>
+          )}
+          {category?.description && !isEditingTitle && (
+            <p className="text-muted-foreground mt-1 truncate">
+              {category.description}
+            </p>
+          )}
         </div>
+
 
         {/* Menu Items Column */}
         {menuId && (
