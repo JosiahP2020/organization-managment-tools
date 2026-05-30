@@ -227,16 +227,16 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
         </div>
       )}
 
-      {/* Search and Controls Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Search */}
-        <div className="relative flex-1">
+      {/* Search and Controls Bar - always single row */}
+      <div className="flex flex-row gap-2 items-center">
+        {/* Search - shrinks to leave room for filter/sort */}
+        <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search files..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="pl-9 pr-8"
           />
           {searchQuery && (
             <button
@@ -248,72 +248,57 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
           )}
         </div>
 
-        {/* Filters and Sort */}
-        <div className="flex gap-2">
-          {/* Type Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Filter className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {typeFilter === "all" ? "All Types" : typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1)}
-                </span>
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuCheckboxItem checked={typeFilter === "all"} onCheckedChange={() => setTypeFilter("all")}>All Types</DropdownMenuCheckboxItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem checked={typeFilter === "documents"} onCheckedChange={() => setTypeFilter("documents")}>Documents</DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem checked={typeFilter === "images"} onCheckedChange={() => setTypeFilter("images")}>Images</DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem checked={typeFilter === "videos"} onCheckedChange={() => setTypeFilter("videos")}>Videos</DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem checked={typeFilter === "audio"} onCheckedChange={() => setTypeFilter("audio")}>Audio</DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem checked={typeFilter === "other"} onCheckedChange={() => setTypeFilter("other")}>Other</DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Type Filter */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1 shrink-0 px-2">
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {typeFilter === "all" ? "All Types" : typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1)}
+              </span>
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuCheckboxItem checked={typeFilter === "all"} onCheckedChange={() => setTypeFilter("all")}>All Types</DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem checked={typeFilter === "documents"} onCheckedChange={() => setTypeFilter("documents")}>Documents</DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={typeFilter === "images"} onCheckedChange={() => setTypeFilter("images")}>Images</DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={typeFilter === "videos"} onCheckedChange={() => setTypeFilter("videos")}>Videos</DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={typeFilter === "audio"} onCheckedChange={() => setTypeFilter("audio")}>Audio</DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem checked={typeFilter === "other"} onCheckedChange={() => setTypeFilter("other")}>Other</DropdownMenuCheckboxItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          {/* Sort */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <span className="hidden sm:inline">Sort:</span>
-                <span className="capitalize">{sortBy}</span>
-                <ChevronDown className="h-3 w-3" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setSortBy("newest")}>Newest First</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("oldest")}>Oldest First</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("name")}>Name A-Z</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy("size")}>Size (Largest)</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Sort */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1 shrink-0 px-2">
+              <span className="hidden sm:inline">Sort:</span>
+              <span className="capitalize">{sortBy}</span>
+              <ChevronDown className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setSortBy("newest")}>Newest First</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("oldest")}>Oldest First</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("name")}>Name A-Z</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("size")}>Size (Largest)</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          {/* Upload Button - Admin Only */}
-          {isAdmin && (
-            <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Button
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadFile.isPending}
-                className="gap-2"
-              >
-                <Upload className="h-4 w-4" />
-                <span className="hidden sm:inline">
-                  {uploadFile.isPending ? "Uploading..." : "Upload"}
-                </span>
-              </Button>
-            </>
-          )}
-        </div>
+        {/* Hidden file input - upload tile lives in grid */}
+        {isAdmin && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+        )}
       </div>
+
 
       {/* Clear Filters */}
       {hasActiveFilters && (
@@ -343,17 +328,35 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
           ))}
         </div>
       ) : filteredFiles.length === 0 ? (
-        <Card className="p-8 text-center">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <File className="h-10 w-10 opacity-50" />
-            <p className="font-medium">
-              {hasActiveFilters ? "No files match your filters" : "No files yet"}
-            </p>
-            {isAdmin && !hasActiveFilters && (
-              <p className="text-sm">Click the Upload button to add files</p>
-            )}
+        hasActiveFilters ? (
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <File className="h-10 w-10 opacity-50" />
+              <p className="font-medium">No files match your filters</p>
+            </div>
+          </Card>
+        ) : isAdmin ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadFile.isPending}
+              className="group relative p-3 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-accent/30 transition-all flex flex-col items-center justify-center aspect-[4/5] text-muted-foreground hover:text-primary"
+            >
+              <Upload className="h-8 w-8 mb-2" />
+              <span className="text-xs font-medium">
+                {uploadFile.isPending ? "Uploading..." : "Upload"}
+              </span>
+            </button>
           </div>
-        </Card>
+        ) : (
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <File className="h-10 w-10 opacity-50" />
+              <p className="font-medium">No files yet</p>
+            </div>
+          </Card>
+        )
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredFiles.map((file) => {
@@ -443,6 +446,19 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
               </Card>
             );
           })}
+          {isAdmin && !hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadFile.isPending}
+              className="group relative p-3 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-accent/30 transition-all flex flex-col items-center justify-center text-muted-foreground hover:text-primary min-h-[140px]"
+            >
+              <Upload className="h-8 w-8 mb-2" />
+              <span className="text-xs font-medium">
+                {uploadFile.isPending ? "Uploading..." : "Upload"}
+              </span>
+            </button>
+          )}
         </div>
       )}
 
