@@ -87,7 +87,7 @@ export function FileDirectoryCard({
       {/* Collapsed card */}
       <div
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border transition-all cursor-pointer hover:bg-accent/50",
+          "group relative flex items-center gap-3 p-4 rounded-lg bg-card border transition-all cursor-pointer hover:bg-accent/50",
           expanded && "rounded-b-none border-b-0",
           selected ? "border-primary ring-2 ring-primary" : "border-border"
         )}

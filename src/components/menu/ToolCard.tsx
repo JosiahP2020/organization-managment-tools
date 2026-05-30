@@ -94,7 +94,7 @@ export function ToolCard({
     <>
       <div
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-xl border transition-all",
+          "group relative flex items-center gap-3 p-4 rounded-xl border transition-all",
           "bg-card hover:bg-accent/50 hover:border-primary/30",
           selected ? "border-primary ring-2 ring-primary" : "border-border",
           !isEditing && onClick && "cursor-pointer"

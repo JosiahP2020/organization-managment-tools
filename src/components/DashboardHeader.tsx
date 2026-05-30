@@ -18,7 +18,7 @@ import { useThemeLogos } from "@/hooks/useThemeLogos";
 export function DashboardHeader() {
   const { isAdmin, organization } = useAuth();
   const location = useLocation();
-  const { mainLogoUrl, logoFilterClass } = useThemeLogos();
+  const { mainLogoUrl, subLogoUrl, logoFilterClass } = useThemeLogos();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Show back button on sub-pages, not on main dashboard (/dashboard/:orgSlug)
@@ -43,7 +43,16 @@ export function DashboardHeader() {
               <Menu className="h-8 w-8" />
             </Button>
           ) : (
-            <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />
+            <>
+              <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />
+              <Logo
+                size="lg"
+                customSrc={subLogoUrl}
+                variant="icon"
+                filterClass={logoFilterClass}
+                className="ml-1"
+              />
+            </>
           )}
         </div>
 
