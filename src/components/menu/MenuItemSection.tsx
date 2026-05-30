@@ -23,6 +23,7 @@ interface DriveExportContext {
 
 interface MenuItemSectionProps {
   section: MenuItemSectionType;
+  surface: string;
   isAdmin: boolean;
   isFirstSection: boolean;
   isLastSection: boolean;
