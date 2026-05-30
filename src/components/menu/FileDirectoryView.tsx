@@ -337,7 +337,7 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
 
       {/* Files Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-20" />
           ))}
@@ -355,7 +355,7 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredFiles.map((file) => {
             const FileIcon = getFileIcon(file.file_type);
             const fileRef = driveExport?.isConnected ? driveExport.getRef(file.id) : null;
