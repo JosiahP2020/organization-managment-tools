@@ -21,8 +21,7 @@ import { useMenuItems, type MenuItemSection as MenuItemSectionType } from "@/hoo
 import { useAuth } from "@/contexts/AuthContext";
 import { useDriveExport } from "@/hooks/useDriveExport";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSelectionAdapter } from "@/components/selection";
-import { useMemo } from "react";
+import { useMenuSelectionAdapter } from "./useMenuSelectionAdapter";
 
 interface MenuItemsColumnProps {
   categoryId: string;
@@ -32,6 +31,7 @@ interface MenuItemsColumnProps {
 export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProps) {
   const { isAdmin } = useAuth();
   const driveExport = useDriveExport();
+  useMenuSelectionAdapter(categoryId);
 
   const {
     sections,

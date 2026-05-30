@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { CheckSquare, Grid3X3, ListChecks, Ruler, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload, Loader2 } from "lucide-react";
+import { CheckSquare, Grid3X3, ListChecks, Ruler, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { useLongPress } from "@/hooks/useLongPress";
+import { useSelectableItem } from "@/components/selection";
 import type { MenuItem } from "@/hooks/useMenuItems";
 
 interface ToolCardProps {
   item: MenuItem;
+  surface: string;
+  sectionId: string;
   isFirst: boolean;
   isLast: boolean;
   onMoveUp: () => void;
@@ -39,6 +41,8 @@ const toolLabels: Record<string, string> = {
 
 export function ToolCard({
   item,
+  surface,
+  sectionId,
   isFirst,
   isLast,
   onMoveUp,
@@ -55,7 +59,13 @@ export function ToolCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.name);
-  const { isPressed, handlers, reset, pressedRef, cardRef } = useLongPress();
+
+  const { selected, active, longPressHandlers, handleClick } = useSelectableItem({
+    surface,
+    id: item.id,
+    meta: { label: item.name, type: item.item_type, parentId: sectionId, payload: item },
+    enabled: isAdmin && !isEditing,
+  });
 
   // Get the appropriate icon for the tool type
   const toolType = (item as any).tool_type || "checklist";
@@ -80,28 +90,23 @@ export function ToolCard({
     }
   };
 
-  const handleCardClick = () => {
-    if (pressedRef.current) {
-      return; // Don't navigate if long-press triggered
-    }
-    if (!isEditing && onClick) {
-      onClick();
-    }
-  };
-
   return (
     <>
       <div
-        ref={cardRef}
         className={cn(
           "group relative flex items-center gap-3 p-3 rounded-xl border transition-all",
-          "bg-card hover:bg-accent/50 border-border hover:border-primary/30",
-          isPressed && "ring-2 ring-primary/50 bg-accent/30",
+          "bg-card hover:bg-accent/50 hover:border-primary/30",
+          selected ? "border-primary ring-2 ring-primary" : "border-border",
           !isEditing && onClick && "cursor-pointer"
         )}
-        onClick={handleCardClick}
-        {...handlers}
+        onClick={isEditing ? undefined : handleClick(onClick)}
+        {...longPressHandlers}
       >
+        {selected && (
+          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow z-10">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
         {/* Icon */}
         <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0">
           <Icon className="h-5 w-5 text-primary" />
@@ -128,8 +133,9 @@ export function ToolCard({
         </div>
 
         {/* Admin Controls */}
-        {isAdmin && !isEditing && (
-          <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto")}>
+        {isAdmin && !isEditing && !active && (
+          <div className="flex items-center gap-0.5 transition-opacity shrink-0 opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto">
+
             {driveButton}
             {!isFirst && (
               <Button

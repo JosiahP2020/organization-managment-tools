@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2, ChevronUp, ChevronDown, Pencil, CloudUpload, Loader2, ExternalLink } from "lucide-react";
+import { Trash2, ChevronUp, ChevronDown, Pencil, CloudUpload, Loader2, ExternalLink, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
@@ -14,12 +14,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
-import { useLongPress } from "@/hooks/useLongPress";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSelectableItem } from "@/components/selection";
 import { cn } from "@/lib/utils";
 import type { MenuItem } from "@/hooks/useMenuItems";
 
 interface TextDisplayCardProps {
   item: MenuItem;
+  surface: string;
+  sectionId: string;
   isFirst: boolean;
   isLast: boolean;
   onMoveUp: () => void;
@@ -34,6 +37,8 @@ interface TextDisplayCardProps {
 
 export function TextDisplayCard({
   item,
+  surface,
+  sectionId,
   isFirst,
   isLast,
   onMoveUp,
@@ -45,11 +50,18 @@ export function TextDisplayCard({
   isSyncingToDrive,
   onResync,
 }: TextDisplayCardProps) {
+  const { isAdmin } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMapsDialog, setShowMapsDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
-  const { isPressed, handlers, reset, pressedRef, cardRef } = useLongPress();
+
+  const { selected, active, longPressHandlers, handleClick } = useSelectableItem({
+    surface,
+    id: item.id,
+    meta: { label: item.name, type: item.item_type, parentId: sectionId, payload: item },
+    enabled: isAdmin && !isEditing,
+  });
 
   const subType = item.description; // "text", "address", or "lockbox"
 
@@ -76,13 +88,6 @@ export function TextDisplayCard({
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`
     : null;
 
-  const handleCardClick = () => {
-    if (pressedRef.current) return;
-    if (isAddress && mapsUrl && !isEditing) {
-      setShowMapsDialog(true);
-    }
-  };
-
   const handleOpenMaps = () => {
     if (mapsUrl) {
       window.open(mapsUrl, "_blank");
@@ -90,18 +95,29 @@ export function TextDisplayCard({
     setShowMapsDialog(false);
   };
 
+  const onCardClick = () => {
+    if (isAddress && mapsUrl && !isEditing) {
+      setShowMapsDialog(true);
+    }
+  };
+
   return (
     <>
       <div
-        ref={cardRef}
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-all",
+          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border transition-all",
           isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default",
-          isPressed && "ring-2 ring-primary/50 bg-accent/30"
+          selected ? "border-primary ring-2 ring-primary" : "border-border"
         )}
-        onClick={handleCardClick}
-        {...handlers}
+        onClick={isEditing ? undefined : handleClick(onCardClick)}
+        {...longPressHandlers}
       >
+        {selected && (
+          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow z-10">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
+
         {/* Icon */}
         <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0 self-center">
           <DynamicIcon name={item.icon} className="h-5 w-5 text-primary" />
@@ -129,32 +145,34 @@ export function TextDisplayCard({
           )}
         </div>
 
-        {/* Admin controls */}
-        <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto")} onClick={(e) => e.stopPropagation()}>
-          {driveButton}
-          {!isFirst && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
-              <ChevronUp className="h-3 w-3" />
+        {/* Admin controls — hidden in select mode */}
+        {isAdmin && !isEditing && !active && (
+          <div className="flex items-center gap-0.5 transition-opacity shrink-0 opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            {driveButton}
+            {!isFirst && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
+                <ChevronUp className="h-3 w-3" />
+              </Button>
+            )}
+            {!isLast && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={() => setIsEditing(true)} title="Edit">
+              <Pencil className="h-3 w-3" />
             </Button>
-          )}
-          {!isLast && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
-              <ChevronDown className="h-3 w-3" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 group-hover:bg-accent"
+              onClick={() => setShowDeleteDialog(true)}
+              title="Delete"
+            >
+              <Trash2 className="h-3 w-3" />
             </Button>
-          )}
-          <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={() => setIsEditing(true)} title="Edit">
-            <Pencil className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 group-hover:bg-accent"
-            onClick={() => setShowDeleteDialog(true)}
-            title="Delete"
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
+          </div>
+        )}
 
         {/* Synced indicator - clickable to resync */}
         {isSynced && (
