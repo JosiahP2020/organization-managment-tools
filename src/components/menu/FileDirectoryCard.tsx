@@ -85,7 +85,8 @@ export function FileDirectoryCard({
   };
 
   return (
-    <>
+    <div>
+
       {/* Collapsed card - matches ToolCard/TextDisplayCard style */}
       <div
         ref={cardRef}
