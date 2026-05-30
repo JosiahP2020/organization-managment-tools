@@ -145,32 +145,34 @@ export function TextDisplayCard({
           )}
         </div>
 
-        {/* Admin controls */}
-        <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto")} onClick={(e) => e.stopPropagation()}>
-          {driveButton}
-          {!isFirst && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
-              <ChevronUp className="h-3 w-3" />
+        {/* Admin controls — hidden in select mode */}
+        {isAdmin && !isEditing && !active && (
+          <div className="flex items-center gap-0.5 transition-opacity shrink-0 opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            {driveButton}
+            {!isFirst && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
+                <ChevronUp className="h-3 w-3" />
+              </Button>
+            )}
+            {!isLast && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={() => setIsEditing(true)} title="Edit">
+              <Pencil className="h-3 w-3" />
             </Button>
-          )}
-          {!isLast && (
-            <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveDown} title="Move down">
-              <ChevronDown className="h-3 w-3" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 group-hover:bg-accent"
+              onClick={() => setShowDeleteDialog(true)}
+              title="Delete"
+            >
+              <Trash2 className="h-3 w-3" />
             </Button>
-          )}
-          <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={() => setIsEditing(true)} title="Edit">
-            <Pencil className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10 group-hover:bg-accent"
-            onClick={() => setShowDeleteDialog(true)}
-            title="Delete"
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
+          </div>
+        )}
 
         {/* Synced indicator - clickable to resync */}
         {isSynced && (
