@@ -184,7 +184,7 @@ const MenuDetail = () => {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="max-w-2xl mx-auto px-4">
+        <div className="max-w-2xl mx-auto px-2 sm:px-4">
           <div className="flex justify-center mb-6 md:mb-8">
             <Skeleton className="h-32 w-48" />
           </div>
