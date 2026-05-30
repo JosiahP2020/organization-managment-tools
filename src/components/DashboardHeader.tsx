@@ -56,9 +56,6 @@ export function DashboardHeader() {
             filterClass={logoFilterClass}
           />
         )}
-        <div className="hidden">
-          {/* spacer removed */}
-        </div>
 
         {/* Center - Logo (main dashboard only) */}
         {isMainDashboard && (
