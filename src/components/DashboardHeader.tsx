@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu } from "@/components/SidebarMenu";
+import { Logo } from "@/components/Logo";
+import { useThemeLogos } from "@/hooks/useThemeLogos";
 
 export function DashboardHeader() {
   const { isAdmin, organization } = useAuth();
