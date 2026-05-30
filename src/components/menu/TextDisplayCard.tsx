@@ -137,7 +137,7 @@ export function TextDisplayCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground text-sm break-words">{item.name}</h3>
+              <h3 className="font-semibold text-foreground text-base md:text-lg break-words">{item.name}</h3>
               {subtitle && (
                 <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
               )}

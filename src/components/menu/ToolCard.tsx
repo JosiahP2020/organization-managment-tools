@@ -126,7 +126,7 @@ export function ToolCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground text-sm truncate">{item.name}</h3>
+              <h3 className="font-semibold text-foreground text-base md:text-lg truncate">{item.name}</h3>
               <p className="text-xs text-muted-foreground mt-1">{toolLabel}</p>
             </>
           )}
