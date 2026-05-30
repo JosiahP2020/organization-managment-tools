@@ -203,6 +203,7 @@ export function FileDirectoryCard({
         title="Delete File Directory"
         description={`Are you sure you want to delete "${item.name}"? All files within will be removed.`}
       />
-    </>
+    </div>
   );
 }
+
