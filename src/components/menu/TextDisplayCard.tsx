@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2, ChevronUp, ChevronDown, Pencil, CloudUpload, Loader2, ExternalLink } from "lucide-react";
+import { Trash2, ChevronUp, ChevronDown, Pencil, CloudUpload, Loader2, ExternalLink, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DynamicIcon } from "@/components/menu-config/DynamicIcon";
@@ -14,12 +14,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
-import { useLongPress } from "@/hooks/useLongPress";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSelectableItem } from "@/components/selection";
 import { cn } from "@/lib/utils";
 import type { MenuItem } from "@/hooks/useMenuItems";
 
 interface TextDisplayCardProps {
   item: MenuItem;
+  surface: string;
+  sectionId: string;
   isFirst: boolean;
   isLast: boolean;
   onMoveUp: () => void;
