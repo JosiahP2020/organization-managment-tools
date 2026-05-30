@@ -41,6 +41,8 @@ const toolLabels: Record<string, string> = {
 
 export function ToolCard({
   item,
+  surface,
+  sectionId,
   isFirst,
   isLast,
   onMoveUp,
@@ -57,7 +59,13 @@ export function ToolCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(item.name);
-  const { isPressed, handlers, reset, pressedRef, cardRef } = useLongPress();
+
+  const { selected, active, longPressHandlers, handleClick } = useSelectableItem({
+    surface,
+    id: item.id,
+    meta: { label: item.name, type: item.item_type, parentId: sectionId, payload: item },
+    enabled: isAdmin && !isEditing,
+  });
 
   // Get the appropriate icon for the tool type
   const toolType = (item as any).tool_type || "checklist";
@@ -82,28 +90,23 @@ export function ToolCard({
     }
   };
 
-  const handleCardClick = () => {
-    if (pressedRef.current) {
-      return; // Don't navigate if long-press triggered
-    }
-    if (!isEditing && onClick) {
-      onClick();
-    }
-  };
-
   return (
     <>
       <div
-        ref={cardRef}
         className={cn(
           "group relative flex items-center gap-3 p-3 rounded-xl border transition-all",
-          "bg-card hover:bg-accent/50 border-border hover:border-primary/30",
-          isPressed && "ring-2 ring-primary/50 bg-accent/30",
+          "bg-card hover:bg-accent/50 hover:border-primary/30",
+          selected ? "border-primary ring-2 ring-primary" : "border-border",
           !isEditing && onClick && "cursor-pointer"
         )}
-        onClick={handleCardClick}
-        {...handlers}
+        onClick={isEditing ? undefined : handleClick(onClick)}
+        {...longPressHandlers}
       >
+        {selected && (
+          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow z-10">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
         {/* Icon */}
         <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0">
           <Icon className="h-5 w-5 text-primary" />
