@@ -37,6 +37,8 @@ interface TextDisplayCardProps {
 
 export function TextDisplayCard({
   item,
+  surface,
+  sectionId,
   isFirst,
   isLast,
   onMoveUp,
@@ -48,11 +50,18 @@ export function TextDisplayCard({
   isSyncingToDrive,
   onResync,
 }: TextDisplayCardProps) {
+  const { isAdmin } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showMapsDialog, setShowMapsDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
-  const { isPressed, handlers, reset, pressedRef, cardRef } = useLongPress();
+
+  const { selected, active, longPressHandlers, handleClick } = useSelectableItem({
+    surface,
+    id: item.id,
+    meta: { label: item.name, type: item.item_type, parentId: sectionId, payload: item },
+    enabled: isAdmin && !isEditing,
+  });
 
   const subType = item.description; // "text", "address", or "lockbox"
 
@@ -79,13 +88,6 @@ export function TextDisplayCard({
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name)}`
     : null;
 
-  const handleCardClick = () => {
-    if (pressedRef.current) return;
-    if (isAddress && mapsUrl && !isEditing) {
-      setShowMapsDialog(true);
-    }
-  };
-
   const handleOpenMaps = () => {
     if (mapsUrl) {
       window.open(mapsUrl, "_blank");
@@ -93,18 +95,29 @@ export function TextDisplayCard({
     setShowMapsDialog(false);
   };
 
+  const onCardClick = () => {
+    if (isAddress && mapsUrl && !isEditing) {
+      setShowMapsDialog(true);
+    }
+  };
+
   return (
     <>
       <div
-        ref={cardRef}
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-all",
+          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border transition-all",
           isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default",
-          isPressed && "ring-2 ring-primary/50 bg-accent/30"
+          selected ? "border-primary ring-2 ring-primary" : "border-border"
         )}
-        onClick={handleCardClick}
-        {...handlers}
+        onClick={isEditing ? undefined : handleClick(onCardClick)}
+        {...longPressHandlers}
       >
+        {selected && (
+          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow z-10">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
+
         {/* Icon */}
         <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0 self-center">
           <DynamicIcon name={item.icon} className="h-5 w-5 text-primary" />
