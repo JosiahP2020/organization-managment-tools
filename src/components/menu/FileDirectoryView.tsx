@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useSelectableItem } from "@/components/selection";
+import { useFilesSelectionAdapter } from "./useFilesSelectionAdapter";
+
 
 interface DriveExportContext {
   isConnected: boolean;
@@ -88,6 +91,8 @@ function matchesFileType(fileType: string | null, filter: FileTypeFilter): boole
 export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExport }: FileDirectoryViewProps) {
   const { isAdmin } = useAuth();
   const { files, isLoading, uploadFile, deleteFile } = useFileDirectory(menuItemId);
+  const surface = useFilesSelectionAdapter(menuItemId);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   
