@@ -200,16 +200,6 @@ const MenuDetail = () => {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto px-2 sm:px-4">
-        {/* Centered main logo */}
-        <div className="flex justify-center mb-4">
-          <Logo
-            size="xl"
-            customSrc={mainLogoUrl}
-            variant="full"
-            filterClass={logoFilterClass}
-            className="max-h-32 md:max-h-40"
-          />
-        </div>
 
         {/* Centered title */}
         <div className="text-center mb-6">
