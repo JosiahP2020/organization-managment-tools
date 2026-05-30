@@ -15,7 +15,7 @@ const MenuDetail = () => {
   const { menuId, slug } = useParams<{ menuId: string; slug: string }>();
   const navigate = useNavigate();
   const { organization, isAdmin } = useAuth();
-  const { mainLogoUrl, logoFilterClass } = useThemeLogos();
+  const { subLogoUrl, logoFilterClass } = useThemeLogos();
   const queryClient = useQueryClient();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -185,10 +185,10 @@ const MenuDetail = () => {
     return (
       <DashboardLayout>
         <div className="max-w-2xl mx-auto px-2 sm:px-4">
-          <div className="flex justify-center mb-6 md:mb-8">
-            <Skeleton className="h-32 w-48" />
+          <div className="flex items-start justify-between mb-6">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-12 w-12" />
           </div>
-          <Skeleton className="h-10 w-64 mx-auto mb-8" />
           <Skeleton className="h-16 w-full mb-2" />
           <Skeleton className="h-16 w-full mb-2" />
           <Skeleton className="h-16 w-full" />
@@ -200,47 +200,45 @@ const MenuDetail = () => {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto px-2 sm:px-4">
-        {/* Organization Logo - Centered */}
-        <div className="flex justify-center mb-6 md:mb-8">
-          <Logo 
-            size="xl" 
-            customSrc={mainLogoUrl} 
-            variant="full"
+        {/* Header: Title left, sub-logo top right */}
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="flex-1 min-w-0">
+            {isEditingTitle ? (
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                onBlur={handleSaveTitle}
+                onKeyDown={handleTitleKeyDown}
+                autoFocus
+                className="text-2xl md:text-3xl font-bold"
+              />
+            ) : (
+              <h1
+                className={`text-2xl md:text-3xl font-bold text-foreground truncate ${isAdmin ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+                onClick={handleStartEditTitle}
+              >
+                {category?.name || "Menu"}
+              </h1>
+            )}
+            {category?.description && !isEditingTitle && (
+              <p className="text-muted-foreground mt-1 truncate">
+                {category.description}
+              </p>
+            )}
+          </div>
+          <Logo
+            size="md"
+            customSrc={subLogoUrl}
+            variant="icon"
             filterClass={logoFilterClass}
-            className="max-h-32 md:max-h-40"
+            className="shrink-0"
           />
-        </div>
-
-        {/* Menu Title - Centered and Editable */}
-        <div className="text-center mb-8">
-          {isEditingTitle ? (
-            <Input
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-              onBlur={handleSaveTitle}
-              onKeyDown={handleTitleKeyDown}
-              autoFocus
-              className="text-2xl md:text-3xl font-bold text-center max-w-md mx-auto"
-            />
-          ) : (
-            <h1 
-              className={`text-2xl md:text-3xl font-bold text-foreground ${isAdmin ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
-              onClick={handleStartEditTitle}
-            >
-              {category?.name || "Menu"}
-            </h1>
-          )}
-          {category?.description && !isEditingTitle && (
-            <p className="text-muted-foreground mt-2">
-              {category.description}
-            </p>
-          )}
         </div>
 
         {/* Menu Items Column */}
         {menuId && (
-          <MenuItemsColumn 
-            categoryId={menuId} 
+          <MenuItemsColumn
+            categoryId={menuId}
             onItemClick={handleItemClick}
           />
         )}
