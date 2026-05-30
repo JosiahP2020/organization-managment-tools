@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { AddWidgetButton } from "./AddWidgetButton";
 import { SortableWidget } from "./SortableWidget";
+import { useWidgetSelectionAdapter } from "./useWidgetSelectionAdapter";
 import type { WidgetType, WidgetSize } from "@/types/widgets";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -23,40 +24,50 @@ const defaultSidebarWidgets: WidgetInstance[] = [
   { id: "3", type: "upcoming-tasks", size: "small" },
 ];
 
-export function WidgetColumn() {
-  const [widgets, setWidgets] = useState<WidgetInstance[]>(defaultColumnWidgets);
-  const { isAdmin } = useAuth();
+function useWidgetContainer(initial: WidgetInstance[], surface: string) {
+  const [widgets, setWidgets] = useState<WidgetInstance[]>(initial);
 
   const handleWidgetAdd = (type: WidgetType, size: WidgetSize) => {
-    const newWidget: WidgetInstance = {
-      id: crypto.randomUUID(),
-      type,
-      size,
-    };
-    setWidgets([...widgets, newWidget]);
+    setWidgets((w) => [...w, { id: crypto.randomUUID(), type, size }]);
   };
 
   const handleWidgetDelete = (id: string) => {
-    setWidgets(widgets.filter((w) => w.id !== id));
+    setWidgets((w) => w.filter((x) => x.id !== id));
   };
 
+  const handleBulkDelete = useCallback((ids: string[]) => {
+    setWidgets((w) => w.filter((x) => !ids.includes(x.id)));
+  }, []);
+
   const handleMoveUp = (id: string) => {
-    const index = widgets.findIndex((w) => w.id === id);
-    if (index > 0) {
-      const newWidgets = [...widgets];
-      [newWidgets[index - 1], newWidgets[index]] = [newWidgets[index], newWidgets[index - 1]];
-      setWidgets(newWidgets);
-    }
+    setWidgets((w) => {
+      const i = w.findIndex((x) => x.id === id);
+      if (i <= 0) return w;
+      const next = [...w];
+      [next[i - 1], next[i]] = [next[i], next[i - 1]];
+      return next;
+    });
   };
 
   const handleMoveDown = (id: string) => {
-    const index = widgets.findIndex((w) => w.id === id);
-    if (index < widgets.length - 1) {
-      const newWidgets = [...widgets];
-      [newWidgets[index], newWidgets[index + 1]] = [newWidgets[index + 1], newWidgets[index]];
-      setWidgets(newWidgets);
-    }
+    setWidgets((w) => {
+      const i = w.findIndex((x) => x.id === id);
+      if (i < 0 || i >= w.length - 1) return w;
+      const next = [...w];
+      [next[i], next[i + 1]] = [next[i + 1], next[i]];
+      return next;
+    });
   };
+
+  useWidgetSelectionAdapter(surface, handleBulkDelete);
+
+  return { widgets, surface, handleWidgetAdd, handleWidgetDelete, handleMoveUp, handleMoveDown };
+}
+
+export function WidgetColumn() {
+  const { isAdmin } = useAuth();
+  const { widgets, surface, handleWidgetAdd, handleWidgetDelete, handleMoveUp, handleMoveDown } =
+    useWidgetContainer(defaultColumnWidgets, "dashboard:widgets:column");
 
   return (
     <div className="flex flex-col gap-4">
@@ -69,12 +80,12 @@ export function WidgetColumn() {
           isAdmin={isAdmin}
           isFirst={index === 0}
           isLast={index === widgets.length - 1}
+          surface={surface}
           onDelete={() => handleWidgetDelete(widget.id)}
           onMoveUp={() => handleMoveUp(widget.id)}
           onMoveDown={() => handleMoveDown(widget.id)}
         />
       ))}
-      {/* Add widget button */}
       {isAdmin && (
         <div className="flex justify-center pt-2">
           <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
@@ -85,39 +96,9 @@ export function WidgetColumn() {
 }
 
 export function SidebarWidgets() {
-  const [widgets, setWidgets] = useState<WidgetInstance[]>(defaultSidebarWidgets);
   const { isAdmin } = useAuth();
-
-  const handleWidgetAdd = (type: WidgetType, size: WidgetSize) => {
-    const newWidget: WidgetInstance = {
-      id: crypto.randomUUID(),
-      type,
-      size,
-    };
-    setWidgets([...widgets, newWidget]);
-  };
-
-  const handleWidgetDelete = (id: string) => {
-    setWidgets(widgets.filter((w) => w.id !== id));
-  };
-
-  const handleMoveUp = (id: string) => {
-    const index = widgets.findIndex((w) => w.id === id);
-    if (index > 0) {
-      const newWidgets = [...widgets];
-      [newWidgets[index - 1], newWidgets[index]] = [newWidgets[index], newWidgets[index - 1]];
-      setWidgets(newWidgets);
-    }
-  };
-
-  const handleMoveDown = (id: string) => {
-    const index = widgets.findIndex((w) => w.id === id);
-    if (index < widgets.length - 1) {
-      const newWidgets = [...widgets];
-      [newWidgets[index], newWidgets[index + 1]] = [newWidgets[index + 1], newWidgets[index]];
-      setWidgets(newWidgets);
-    }
-  };
+  const { widgets, surface, handleWidgetAdd, handleWidgetDelete, handleMoveUp, handleMoveDown } =
+    useWidgetContainer(defaultSidebarWidgets, "dashboard:widgets:sidebar");
 
   return (
     <div className="flex flex-col gap-3">
@@ -130,12 +111,12 @@ export function SidebarWidgets() {
           isAdmin={isAdmin}
           isFirst={index === 0}
           isLast={index === widgets.length - 1}
+          surface={surface}
           onDelete={() => handleWidgetDelete(widget.id)}
           onMoveUp={() => handleMoveUp(widget.id)}
           onMoveDown={() => handleMoveDown(widget.id)}
         />
       ))}
-      {/* Add widget button */}
       {isAdmin && (
         <div className="flex justify-center pt-2">
           <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
@@ -147,39 +128,9 @@ export function SidebarWidgets() {
 
 // Grid layout for widgets - flows left to right, then wraps down
 export function WidgetGrid() {
-  const [widgets, setWidgets] = useState<WidgetInstance[]>(defaultColumnWidgets);
   const { isAdmin } = useAuth();
-
-  const handleWidgetAdd = (type: WidgetType, size: WidgetSize) => {
-    const newWidget: WidgetInstance = {
-      id: crypto.randomUUID(),
-      type,
-      size,
-    };
-    setWidgets([...widgets, newWidget]);
-  };
-
-  const handleWidgetDelete = (id: string) => {
-    setWidgets(widgets.filter((w) => w.id !== id));
-  };
-
-  const handleMoveUp = (id: string) => {
-    const index = widgets.findIndex((w) => w.id === id);
-    if (index > 0) {
-      const newWidgets = [...widgets];
-      [newWidgets[index - 1], newWidgets[index]] = [newWidgets[index], newWidgets[index - 1]];
-      setWidgets(newWidgets);
-    }
-  };
-
-  const handleMoveDown = (id: string) => {
-    const index = widgets.findIndex((w) => w.id === id);
-    if (index < widgets.length - 1) {
-      const newWidgets = [...widgets];
-      [newWidgets[index], newWidgets[index + 1]] = [newWidgets[index + 1], newWidgets[index]];
-      setWidgets(newWidgets);
-    }
-  };
+  const { widgets, surface, handleWidgetAdd, handleWidgetDelete, handleMoveUp, handleMoveDown } =
+    useWidgetContainer(defaultColumnWidgets, "dashboard:widgets:grid");
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -192,12 +143,12 @@ export function WidgetGrid() {
           isAdmin={isAdmin}
           isFirst={index === 0}
           isLast={index === widgets.length - 1}
+          surface={surface}
           onDelete={() => handleWidgetDelete(widget.id)}
           onMoveUp={() => handleMoveUp(widget.id)}
           onMoveDown={() => handleMoveDown(widget.id)}
         />
       ))}
-      {/* Add widget button */}
       {isAdmin && (
         <div className="flex items-center justify-center min-h-[100px]">
           <AddWidgetButton onWidgetAdd={handleWidgetAdd} />
