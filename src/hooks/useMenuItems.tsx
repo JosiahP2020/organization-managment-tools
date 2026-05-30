@@ -242,7 +242,15 @@ export function useMenuItems(categoryId: string | undefined) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      try {
+        const raw = sessionStorage.getItem("newFileDirectoryIds");
+        const ids: string[] = raw ? JSON.parse(raw) : [];
+        if (data?.id && !ids.includes(data.id)) {
+          ids.push(data.id);
+          sessionStorage.setItem("newFileDirectoryIds", JSON.stringify(ids));
+        }
+      } catch {}
       queryClient.invalidateQueries({ queryKey: ["menu-items", categoryId] });
       toast.success("File directory created");
     },

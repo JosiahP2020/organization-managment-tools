@@ -50,7 +50,20 @@ export function FileDirectoryCard({
   onResync,
 }: FileDirectoryCardProps) {
   const { isAdmin } = useAuth();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem("newFileDirectoryIds");
+      const ids: string[] = raw ? JSON.parse(raw) : [];
+      if (ids.includes(item.id)) {
+        sessionStorage.setItem(
+          "newFileDirectoryIds",
+          JSON.stringify(ids.filter((id) => id !== item.id))
+        );
+        return true;
+      }
+    } catch {}
+    return false;
+  });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
@@ -174,8 +187,6 @@ export function FileDirectoryCard({
         <div className="border border-t-0 border-border rounded-b-lg p-3 bg-card">
           <FileDirectoryView
             menuItemId={item.id}
-            title={item.name}
-            onTitleChange={onTitleChange}
             driveExport={driveExport}
           />
         </div>
