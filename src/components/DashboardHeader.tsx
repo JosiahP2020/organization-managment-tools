@@ -29,7 +29,7 @@ export function DashboardHeader() {
   return (
     <>
       {/* In-flow buttons that scroll with the page */}
-      <div className="relative w-full flex items-center justify-between p-4">
+      <div className="relative w-full flex items-center justify-between p-4 min-h-[8rem]">
         {/* Left side - Menu Button or Back Button */}
         <div className="flex items-center gap-2">
           {isMainDashboard ? (
@@ -49,13 +49,13 @@ export function DashboardHeader() {
 
 
         {/* Center - Logo */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-2 flex items-center justify-center pointer-events-none px-2" style={{ maxWidth: 'calc(100% - 8rem)' }}>
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none px-2" style={{ maxWidth: 'calc(100% - 8rem)' }}>
           <Logo
             size="xl"
             customSrc={mainLogoUrl}
             variant="full"
             filterClass={logoFilterClass}
-            className={isMainDashboard ? "max-h-24 w-auto object-contain" : "max-h-20 w-auto object-contain"}
+            className={isMainDashboard ? "max-h-28 w-auto object-contain" : "max-h-24 w-auto object-contain"}
           />
         </div>
 
