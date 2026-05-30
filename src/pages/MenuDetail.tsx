@@ -15,7 +15,7 @@ const MenuDetail = () => {
   const { menuId, slug } = useParams<{ menuId: string; slug: string }>();
   const navigate = useNavigate();
   const { organization, isAdmin } = useAuth();
-  const { subLogoUrl, logoFilterClass } = useThemeLogos();
+  const { mainLogoUrl, logoFilterClass } = useThemeLogos();
   const queryClient = useQueryClient();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
