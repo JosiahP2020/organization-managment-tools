@@ -43,18 +43,19 @@ export function DashboardHeader() {
               <Menu className="h-8 w-8" />
             </Button>
           ) : (
-            <>
-              <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />
-              <Logo
-                size="lg"
-                customSrc={subLogoUrl}
-                variant="icon"
-                filterClass={logoFilterClass}
-                className="ml-1"
-              />
-            </>
+            <BackButton fallbackPath={`/dashboard/${organization?.slug}`} />
           )}
         </div>
+
+        {/* Right - Sub-logo on sub-pages */}
+        {!isMainDashboard && (
+          <Logo
+            size="lg"
+            customSrc={subLogoUrl}
+            variant="icon"
+            filterClass={logoFilterClass}
+          />
+        )}
 
         {/* Center - Logo (main dashboard only) */}
         {isMainDashboard && (
