@@ -446,6 +446,19 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
               </Card>
             );
           })}
+          {isAdmin && !hasActiveFilters && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadFile.isPending}
+              className="group relative p-3 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-accent/30 transition-all flex flex-col items-center justify-center text-muted-foreground hover:text-primary min-h-[140px]"
+            >
+              <Upload className="h-8 w-8 mb-2" />
+              <span className="text-xs font-medium">
+                {uploadFile.isPending ? "Uploading..." : "Upload"}
+              </span>
+            </button>
+          )}
         </div>
       )}
 
