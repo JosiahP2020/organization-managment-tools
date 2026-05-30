@@ -25,10 +25,10 @@ export function DashboardHeader() {
 
   return (
     <>
-      {/* Floating buttons without header background */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between p-4 pointer-events-none">
+      {/* In-flow buttons that scroll with the page */}
+      <div className="relative w-full flex items-center justify-between p-4">
         {/* Left side - Menu Button or Back Button */}
-        <div className="flex items-center gap-2 pointer-events-auto">
+        <div className="flex items-center gap-2">
           {isMainDashboard ? (
             <Button
               variant="outline"
@@ -46,7 +46,7 @@ export function DashboardHeader() {
 
         {/* Settings Dropdown - Right - Only show on main dashboard */}
         {isMainDashboard && (
-          <div className="pointer-events-auto">
+          <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -88,9 +88,7 @@ export function DashboardHeader() {
           </div>
         )}
       </div>
-      
-      {/* Spacer to prevent content from going under fixed buttons */}
-      <div className="h-20" />
+
 
       {/* Sidebar Menu */}
       <SidebarMenu open={sidebarOpen} onOpenChange={setSidebarOpen} />
