@@ -415,3 +415,111 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
     </div>
   );
 }
+
+interface SelectableFileCardProps {
+  file: FileDirectoryFile;
+  surface: string | null;
+  isAdmin: boolean;
+  driveExport?: DriveExportContext;
+  onDownload: (file: FileDirectoryFile) => void;
+  onDelete: (file: FileDirectoryFile) => void;
+}
+
+function SelectableFileCard({ file, surface, isAdmin, driveExport, onDownload, onDelete }: SelectableFileCardProps) {
+  const FileIcon = getFileIcon(file.file_type);
+  const fileRef = driveExport?.isConnected ? driveExport.getRef(file.id) : null;
+
+  const { selected, active, longPressHandlers, handleClick } = useSelectableItem({
+    surface: surface || "files:disabled",
+    id: file.id,
+    meta: { label: file.file_name, type: "file" },
+    enabled: !!surface,
+  });
+
+  const handleAnchorClick = (e: React.MouseEvent) => {
+    if (active) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleClick()(e);
+    }
+  };
+
+  return (
+    <Card
+      className={cn(
+        "group relative p-3 transition-all hover:shadow-md",
+        "border border-border hover:border-primary/30",
+        selected && "ring-2 ring-primary border-primary"
+      )}
+      {...longPressHandlers}
+      onClick={handleClick()}
+    >
+      {selected && (
+        <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow z-30">
+          <Check className="h-3 w-3" />
+        </div>
+      )}
+      <div className="flex flex-col gap-2">
+        <a
+          href={file.file_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleAnchorClick}
+          className="block w-full aspect-video rounded-md bg-muted overflow-hidden flex items-center justify-center border border-border"
+          title={`Preview ${file.file_name}`}
+        >
+          {file.file_type?.startsWith("image/") ? (
+            <img src={file.file_url} alt={file.file_name} loading="lazy" className="h-full w-full object-cover" />
+          ) : file.file_type?.startsWith("video/") ? (
+            <video src={file.file_url} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+          ) : file.file_type === "application/pdf" ? (
+            <object data={`${file.file_url}#page=1&view=FitH&toolbar=0&navpanes=0`} type="application/pdf" className="h-full w-full pointer-events-none" aria-label={file.file_name}>
+              <FileIcon className="h-8 w-8 text-muted-foreground" />
+            </object>
+          ) : (
+            <FileIcon className="h-8 w-8 text-muted-foreground" />
+          )}
+        </a>
+        <p className="font-medium text-xs truncate" title={file.file_name}>
+          {file.file_name}
+        </p>
+      </div>
+
+      {/* Action buttons - hidden in select mode */}
+      {!active && (
+        <div className="absolute top-2 right-2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {isAdmin && driveExport?.isConnected && (
+            <ExportToDriveButton
+              entityId={file.id}
+              entityType="file"
+              isExporting={driveExport.isExporting(file.id)}
+              lastSynced={fileRef?.last_synced_at || null}
+              onExport={(folderId) => driveExport.exportToDrive("file", file.id, folderId)}
+            />
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 bg-background/80 backdrop-blur group-hover:bg-accent"
+            onClick={(e) => { e.stopPropagation(); onDownload(file); }}
+            title="Download"
+          >
+            <Download className="h-3 w-3" />
+          </Button>
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 bg-background/80 backdrop-blur text-destructive hover:text-destructive group-hover:bg-accent"
+              onClick={(e) => { e.stopPropagation(); onDelete(file); }}
+              title="Delete"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
