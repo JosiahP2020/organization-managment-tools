@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { CheckSquare, Grid3X3, ListChecks, Ruler, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload, Loader2 } from "lucide-react";
+import { CheckSquare, Grid3X3, ListChecks, Ruler, ChevronUp, ChevronDown, Trash2, Pencil, CloudUpload, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { useLongPress } from "@/hooks/useLongPress";
+import { useSelectableItem } from "@/components/selection";
 import type { MenuItem } from "@/hooks/useMenuItems";
 
 interface ToolCardProps {
   item: MenuItem;
+  surface: string;
+  sectionId: string;
   isFirst: boolean;
   isLast: boolean;
   onMoveUp: () => void;
