@@ -23,6 +23,7 @@ interface DriveExportContext {
 
 interface MenuItemSectionProps {
   section: MenuItemSectionType;
+  surface: string;
   isAdmin: boolean;
   isFirstSection: boolean;
   isLastSection: boolean;
@@ -46,6 +47,7 @@ interface MenuItemSectionProps {
 
 export function MenuItemSection({
   section,
+  surface,
   isAdmin,
   isFirstSection,
   isLastSection,
@@ -177,6 +179,8 @@ export function MenuItemSection({
                 <FileDirectoryCard
                   key={item.id}
                   item={item}
+                  surface={surface}
+                  sectionId={section.id}
                   isFirst={index === 0}
                   isLast={index === section.items.length - 1}
                   onMoveUp={() => onMoveItemUp(item.id, section.id)}
@@ -235,6 +239,7 @@ export function MenuItemSection({
                 key={item.id}
                 item={item}
                 sectionId={section.id}
+                surface={surface}
                 isAdmin={isAdmin}
                 isFirst={index === 0}
                 isLast={index === section.items.length - 1}

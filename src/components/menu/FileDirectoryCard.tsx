@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { ChevronUp, ChevronDown, Trash2, CloudUpload, Loader2, FolderOpen, ChevronRight, Pencil } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, CloudUpload, Loader2, FolderOpen, ChevronRight, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileDirectoryView } from "./FileDirectoryView";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import { cn } from "@/lib/utils";
-import { useLongPress } from "@/hooks/useLongPress";
+import { useSelectableItem } from "@/components/selection";
 
 interface DriveExportContext {
   isConnected: boolean;
@@ -24,6 +24,8 @@ interface FileDirectoryCardProps {
     description: string | null;
     icon: string;
   };
+  surface: string;
+  sectionId: string;
   isFirst: boolean;
   isLast: boolean;
   onMoveUp: () => void;
@@ -38,6 +40,8 @@ interface FileDirectoryCardProps {
 
 export function FileDirectoryCard({
   item,
+  surface,
+  sectionId,
   isFirst,
   isLast,
   onMoveUp,
@@ -54,7 +58,13 @@ export function FileDirectoryCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
-  const { isPressed, handlers, reset, pressedRef, cardRef } = useLongPress();
+
+  const { selected, active, longPressHandlers, handleClick } = useSelectableItem({
+    surface,
+    id: item.id,
+    meta: { label: item.name, type: "file_directory", parentId: sectionId, payload: item },
+    enabled: isAdmin && !isEditing,
+  });
 
   const handleSaveEdit = () => {
     if (editName.trim() && editName !== item.name) {
@@ -74,23 +84,23 @@ export function FileDirectoryCard({
   return (
     <div>
 
-      {/* Collapsed card - matches ToolCard/TextDisplayCard style */}
+      {/* Collapsed card */}
       <div
-        ref={cardRef}
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border border-border transition-all cursor-pointer hover:bg-accent/50",
+          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border transition-all cursor-pointer hover:bg-accent/50",
           expanded && "rounded-b-none border-b-0",
-          isPressed && "ring-2 ring-primary/50 bg-accent/30"
+          selected ? "border-primary ring-2 ring-primary" : "border-border"
         )}
-        onClick={() => {
-          if (pressedRef.current) return;
-          if (!isEditing) {
-            reset();
-            setExpanded(!expanded);
-          }
-        }}
-        {...handlers}
+        onClick={handleClick(() => {
+          if (!isEditing) setExpanded(!expanded);
+        })}
+        {...longPressHandlers}
       >
+        {selected && (
+          <div className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow z-10">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
         {/* Icon */}
         <div className="flex items-center justify-center p-2 rounded-lg bg-primary/10 shrink-0">
           <FolderOpen className="h-5 w-5 text-primary" />
@@ -116,9 +126,9 @@ export function FileDirectoryCard({
           )}
         </div>
 
-        {/* Admin controls */}
-        {isAdmin && !isEditing && (
-          <div className={cn("flex items-center gap-0.5 transition-opacity shrink-0", isPressed ? "opacity-100" : "opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto")} onClick={(e) => e.stopPropagation()}>
+        {/* Admin controls — hidden in select mode */}
+        {isAdmin && !isEditing && !active && (
+          <div className="flex items-center gap-0.5 transition-opacity shrink-0 opacity-0 pointer-events-none [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             {!isFirst && (
               <Button variant="ghost" size="icon" className="h-6 w-6 group-hover:bg-accent" onClick={onMoveUp} title="Move up">
                 <ChevronUp className="h-3 w-3" />
