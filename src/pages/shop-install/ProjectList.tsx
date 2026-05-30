@@ -43,6 +43,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "@/hooks/use-toast";
+import { useSelectableItem } from "@/components/selection";
+import { useProjectSelectionAdapter } from "@/components/shop-install/useProjectSelectionAdapter";
+import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
+
 
 type SortOption = "recent" | "oldest" | "alphabetical";
 
@@ -65,6 +70,8 @@ const ProjectList = () => {
   const { mainLogoUrl } = useThemeLogos();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  useProjectSelectionAdapter();
+
   
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
