@@ -85,8 +85,8 @@ export function MenuItemCard({
         onClick={isEditing ? undefined : onClick}
       >
         {/* Icon - always on far left */}
-        <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 shrink-0">
-          <DynamicIcon name={item.icon} className="h-4 w-4 text-primary" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/20 shrink-0">
+          <DynamicIcon name={item.icon} className="h-5 w-5 text-primary" />
         </div>
 
         {/* Content */}
