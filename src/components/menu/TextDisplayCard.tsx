@@ -105,7 +105,7 @@ export function TextDisplayCard({
     <>
       <div
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border transition-all",
+          "group relative flex items-center gap-3 p-4 rounded-lg bg-card border transition-all",
           isAddress ? "cursor-pointer hover:bg-accent/50" : "cursor-default",
           selected ? "border-primary ring-2 ring-primary" : "border-border"
         )}

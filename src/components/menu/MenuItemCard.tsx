@@ -86,7 +86,7 @@ export function MenuItemCard({
         ref={setNodeRef}
         style={style}
         className={cn(
-          "group relative flex items-center gap-3 p-3 rounded-lg bg-card border transition-colors cursor-pointer",
+          "group relative flex items-center gap-3 p-4 rounded-lg bg-card border transition-colors cursor-pointer",
           selected ? "border-primary ring-2 ring-primary" : "border-border hover:border-primary/50"
         )}
         onClick={isEditing ? undefined : handleClick(onClick)}
@@ -99,8 +99,8 @@ export function MenuItemCard({
           </div>
         )}
 
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
-          <DynamicIcon name={item.icon} className="h-5 w-5 text-primary" />
+        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 shrink-0">
+          <DynamicIcon name={item.icon} className="h-6 w-6 text-primary" />
         </div>
 
         <div className="flex-1 min-w-0">
