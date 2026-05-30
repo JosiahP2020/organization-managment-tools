@@ -357,9 +357,8 @@ const ProjectList = () => {
                 onDelete={(e) => handleDelete(e, project)}
               />
             ))}
-
-            ))}
           </div>
+
         ) : (
           <Card>
             <CardContent className="py-16 text-center">
