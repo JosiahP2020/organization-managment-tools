@@ -179,6 +179,8 @@ export function MenuItemSection({
                 <FileDirectoryCard
                   key={item.id}
                   item={item}
+                  surface={surface}
+                  sectionId={section.id}
                   isFirst={index === 0}
                   isLast={index === section.items.length - 1}
                   onMoveUp={() => onMoveItemUp(item.id, section.id)}
@@ -237,6 +239,7 @@ export function MenuItemSection({
                 key={item.id}
                 item={item}
                 sectionId={section.id}
+                surface={surface}
                 isAdmin={isAdmin}
                 isFirst={index === 0}
                 isLast={index === section.items.length - 1}

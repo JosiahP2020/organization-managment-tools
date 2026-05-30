@@ -240,6 +240,7 @@ export function MenuItemsColumn({ categoryId, onItemClick }: MenuItemsColumnProp
                 <MenuItemSection
                   key={section.id}
                   section={section}
+                  surface={`menu:${categoryId}`}
                   isAdmin={isAdmin}
                   isFirstSection={section.id === "default" || isFirstRealSection}
                   isLastSection={section.id === "default" || isLastRealSection}
