@@ -200,8 +200,19 @@ const MenuDetail = () => {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto px-2 sm:px-4">
-        {/* Header: Title */}
-        <div className="mb-6">
+        {/* Centered main logo */}
+        <div className="flex justify-center mb-4">
+          <Logo
+            size="xl"
+            customSrc={mainLogoUrl}
+            variant="full"
+            filterClass={logoFilterClass}
+            className="max-h-32 md:max-h-40"
+          />
+        </div>
+
+        {/* Centered title */}
+        <div className="text-center mb-6">
           {isEditingTitle ? (
             <Input
               value={editTitle}
@@ -209,22 +220,23 @@ const MenuDetail = () => {
               onBlur={handleSaveTitle}
               onKeyDown={handleTitleKeyDown}
               autoFocus
-              className="text-2xl md:text-3xl font-bold"
+              className="text-2xl md:text-3xl font-bold text-center max-w-md mx-auto"
             />
           ) : (
             <h1
-              className={`text-2xl md:text-3xl font-bold text-foreground truncate ${isAdmin ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
+              className={`text-2xl md:text-3xl font-bold text-foreground ${isAdmin ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
               onClick={handleStartEditTitle}
             >
               {category?.name || "Menu"}
             </h1>
           )}
           {category?.description && !isEditingTitle && (
-            <p className="text-muted-foreground mt-1 truncate">
+            <p className="text-muted-foreground mt-2">
               {category.description}
             </p>
           )}
         </div>
+
 
 
         {/* Menu Items Column */}
