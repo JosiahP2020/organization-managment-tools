@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { ChevronUp, ChevronDown, Trash2, CloudUpload, Loader2, FolderOpen, ChevronRight, Pencil } from "lucide-react";
+import { ChevronUp, ChevronDown, Trash2, CloudUpload, Loader2, FolderOpen, ChevronRight, Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileDirectoryView } from "./FileDirectoryView";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import { cn } from "@/lib/utils";
-import { useLongPress } from "@/hooks/useLongPress";
+import { useSelectableItem } from "@/components/selection";
 
 interface DriveExportContext {
   isConnected: boolean;
