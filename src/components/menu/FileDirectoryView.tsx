@@ -367,12 +367,12 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
                   "border border-border hover:border-primary/30"
                 )}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex flex-col gap-2">
                   <a
                     href={file.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 h-14 w-14 rounded-lg bg-muted overflow-hidden flex items-center justify-center border border-border"
+                    className="block w-full aspect-video rounded-md bg-muted overflow-hidden flex items-center justify-center border border-border"
                     title={`Preview ${file.file_name}`}
                   >
                     {file.file_type?.startsWith("image/") ? (
@@ -397,22 +397,15 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
                         className="h-full w-full pointer-events-none"
                         aria-label={file.file_name}
                       >
-                        <FileIcon className="h-5 w-5 text-muted-foreground" />
+                        <FileIcon className="h-8 w-8 text-muted-foreground" />
                       </object>
                     ) : (
-                      <FileIcon className="h-5 w-5 text-muted-foreground" />
+                      <FileIcon className="h-8 w-8 text-muted-foreground" />
                     )}
                   </a>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate" title={file.file_name}>
-                      {file.file_name}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                      <span>{formatFileSize(file.file_size)}</span>
-                      <span>•</span>
-                      <span>{formatDistanceToNow(new Date(file.created_at), { addSuffix: true })}</span>
-                    </div>
-                  </div>
+                  <p className="font-medium text-xs truncate" title={file.file_name}>
+                    {file.file_name}
+                  </p>
                 </div>
 
                 {/* Action Buttons */}
@@ -429,7 +422,7 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 group-hover:bg-accent"
+                    className="h-6 w-6 bg-background/80 backdrop-blur group-hover:bg-accent"
                     onClick={() => handleDownload(file)}
                     title="Download"
                   >
@@ -439,7 +432,7 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-destructive hover:text-destructive group-hover:bg-accent"
+                      className="h-6 w-6 bg-background/80 backdrop-blur text-destructive hover:text-destructive group-hover:bg-accent"
                       onClick={() => handleDeleteClick(file)}
                       title="Delete"
                     >
