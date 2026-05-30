@@ -21,6 +21,8 @@ import { useMenuItems, type MenuItemSection as MenuItemSectionType } from "@/hoo
 import { useAuth } from "@/contexts/AuthContext";
 import { useDriveExport } from "@/hooks/useDriveExport";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSelectionAdapter } from "@/components/selection";
+import { useMemo } from "react";
 
 interface MenuItemsColumnProps {
   categoryId: string;
