@@ -47,6 +47,7 @@ interface MenuItemSectionProps {
 
 export function MenuItemSection({
   section,
+  surface,
   isAdmin,
   isFirstSection,
   isLastSection,
