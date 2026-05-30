@@ -14,6 +14,8 @@ import { ChecklistPrintView } from "@/components/training/ChecklistPrintView";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus, Image } from "lucide-react";
+import { useChecklistSelectionAdapter } from "@/components/training/useChecklistSelectionAdapter";
+
 
 
 export interface ChecklistItem {
