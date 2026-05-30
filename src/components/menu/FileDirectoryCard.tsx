@@ -50,20 +50,7 @@ export function FileDirectoryCard({
   onResync,
 }: FileDirectoryCardProps) {
   const { isAdmin } = useAuth();
-  const [expanded, setExpanded] = useState(() => {
-    try {
-      const raw = sessionStorage.getItem("newFileDirectoryIds");
-      const ids: string[] = raw ? JSON.parse(raw) : [];
-      if (ids.includes(item.id)) {
-        sessionStorage.setItem(
-          "newFileDirectoryIds",
-          JSON.stringify(ids.filter((id) => id !== item.id))
-        );
-        return true;
-      }
-    } catch {}
-    return false;
-  });
+  const [expanded, setExpanded] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(item.name);
