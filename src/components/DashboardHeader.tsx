@@ -47,6 +47,20 @@ export function DashboardHeader() {
           )}
         </div>
 
+        {/* Center - Logo (main dashboard only) */}
+        {isMainDashboard && (
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-none">
+            <Logo
+              size="md"
+              customSrc={mainLogoUrl}
+              variant="full"
+              filterClass={logoFilterClass}
+              className="max-h-12"
+            />
+          </div>
+        )}
+
+
         {/* Settings Dropdown - Right - Only show on main dashboard */}
         {isMainDashboard && (
           <div>
