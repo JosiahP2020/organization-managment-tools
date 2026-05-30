@@ -328,17 +328,35 @@ export function FileDirectoryView({ menuItemId, title, onTitleChange, driveExpor
           ))}
         </div>
       ) : filteredFiles.length === 0 ? (
-        <Card className="p-8 text-center">
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <File className="h-10 w-10 opacity-50" />
-            <p className="font-medium">
-              {hasActiveFilters ? "No files match your filters" : "No files yet"}
-            </p>
-            {isAdmin && !hasActiveFilters && (
-              <p className="text-sm">Click the Upload button to add files</p>
-            )}
+        hasActiveFilters ? (
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <File className="h-10 w-10 opacity-50" />
+              <p className="font-medium">No files match your filters</p>
+            </div>
+          </Card>
+        ) : isAdmin ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadFile.isPending}
+              className="group relative p-3 rounded-lg border-2 border-dashed border-border hover:border-primary hover:bg-accent/30 transition-all flex flex-col items-center justify-center aspect-[4/5] text-muted-foreground hover:text-primary"
+            >
+              <Upload className="h-8 w-8 mb-2" />
+              <span className="text-xs font-medium">
+                {uploadFile.isPending ? "Uploading..." : "Upload"}
+              </span>
+            </button>
           </div>
-        </Card>
+        ) : (
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <File className="h-10 w-10 opacity-50" />
+              <p className="font-medium">No files yet</p>
+            </div>
+          </Card>
+        )
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredFiles.map((file) => {
