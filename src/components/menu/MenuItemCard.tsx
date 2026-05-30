@@ -116,7 +116,7 @@ export function MenuItemCard({
             />
           ) : (
             <>
-              <h3 className="font-medium text-foreground truncate">{item.name}</h3>
+              <h3 className="font-semibold text-foreground text-base md:text-lg truncate">{item.name}</h3>
               {item.description && (
                 <p className="text-sm text-muted-foreground truncate">{item.description}</p>
               )}
