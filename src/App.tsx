@@ -47,8 +47,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <AccentColorProvider>
-              <Routes>
+            <SelectionProvider>
+              <AccentColorProvider>
+                <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<OrganizationLogin />} />
                 <Route path="/login/:organizationName" element={<EmployeeLogin />} />
