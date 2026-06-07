@@ -11,6 +11,7 @@ import { ChecklistItem } from "@/components/training/ChecklistItem";
 import { AddItemDialog } from "@/components/training/AddItemDialog";
 import type { ChecklistSectionType, ChecklistItem as ChecklistItemType } from "@/pages/training/ChecklistEditor";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ImageLightbox } from "@/components/ImageLightbox";
 
 interface ChecklistSectionProps {
   section: ChecklistSectionType;
@@ -42,6 +43,7 @@ export function ChecklistSection({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(section.title);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -432,24 +434,28 @@ export function ChecklistSection({
         {!hideAllImages && images.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-3">
             {images.map((imageUrl, index) => {
-              const handleImageClick = () => {
-                if (isMobile && canEdit) {
-                  setSelectedImageIndex(prev => prev === index ? null : index);
-                }
-              };
-              
               const isSelected = selectedImageIndex === index;
-              
+
+              const handleImageClick = (e: React.MouseEvent) => {
+                e.stopPropagation();
+                // On mobile with edit rights, first tap reveals delete; second tap opens lightbox
+                if (isMobile && canEdit && !isSelected) {
+                  setSelectedImageIndex(index);
+                  return;
+                }
+                setLightboxUrl(imageUrl);
+              };
+
               return (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="relative group inline-block"
-                  onClick={handleImageClick}
                 >
-                  <img 
-                    src={imageUrl} 
+                  <img
+                    src={imageUrl}
                     alt={`${section.title} image ${index + 1}`}
-                    className="max-h-48 rounded-lg border border-border"
+                    className="max-h-48 rounded-lg border border-border cursor-zoom-in"
+                    onClick={handleImageClick}
                   />
                   {/* Delete button - visible on hover (desktop) or on tap (mobile) */}
                   {canEdit && (
@@ -457,8 +463,8 @@ export function ChecklistSection({
                       variant="destructive"
                       size="icon"
                       className={`absolute top-2 right-2 h-8 w-8 transition-opacity ${
-                        isMobile 
-                          ? (isSelected ? "opacity-100" : "opacity-0 pointer-events-none") 
+                        isMobile
+                          ? (isSelected ? "opacity-100" : "opacity-0 pointer-events-none")
                           : "opacity-0 group-hover:opacity-100"
                       }`}
                       onClick={(e) => {
@@ -474,6 +480,13 @@ export function ChecklistSection({
             })}
           </div>
         )}
+
+        <ImageLightbox
+          src={lightboxUrl}
+          alt={section.title}
+          open={!!lightboxUrl}
+          onOpenChange={(o) => !o && setLightboxUrl(null)}
+        />
 
         {/* Hidden file input for image upload */}
         <input
