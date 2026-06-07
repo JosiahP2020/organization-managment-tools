@@ -158,7 +158,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let didInit = false;
+
+    // Supabase fires INITIAL_SESSION on subscribe, so this is our single
+    // source of truth for loading user data. Calling getSession() in parallel
+    // would trigger duplicate profile/organization/role fetches on every load.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -167,27 +171,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Defer Supabase calls with setTimeout to prevent deadlock
         if (session?.user) {
           setTimeout(() => {
-            fetchUserData(session.user.id);
+            fetchUserData(session.user.id).finally(() => {
+              if (!didInit) {
+                didInit = true;
+                setIsLoading(false);
+              }
+            });
           }, 0);
         } else {
           setProfile(null);
           setOrganization(null);
           setUserRole(null);
+          if (!didInit) {
+            didInit = true;
+            setIsLoading(false);
+          }
         }
       }
     );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserData(session.user.id).finally(() => setIsLoading(false));
-      } else {
-        setIsLoading(false);
-      }
-    });
 
     return () => subscription.unsubscribe();
   }, []);
