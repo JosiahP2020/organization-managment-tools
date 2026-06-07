@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus, Image } from "lucide-react";
 import { useChecklistSelectionAdapter } from "@/components/training/useChecklistSelectionAdapter";
+import { ImageLightbox } from "@/components/ImageLightbox";
 
 
 
@@ -54,6 +55,7 @@ const ChecklistEditor = () => {
   const [hideCompleted, setHideCompleted] = useState(false);
   const [hideAllImages, setHideAllImages] = useState(false);
   const [showAllImagesGallery, setShowAllImagesGallery] = useState(false);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [addSectionOpen, setAddSectionOpen] = useState(false);
   
 
@@ -357,7 +359,8 @@ const ChecklistEditor = () => {
                           <img
                             src={section.image_url!}
                             alt={`${section.title} image`}
-                            className="w-full rounded-lg border border-border"
+                            className="w-full rounded-lg border border-border cursor-zoom-in"
+                            onClick={() => setLightboxUrl(section.image_url!)}
                           />
                         </div>
                       ))}
@@ -374,6 +377,12 @@ const ChecklistEditor = () => {
             onOpenChange={setAddSectionOpen}
             checklistId={checklistId!}
             nextSortOrder={sections?.length || 0}
+          />
+
+          <ImageLightbox
+            src={lightboxUrl}
+            open={!!lightboxUrl}
+            onOpenChange={(o) => !o && setLightboxUrl(null)}
           />
         </DashboardLayout>
       </div>
