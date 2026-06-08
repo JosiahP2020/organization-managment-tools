@@ -385,14 +385,5 @@ const ChecklistEditor = () => {
   );
 };
 
-            src={lightboxUrl}
-            open={!!lightboxUrl}
-            onOpenChange={(o) => !o && setLightboxUrl(null)}
-          />
-        </DashboardLayout>
-      </div>
-    </>
-  );
-};
-
 export default ChecklistEditor;
+
