@@ -377,6 +377,18 @@ const ChecklistEditor = () => {
             open={!!lightboxUrl}
             onOpenChange={(o) => !o && setLightboxUrl(null)}
           />
+            </>
+          )}
+        </DashboardLayout>
+      </div>
+    </>
+  );
+};
+
+            src={lightboxUrl}
+            open={!!lightboxUrl}
+            onOpenChange={(o) => !o && setLightboxUrl(null)}
+          />
         </DashboardLayout>
       </div>
     </>
