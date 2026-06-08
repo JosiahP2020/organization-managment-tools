@@ -182,51 +182,44 @@ const ChecklistEditor = () => {
   const isLocked = checklist?.is_locked || false;
   const canEdit = isAdmin && !isLocked;
 
-  if (checklistLoading || sectionsLoading) {
-    return (
-      <DashboardLayout>
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-center mb-6">
-            <Skeleton className="h-32 w-48" />
-          </div>
-          <Skeleton className="h-8 w-64 mb-4" />
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-32 w-full" />
-            ))}
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!checklist) {
-    return (
-      <DashboardLayout>
-        <div className="max-w-6xl mx-auto text-center py-12">
-          <h1 className="text-2xl font-bold text-foreground">Checklist not found</h1>
-          <p className="text-muted-foreground mt-2">This checklist may have been deleted.</p>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <>
       {/* Print view - OUTSIDE DashboardLayout so no header/menu/back button */}
-      <div className="hidden print:block print:p-0 print:m-0">
-        <ChecklistPrintView
-          ref={printRef}
-          checklist={checklist}
-          sections={sections || []}
-          logoUrl={subLogoUrl}
-          showImages={!hideAllImages}
-        />
-      </div>
+      {checklist && (
+        <div className="hidden print:block print:p-0 print:m-0">
+          <ChecklistPrintView
+            ref={printRef}
+            checklist={checklist}
+            sections={sections || []}
+            logoUrl={subLogoUrl}
+            showImages={!hideAllImages}
+          />
+        </div>
+      )}
 
       {/* Screen view (hidden on print) */}
       <div className="print:hidden">
         <DashboardLayout>
+          {checklistLoading || sectionsLoading ? (
+            <div className="max-w-6xl mx-auto">
+              <div className="flex justify-center mb-6">
+                <Skeleton className="h-32 w-48" />
+              </div>
+              <Skeleton className="h-8 w-64 mb-4" />
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-32 w-full" />
+                ))}
+              </div>
+            </div>
+          ) : !checklist ? (
+            <div className="max-w-6xl mx-auto text-center py-12">
+              <h1 className="text-2xl font-bold text-foreground">Checklist not found</h1>
+              <p className="text-muted-foreground mt-2">This checklist may have been deleted.</p>
+            </div>
+          ) : (
+            <>
+
           <div className="relative">
             {/* Sidebar - Positioned absolutely on the left on desktop, FAB on mobile */}
             <div className="hidden md:block absolute left-0 top-[7.5rem]">
